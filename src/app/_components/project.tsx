@@ -20,7 +20,7 @@ export function LatestProject() {
   return (
     <div className="w-full max-w-xs">
       {latestProject ? (
-        <p className="truncate">Your most recent project: {name}</p>
+        <p className="truncate">Your most recent project: {latestProject.name}</p>
       ) : (
         <p>You have no projects yet.</p>
       )}
@@ -28,6 +28,7 @@ export function LatestProject() {
         onSubmit={(e) => {
           e.preventDefault();
           createProject.mutate({ name });
+          api.project.getAll.useSuspenseQuery();
         }}
         className="flex flex-col gap-2"
       >
