@@ -3,16 +3,17 @@
 import { useState } from "react";
 
 import { api } from "~/trpc/react";
+import AllProjects from "./allProjects";
 
 export function LatestProject() {
   const [latestProject] = api.project.getLatest.useSuspenseQuery();
- 
+  var   projectReload = 0;
 
   const utils = api.useUtils();
   const [name, setName] = useState("");
   const createProject = api.project.create.useMutation({
     onSuccess: async () => {
-      await utils.post.invalidate();
+      await utils.project.invalidate();
       setName("");
     },
   });
@@ -28,7 +29,6 @@ export function LatestProject() {
         onSubmit={(e) => {
           e.preventDefault();
           createProject.mutate({ name });
-          api.project.getAll.useSuspenseQuery();
         }}
         className="flex flex-col gap-2"
       >
@@ -47,6 +47,9 @@ export function LatestProject() {
           {createProject.isPending ? "Submitting..." : "Submit"}
         </button>
       </form>
+
+      
+
     </div>
   );
 }
