@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { LatestPost } from "~/app/_components/post";
+import { LatestProject } from "./_components/project";
+import AllProjects from "./_components/allProjects"
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -14,7 +16,7 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-300 text-white">
           
           <div className="flex flex-col items-center gap-2">
             <p className="text-2xl text-white">
@@ -35,6 +37,10 @@ export default async function Home() {
           </div>
 
           {session?.user && <LatestPost />}
+
+          {session?.user && <LatestProject />}
+          {session?.user && <AllProjects />}
+
        
       </main>
     </HydrateClient>

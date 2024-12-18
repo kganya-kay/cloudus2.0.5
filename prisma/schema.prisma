@@ -14,6 +14,27 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+model Project {
+    id  Int @default(autoincrement()) @id
+    name String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    createdBy User @relation(fields:[createdById],references:[id])
+    createdById String
+
+    @@index([name])
+    type String
+    price Int
+    description String
+    image String @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+    count Int @default(autoincrement())
+    link String 
+    contributors User[] @relation("name")
+    api String
+}
+
 model Post {
     id        Int      @id @default(autoincrement())
     name      String
@@ -63,6 +84,10 @@ model User {
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+
+    projects Project[]
+
+    Project Project[] @relation("name")
 }
 
 model VerificationToken {
