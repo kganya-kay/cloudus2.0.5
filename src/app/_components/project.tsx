@@ -3,11 +3,10 @@
 import { useState } from "react";
 
 import { api } from "~/trpc/react";
-import AllProjects from "./allProjects";
 
 export function LatestProject() {
   const [latestProject] = api.project.getLatest.useSuspenseQuery();
-  var   projectReload = 0;
+
 
   const utils = api.useUtils();
   const [name, setName] = useState("");
