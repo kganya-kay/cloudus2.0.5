@@ -16,6 +16,7 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Button } from "@mui/material";
 
 const navigation = [
     { name: "Dashboard", href: "./", current: false },
@@ -212,25 +213,21 @@ export default async function Home() {
           </Disclosure>
 
           <header className="bg-white shadow">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto flex max-w-7xl px-4 py-6 sm:px-6 lg:px-8 justify-between">
+              <div>
               <h1 className="text-3xl font-bold tracking-tight text-gray-700">
                 Projects
               </h1>
-              <p className="text-2xl text-gray-400">
-                {hello ? hello.greeting : "Loading Cloudus Environment..."}
-              </p>
+              </div>
+              <div><Button variant="contained" href="./projects/create">Create A Project</Button></div>
+              
             </div>
           </header>
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               
               {session?.user && <AllProjects />}
-              <Link
-                href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-              >
-                {session ? "Sign out" : "Sign in"}
-              </Link>
+              
             </div>
           </main>
         </div>
