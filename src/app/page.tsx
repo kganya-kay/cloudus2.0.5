@@ -49,6 +49,8 @@ export default async function Home() {
     void api.post.getLatest.prefetch();
     if (typeof session.user.image == "string") {
       user.image = session.user.image;
+    }else {
+      user.image = "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
     }
   }
 
