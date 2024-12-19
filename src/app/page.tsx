@@ -62,7 +62,7 @@ export default async function Home() {
                     <img
                       alt="Your Company"
                       src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
-                      className="size-8"
+                      className="size-12"
                     />
                   </div>
                   <div className="hidden md:block">

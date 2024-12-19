@@ -24,10 +24,12 @@ export function LatestProject() {
   return (
     <div className="w-full max-w-xs gap-4 justify-self-center">
       {latestProject ? (
-        <p className="truncate">Your most recent project: {latestProject.name}</p>
+        <p className="truncate text-gray-700">Create Another Project Like: <span className="text-red-300">{latestProject.name}</span></p>
       ) : (
         <p>You have no projects yet.</p>
       )}
+      <br />
+      <br />
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -65,7 +67,7 @@ export function LatestProject() {
         <h1>{type}</h1>
         <button
           type="submit"
-          className="rounded-full bg-white/40 px-10 py-3 font-semibold transition hover:bg-white/80 "
+          className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700 "
           disabled={createProject.isPending}
         >
           {createProject.isPending ? "Submitting..." : "Submit"}
