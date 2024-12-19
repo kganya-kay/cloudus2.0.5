@@ -33,9 +33,9 @@ function classNames(...classes: string[]) {
 export default async function Home() {
   const hello = await api.post.hello({ text: "from Cloudus" });
   const session = await auth();
-  const user = {
+  let user = {
     name: session?.user.name,
-    image: session?.user.image,
+    image: "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV",
     email: session?.user.email,
   };
 
@@ -47,7 +47,9 @@ export default async function Home() {
 
   if (session?.user) {
     void api.post.getLatest.prefetch();
-    
+    if (typeof session.user.image == "string") {
+      user.image = session.user.image;
+    }
   }
 
   return (
@@ -167,9 +169,10 @@ export default async function Home() {
               <div className="border-t border-gray-700 pb-3 pt-4">
                 <div className="flex items-center px-5">
                   <div className="shrink-0">
+                    
                     <img
                       alt=""
-                      src={user.image as string}
+                      src={user.image}
                       className="size-10 rounded-full"
                     />
                   </div>
