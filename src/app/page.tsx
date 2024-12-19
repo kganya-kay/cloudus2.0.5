@@ -49,7 +49,7 @@ export default async function Home() {
     void api.post.getLatest.prefetch();
     
   }
-  if ( session?.user.image !== undefined) {
+  if ( session?.user.image !== undefined && session?.user.image !== null ) {
     user.image = session?.user.image
   }
 
