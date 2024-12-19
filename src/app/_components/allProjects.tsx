@@ -30,7 +30,7 @@ export default function AllProjects() {
               <p className="mt-1 text-xs/5 text-gray-500">
                 Last Updated At{" "}
                 <time dateTime={project.updatedAt.toDateString()}>
-                  {project.updatedAt.toDateString()}
+                  {project.updatedAt.toLocaleString()}
                 </time>
               </p>
             ) : (

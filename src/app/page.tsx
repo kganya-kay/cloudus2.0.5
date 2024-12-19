@@ -19,10 +19,10 @@ import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 const navigation = [
   { name: "Dashboard", href: "#", current: true },
-  { name: "Team", href: "#", current: false },
+  { name: "Shop", href: "#", current: false },
   { name: "Projects", href: "#", current: false },
+  { name: "Team", href: "#", current: false },
   { name: "Calendar", href: "#", current: false },
-  { name: "Reports", href: "#", current: false },
 ];
 
 
@@ -35,7 +35,7 @@ export default async function Home() {
   const session = await auth();
   const user = {
     name: session?.user.name,
-    image: "",
+    image: session?.user.image,
     email: session?.user.email,
   };
 
@@ -62,7 +62,7 @@ export default async function Home() {
                     <img
                       alt="Your Company"
                       src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
-                      className="size-12"
+                      className="size-12 rounded-full"
                     />
                   </div>
                   <div className="hidden md:block">
@@ -104,7 +104,7 @@ export default async function Home() {
                           <span className="sr-only">Open user menu</span>
                           <img
                             alt=""
-                            src={user.image}
+                            src={ user.image as string}
                             className="size-8 rounded-full"
                           />
                         </MenuButton>
@@ -169,7 +169,7 @@ export default async function Home() {
                   <div className="shrink-0">
                     <img
                       alt=""
-                      src={user.image}
+                      src={user.image as string}
                       className="size-10 rounded-full"
                     />
                   </div>
