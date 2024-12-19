@@ -35,7 +35,7 @@ export default async function Home() {
   const session = await auth();
   let user = {
     name: session?.user.name,
-    image: "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV",
+    image: "",
     email: session?.user.email,
   };
 
