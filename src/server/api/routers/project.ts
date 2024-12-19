@@ -16,16 +16,16 @@ export const projectRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) }))
+    .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string()}))
     .mutation(async ({ ctx, input }) => {
       return ctx.db.project.create({
         data: {
           name: input.name,
           createdBy: { connect: { id: ctx.session.user.id } },
-          type: "print",
+          type: input.type,
           price: 50,
-          description: "internal des from code",
-          link: "empty link",
+          description: input.description,
+          link: "Link to Project not set",
           api:"api empty"
         },
       });

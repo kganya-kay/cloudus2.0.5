@@ -8,6 +8,7 @@ export default function AllProjects() {
     <ul role="list" className="divide-y divide-gray-100 flex flex-col gap-2 px-4">
       {allProjects.map((project) => (
         <li key={project.id} className="flex justify-between gap-x-6 py-5">
+          
           <div className="flex min-w-0 gap-x-4">
             <img
               alt=""
@@ -19,7 +20,7 @@ export default function AllProjects() {
                 {project.name}
               </p>
               <p className="mt-1 truncate text-xs/5 text-gray-500">
-                {project.link}
+                {project.description}
               </p>
             </div>
           </div>
@@ -27,7 +28,7 @@ export default function AllProjects() {
             <p className="text-sm/6 text-gray-900">{project.type}</p>
             {project.updatedAt ? (
               <p className="mt-1 text-xs/5 text-gray-500">
-                Last seen{" "}
+                Last Updated At{" "}
                 <time dateTime={project.updatedAt.toDateString()}>
                   {project.updatedAt.toDateString()}
                 </time>
