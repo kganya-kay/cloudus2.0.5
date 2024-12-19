@@ -33,7 +33,7 @@ function classNames(...classes: string[]) {
 export default async function Home() {
   const hello = await api.post.hello({ text: "from Cloudus" });
   const session = await auth();
-  let user = {
+  const user = {
     name: session?.user.name,
     image: "",
     email: session?.user.email,
