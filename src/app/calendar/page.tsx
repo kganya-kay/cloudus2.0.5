@@ -1,14 +1,12 @@
 import Link from "next/link";
 
 import { LatestPost } from "~/app/_components/post";
-import { LatestProject } from "./_components/project";
-import AllProjects from "./_components/allProjects";
+import { LatestProject } from "../_components/project";
+import AllProjects from "~/app/_components/allProjects";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-import Button from '@mui/material/Button';
 
 import {
-  
   Disclosure,
   DisclosureButton,
   DisclosurePanel,
@@ -20,11 +18,11 @@ import {
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 const navigation = [
-  { name: "Dashboard", href: "./", current: true },
+  { name: "Dashboard", href: "./", current: false },
   { name: "Shop", href: "/shop", current: false },
   { name: "Projects", href: "/projects", current: false },
   { name: "Team", href: "/team", current: false },
-  { name: "Calendar", href: "/calendar", current: false },
+  { name: "Calendar", href: "/calendar", current: true },
 ];
 
 
@@ -65,7 +63,7 @@ export default async function Home() {
                 <div className="flex items-center">
                   <div className="shrink-0">
                     <img
-                      alt="Your Company"
+                      alt="Cloudus"
                       src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
                       className="size-12 rounded-full"
                     />
@@ -74,6 +72,7 @@ export default async function Home() {
                     <div className="ml-10 flex items-baseline space-x-4">
                       {navigation.map((item) => (
                         <Link
+
                           key={item.name}
                           href={item.href}
                           aria-current={item.current ? "page" : undefined}
@@ -216,18 +215,21 @@ export default async function Home() {
           <header className="bg-white shadow">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               <h1 className="text-3xl font-bold tracking-tight text-gray-700">
-                Dashboard
+                Calendar & Events
               </h1>
-              <p className="text-2xl text-gray-400">
-                Welcome Back {user.name}
-              </p>
+              
             </div>
           </header>
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 justify-between">
-             <div>
-             <Button variant="contained" href="./projects/create">Create A Project</Button>
-             </div>
+            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+              
+              <h1>Our Events and Project Timelines</h1>
+              <Link
+                href={session ? "/api/auth/signout" : "/api/auth/signin"}
+                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
+              >
+                {session ? "Sign out" : "Sign in"}
+              </Link>
             </div>
           </main>
         </div>
@@ -235,3 +237,4 @@ export default async function Home() {
     </HydrateClient>
   );
 }
+
