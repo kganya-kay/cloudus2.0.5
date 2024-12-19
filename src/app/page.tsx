@@ -107,7 +107,7 @@ export default async function Home() {
                           <span className="sr-only">Open user menu</span>
                           <img
                             alt=""
-                            src={ user.image as string}
+                            src={ user.image}
                             className="size-8 rounded-full"
                           />
                         </MenuButton>
