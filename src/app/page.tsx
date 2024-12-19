@@ -47,7 +47,7 @@ export default async function Home() {
 
   if (session?.user) {
     void api.post.getLatest.prefetch();
-    user.image = session.user.image?.toString();
+    
   }
 
   return (
