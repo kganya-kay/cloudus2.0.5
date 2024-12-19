@@ -5,7 +5,7 @@ export default function AllProjects() {
     const [allProjects] = api.project.getAll.useSuspenseQuery();
     
   return (
-    <ul role="list" className="divide-y divide-gray-100">
+    <ul role="list" className="divide-y divide-gray-100 flex flex-col gap-2 px-4">
       {allProjects.map((project) => (
         <li key={project.id} className="flex justify-between gap-x-6 py-5">
           <div className="flex min-w-0 gap-x-4">

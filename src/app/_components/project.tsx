@@ -18,7 +18,7 @@ export function LatestProject() {
   });
 
   return (
-    <div className="w-full max-w-xs">
+    <div className="w-full max-w-xs gap-4">
       {latestProject ? (
         <p className="truncate">Your most recent project: {latestProject.name}</p>
       ) : (
