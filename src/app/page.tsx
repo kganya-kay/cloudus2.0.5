@@ -35,7 +35,7 @@ export default async function Home() {
   const session = await auth();
   const user = {
     name: session?.user.name,
-    image: "",
+    image: "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV",
     email: session?.user.email,
   };
 
@@ -47,11 +47,10 @@ export default async function Home() {
 
   if (session?.user) {
     void api.post.getLatest.prefetch();
-    if (typeof session.user.image == "string") {
-      user.image = session.user.image;
-    }
-  }else {
-    user.image = "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
+    
+  }
+  if ( session?.user.image !== undefined) {
+    user.image = session?.user.image
   }
 
   return (
