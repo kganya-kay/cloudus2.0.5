@@ -225,16 +225,13 @@ export default async function Home() {
             </div>
           </header>
           <main className="flex min-h-screen flex-col  justify-center bg-gray-200 text-white">
-            <div className=" flex justify-around">
+            <div className="justify-around">
               <div>
                 <OpenProjectsCard/>
               </div>
-             <div className="self-center">
+             <div className="self-center pt-3">
              <Button variant="contained" href="./projects/create">Create A Project</Button>
              </div>
-             <div>
-                <OpenProjectsCard/>
-              </div>
             </div>
           </main>
         </div>

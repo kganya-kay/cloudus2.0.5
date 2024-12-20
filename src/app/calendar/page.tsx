@@ -223,7 +223,7 @@ export default async function Home() {
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               
-              <h1>Our Events and Project Timelines</h1>
+              <h1>Events and Project Timelines</h1>
               
             </div>
           </main>

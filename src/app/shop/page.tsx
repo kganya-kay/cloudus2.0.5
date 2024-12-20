@@ -16,6 +16,7 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import AllShopItems from "../_components/allShopItems";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
@@ -220,16 +221,9 @@ export default async function Home() {
               
             </div>
           </header>
-          <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
+          <main className="flex min-h-screen flex-col items-center  bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-              
-              <h1>Shop for the latest Trends and Items Online</h1>
-              <Link
-                href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-              >
-                {session ? "Sign out" : "Sign in"}
-              </Link>
+              <AllShopItems/>       
             </div>
           </main>
         </div>

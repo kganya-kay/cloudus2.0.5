@@ -1,6 +1,9 @@
 
 Hosted on https://cloudus2-0-5.vercel.app/
 
+to-do
+[] = Shop Page
+
 
 # Create T3 App
 
