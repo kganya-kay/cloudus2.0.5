@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LatestPost } from "~/app/_components/post";
 import { LatestProject } from "./_components/project";
 import AllProjects from "./_components/allProjects";
+import OpenProjectsCard from "./_components/openProjectsCard";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import Button from '@mui/material/Button';
@@ -59,7 +60,7 @@ export default async function Home() {
     <HydrateClient>
       <>
         <div className="min-h-full">
-          <Disclosure as="nav" className="bg-gray-300">
+          <Disclosure as="nav" className="bg-gray-300 sticky top-0">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
@@ -213,7 +214,7 @@ export default async function Home() {
             </DisclosurePanel>
           </Disclosure>
 
-          <header className="bg-white shadow">
+          <header className="bg-white shadow sticky top-16">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               <h1 className="text-3xl font-bold tracking-tight text-gray-700">
                 Dashboard
@@ -223,11 +224,17 @@ export default async function Home() {
               </p>
             </div>
           </header>
-          <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 justify-between">
-             <div>
+          <main className="flex min-h-screen flex-col  justify-center bg-gray-200 text-white">
+            <div className=" flex justify-around">
+              <div>
+                <OpenProjectsCard/>
+              </div>
+             <div className="self-center">
              <Button variant="contained" href="./projects/create">Create A Project</Button>
              </div>
+             <div>
+                <OpenProjectsCard/>
+              </div>
             </div>
           </main>
         </div>

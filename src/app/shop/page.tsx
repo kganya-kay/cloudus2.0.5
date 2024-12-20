@@ -57,7 +57,7 @@ export default async function Home() {
     <HydrateClient>
       <>
         <div className="min-h-full">
-          <Disclosure as="nav" className="bg-gray-300">
+          <Disclosure as="nav" className="bg-gray-300 sticky top-0">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
@@ -212,7 +212,7 @@ export default async function Home() {
             </DisclosurePanel>
           </Disclosure>
 
-          <header className="bg-white shadow">
+          <header className="bg-white shadow sticky top-16">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               <h1 className="text-3xl font-bold tracking-tight text-gray-700">
                 Shop

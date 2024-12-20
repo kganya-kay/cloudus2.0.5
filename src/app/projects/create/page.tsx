@@ -16,9 +16,10 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import Button from "@mui/material/Button";
 
 const navigation = [
-  { name: "Dashboard", href: "./", current: false },
+  { name: "Dashboard", href: "../", current: false },
   { name: "Shop", href: "/shop", current: false },
   { name: "Projects", href: "/projects", current: true },
   { name: "Team", href: "/team", current: false },
@@ -57,7 +58,7 @@ export default async function Home() {
     <HydrateClient>
       <>
         <div className="min-h-full">
-          <Disclosure as="nav" className="bg-gray-300">
+          <Disclosure as="nav" className="bg-gray-300 sticky top-0">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
@@ -212,11 +213,14 @@ export default async function Home() {
             </DisclosurePanel>
           </Disclosure>
 
-          <header className="bg-white shadow">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <header className="bg-white shadow sticky top-16">
+          <div className="mx-auto flex max-w-7xl px-4 py-6 sm:px-6 lg:px-8 justify-between">
+              <div>
               <h1 className="text-3xl font-bold tracking-tight text-gray-700">
                 Create A Project
               </h1>
+              </div>
+              <div><Button variant="contained" href="./">Go to Projects</Button></div>
               
             </div>
           </header>
