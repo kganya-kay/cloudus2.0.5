@@ -11,9 +11,9 @@ export default function AllShopItems() {
       className="flex flex-col gap-2 divide-y divide-gray-100 px-4"
     >
       {allShopItems.map((shopItem) => (
-        <div className="flex flex-col justify-between">
+        <div key={shopItem.id} className="flex flex-col justify-between">
           <div>
-            <li key={shopItem.id} className="flex justify-between gap-x-6 py-5">
+            <li  className="flex justify-between gap-x-6 py-5">
               <div className="flex min-w-0 gap-x-4">
                 <img
                   alt=""
@@ -39,17 +39,10 @@ export default function AllShopItems() {
             </li>
             <div className="flex justify-between gap-12">
               
-              <ul>
-                <li>
-                    <img key={0} src={shopItem.links[0]} alt="" />
-                </li>
-                <li>
-                    <img key={1} src={shopItem.links[1]} alt="" />
-                </li>
-                <li>
-                    <img key={2} src={shopItem.links[3]} alt="" />
-                </li>
-              </ul>
+              <div><img className="size-40" src={shopItem.links[0]} alt="" /></div>
+              <div><img className="size-40" src={shopItem.links[1]} alt="" /></div>
+              <div><img className="size-40" src={shopItem.links[2]} alt="" /></div>
+
             </div>
             <br />
             <div className="justify-self-center">
