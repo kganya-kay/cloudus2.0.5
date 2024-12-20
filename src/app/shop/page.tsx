@@ -117,7 +117,7 @@ export default async function Home() {
                       </div>
                       <MenuItems
                         transition
-                        className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+                        className="absolute right-0 z-10 mt-24 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                       >
                         {userNavigation.map((item) => (
                           <MenuItem key={item.name}>
@@ -171,13 +171,13 @@ export default async function Home() {
                 ))}
               </div>
               <div className="border-t border-gray-700 pb-3 pt-4">
-                <div className="flex items-center px-5">
+                <div className="flex items-center md:px-5">
                   <div className="shrink-0">
                     
                     <img
                       alt=""
                       src={user.image}
-                      className="size-10 rounded-full"
+                      className="sm:size-5 size-10 rounded-full"
                     />
                   </div>
                   <div className="ml-3">

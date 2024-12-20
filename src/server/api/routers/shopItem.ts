@@ -31,7 +31,7 @@ export const shopItemRouter = createTRPCRouter({
       });
     }),
 
-  getLatest: protectedProcedure.query(async ({ ctx }) => {
+  getLatest: publicProcedure.query(async ({ ctx }) => {
     const shopItem = await ctx.db.shopItem.findFirst({
       orderBy: { createdAt: "desc" },
     });
@@ -39,7 +39,7 @@ export const shopItemRouter = createTRPCRouter({
     return shopItem ?? null;
   }),
 
-  getAll: protectedProcedure.query(async ({ ctx }) => {
+  getAll: publicProcedure.query(async ({ ctx }) => {
     const allShopItems = await ctx.db.shopItem.findMany({
       orderBy: { createdAt: "desc" },
       

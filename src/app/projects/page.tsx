@@ -43,7 +43,7 @@ export default async function Home() {
   const userNavigation = [
     { name: "Your Profile", href: "#" },
     { name: "Settings", href: "#" },
-    { name: "Sign out", href:session ? "/api/auth/signout" : "/api/auth/signin" },
+    { name: session ? "Sign out" : "Sign In", href:session ? "/api/auth/signout" : "/api/auth/signin" },
   ];
 
   if (session?.user) {
@@ -69,7 +69,7 @@ export default async function Home() {
                       className="size-12 rounded-full"
                     />
                   </div>
-                  <div className="hidden md:block">
+                  <div className="hidden md:block z-50">
                     <div className="ml-10 flex items-baseline space-x-4">
                       {navigation.map((item) => (
                         <Link
@@ -101,7 +101,7 @@ export default async function Home() {
                     </button>
 
                     {/* Profile dropdown */}
-                    <Menu as="div" className="relative ml-3">
+                    <Menu as="div" className="relative ml-3 ">
                       <div>
                         
                         <MenuButton className="relative flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
@@ -116,7 +116,7 @@ export default async function Home() {
                       </div>
                       <MenuItems
                         transition
-                        className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+                        className="absolute right-0 z-50 mt-24 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                       >
                         {userNavigation.map((item) => (
                           <MenuItem key={item.name}>
@@ -150,7 +150,7 @@ export default async function Home() {
               </div>
             </div>
 
-            <DisclosurePanel className="md:hidden">
+            <DisclosurePanel className="md:hidden sticky">
               <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
                 {navigation.map((item) => (
                   <DisclosureButton
@@ -212,14 +212,14 @@ export default async function Home() {
             </DisclosurePanel>
           </Disclosure>
 
-          <header className="bg-white shadow sticky top-16">
-            <div className="mx-auto flex max-w-7xl px-4 py-6 sm:px-6 lg:px-8 justify-between">
+          <header className="bg-white shadow sticky top-16 z-0">
+            <div className="mx-auto flex max-w-7xl px-4 py-6 sm:px-6 lg:px-8 justify-between gap-2">
               <div>
               <h1 className="text-3xl font-bold tracking-tight text-gray-700">
                 Projects
               </h1>
               </div>
-              <div><Button variant="contained" href="./projects/create">Create A Project</Button></div>
+              <div><Button  variant="contained" href="./projects/create">Add Project</Button></div>
               
             </div>
           </header>
