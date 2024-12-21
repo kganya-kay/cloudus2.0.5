@@ -5,12 +5,22 @@ import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { Field, Label, Switch } from '@headlessui/react'
 
 type Params = Promise<{ orderId: string[] }>;
+let orderId = "";
 
-export default async function Example({params}:{
+
+  async function setParams({params}:{
     params: Params
 }) {
+  
+    orderId = (await params).orderId;
+    return orderId
+ 
+}
+
+
+export default function Example() {
   const [agreed, setAgreed] = useState(false)
-    const {orderId} = await params;
+    
   return (
     <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
       <div
