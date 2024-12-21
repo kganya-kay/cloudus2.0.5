@@ -1,25 +1,18 @@
-'use client'
 
-import { useState } from 'react'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { Field, Label, Switch } from '@headlessui/react'
+
 
 type Params = Promise<{ orderId: string[] }>;
 let orderId: string [] =  []  ;
 
 
-  async function setParams({params}:{
+
+export default async function Example({params}:{
     params: Params
 }) {
   
-    orderId = (await params).orderId;
-    return orderId
- 
-}
-
-
-export default function Example() {
-  const [agreed, setAgreed] = useState(false)
+  orderId =  (await params).orderId;
     
   return (
     <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
@@ -111,9 +104,8 @@ export default function Example() {
                     aria-label="Country"
                     className="col-start-1 row-start-1 w-full appearance-none rounded-md py-2 pl-3.5 pr-7 text-base text-gray-500 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                   >
-                    <option>US</option>
-                    <option>CA</option>
-                    <option>EU</option>
+                    <option>SA</option>
+                    <option>INT</option>
                   </select>
                   <ChevronDownIcon
                     aria-hidden="true"
@@ -146,17 +138,7 @@ export default function Example() {
           </div>
           <Field className="flex gap-x-4 sm:col-span-2">
             <div className="flex h-6 items-center">
-              <Switch
-                checked={agreed}
-                onChange={setAgreed}
-                className="group flex w-8 flex-none cursor-pointer rounded-full bg-gray-200 p-px ring-1 ring-inset ring-gray-900/5 transition-colors duration-200 ease-in-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 data-[checked]:bg-indigo-600"
-              >
-                <span className="sr-only">Agree to policies</span>
-                <span
-                  aria-hidden="true"
-                  className="size-4 transform rounded-full bg-white shadow-sm ring-1 ring-gray-900/5 transition duration-200 ease-in-out group-data-[checked]:translate-x-3.5"
-                />
-              </Switch>
+              
             </div>
             <Label className="text-sm/6 text-gray-600">
               By selecting this, you agree to our{' '}
