@@ -5,7 +5,7 @@ import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { Field, Label, Switch } from '@headlessui/react'
 
 type Params = Promise<{ orderId: string[] }>;
-let orderId = "";
+let orderId: string [] =  []  ;
 
 
   async function setParams({params}:{
