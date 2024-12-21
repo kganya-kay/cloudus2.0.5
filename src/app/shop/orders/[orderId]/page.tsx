@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { Field, Label, Switch } from '@headlessui/react'
 
-export default async function Example({params}:{
-    params: Promise<{ orderId: string }>
+export default  function Example({params}:{
+    params: { orderId: string }
 }) {
   const [agreed, setAgreed] = useState(false)
-    const {orderId} = await params;
+    const {orderId} = params;
   return (
     <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
       <div
