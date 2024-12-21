@@ -46,7 +46,7 @@ export default function AllShopItems() {
             </div>
             <br />
             <div className="justify-self-center">
-              <Button variant="outlined" className="py-3">
+              <Button variant="outlined" className="py-3" href={`shop/orders/${shopItem.id}`}>
                 Order Now!
               </Button>
             </div>
