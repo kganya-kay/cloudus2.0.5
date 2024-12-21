@@ -4,15 +4,14 @@ import { useState } from "react";
 
 import { api } from "~/trpc/react";
 
+export default function LatestProject() {
+  const [latestOrder] = api.order.getLatest.useSuspenseQuery();
 
-export default function LatestProject({params} : {params : {orderId: number}}) {
-  const selectedItem = api.shopItem.select.useQuery({id : parseInt(params.orderId.toString())});
-  console.log(params.orderId)
   const utils = api.useUtils();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
-  const createProject = api.project.create.useMutation({
+  const createOrder = api.project.create.useMutation({
     onSuccess: async () => {
       await utils.project.invalidate();
       setName("");
@@ -23,34 +22,33 @@ export default function LatestProject({params} : {params : {orderId: number}}) {
 
   return (
     <div className="w-full max-w-xs gap-4 justify-self-center">
-      
-      {selectedItem ? (
+      {latestOrder ? (
         <>
           <p className="truncate text-gray-700">
-            Thank You for Ordering:{" "}
-            <span className="text-red-300">{selectedItem.data?.name}</span>
+            Create Another Project Like:{" "}
+            <span className="text-red-300">{latestOrder.name}</span>
           </p>
        
           <div className="flex justify-between border-y border-y-white py-1">
             <div>
             <img
             alt=""
-            src={selectedItem.data?.image}
+            src={latestOrder.image}
             className="size-12 flex-none rounded-full bg-slate-400"
           />
             </div>
-            <div><p className="text-sm">{selectedItem.data?.description}</p></div>
+            <div><p className="text-sm">{latestOrder.description}</p></div>
           </div>
           
         </> 
       ) : (
-        <p>You have no projects yet.</p>
+        <p>You have no Orders yet.</p>
       )}
       <br />
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createProject.mutate({ name, description, type });
+          createOrder.mutate({ name, description, type });
         }}
         className="flex flex-col gap-2"
       >
@@ -90,9 +88,9 @@ export default function LatestProject({params} : {params : {orderId: number}}) {
         <button
           type="submit"
           className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700"
-          disabled={createProject.isPending}
+          disabled={createOrder.isPending}
         >
-          {createProject.isPending ? "Submitting..." : "Submit"}
+          {createOrder.isPending ? "Submitting..." : "Submit"}
         </button>
       </form>
     </div>

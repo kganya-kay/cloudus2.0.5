@@ -6,7 +6,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 
-export const shopItemRouter = createTRPCRouter({
+export const orderRouter = createTRPCRouter({
   hello: publicProcedure
     .input(z.object({ text: z.string() }))
     .query(({ input }) => {
@@ -16,15 +16,13 @@ export const shopItemRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string()}))
+    .input(z.object({ name: z.string().min(1)}))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.shopItem.create({
+      return ctx.db.order.create({
         data: {
           name: input.name,
           createdBy: { connect: { id: ctx.session.user.id } },
-          type: input.type,
           price: 50,
-          description: input.description,
           link: "Link to item not set",
           api:"api empty"
         },
@@ -32,28 +30,20 @@ export const shopItemRouter = createTRPCRouter({
     }),
 
   getLatest: publicProcedure.query(async ({ ctx }) => {
-    const shopItem = await ctx.db.shopItem.findFirst({
+    const order = await ctx.db.order.findFirst({
       orderBy: { createdAt: "desc" },
     });
 
-    return shopItem ?? null;
+    return order ?? null;
   }),
 
   getAll: publicProcedure.query(async ({ ctx }) => {
-    const allShopItems = await ctx.db.shopItem.findMany({
+    const allOrders = await ctx.db.order.findMany({
       orderBy: { createdAt: "desc" },
       
     });
 
-    return allShopItems ?? null;
-  }),
-
-  select: publicProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-    const selectedItem = await ctx.db.shopItem.findUnique({
-      where: {id: input.id}
-    });
-
-    return selectedItem ?? null;
+    return allOrders ?? null;
   }),
 
   getSecretMessage: protectedProcedure.query(() => {

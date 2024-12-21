@@ -33,6 +33,7 @@ model Project {
     link String 
     contributors User[] @relation("name")
     api String
+    Orders Order[]
 }
 
 model ShopItem {
@@ -55,6 +56,30 @@ model ShopItem {
     contributors User[] @relation("name")
     api String
     links String []
+    Orders Order[] 
+}
+model Order {
+    id  Int @default(autoincrement()) @id
+    name String 
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    createdBy User @relation(fields:[createdById],references:[id])
+    createdById String
+
+    @@index([name])
+    
+    price Int
+    description String
+    image String @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+    count Int @default(autoincrement())
+    link String 
+    api String
+    links String []
+    ShopItem ShopItem[]  
+    Project Project[]
+    User User[] @relation("name")
 }
 
 model Post {
@@ -116,6 +141,10 @@ model User {
     
 
     ShopItems ShopItem[]
+
+    Order Order[] @relation("name")
+
+    Orders Order[]
 }
 
 model VerificationToken {
