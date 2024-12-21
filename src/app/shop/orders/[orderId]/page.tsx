@@ -5,7 +5,7 @@ import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { Field, Label, Switch } from '@headlessui/react'
 
 export default async function Example({params}:{
-    params: {orderId: number}
+    params: {orderId: string}
 }) {
   const [agreed, setAgreed] = useState(false)
     const {orderId} = await params;
