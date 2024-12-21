@@ -42,7 +42,7 @@ export default async function Home() {
   const userNavigation = [
     { name: "Your Profile", href: "#" },
     { name: "Settings", href: "#" },
-    { name: "Sign out", href:session ? "/api/auth/signout" : "/api/auth/signin" },
+    { name: session ? "Sign out" :"Sign In", href:session ? "/api/auth/signout" : "/api/auth/signin" },
   ];
 
   if (session?.user) {

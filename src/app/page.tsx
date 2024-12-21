@@ -4,6 +4,7 @@ import { LatestPost } from "~/app/_components/post";
 import { LatestProject } from "./_components/project";
 import AllProjects from "./_components/allProjects";
 import OpenProjectsCard from "./_components/openProjectsCard";
+import ShopCard from "./_components/shopCard"
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import Button from '@mui/material/Button';
@@ -45,7 +46,7 @@ export default async function Home() {
   const userNavigation = [
     { name: "Your Profile", href: "#" },
     { name: "Settings", href: "#" },
-    { name: "Sign out", href:session ? "/api/auth/signout" : "/api/auth/signin" },
+    { name: session ? "Sign out" :"Sign In", href:session ? "/api/auth/signout" : "/api/auth/signin" },
   ];
 
   if (session?.user) {
@@ -227,10 +228,13 @@ export default async function Home() {
           <main className="flex min-h-screen flex-col  justify-center bg-gray-200 text-white">
             <div className="justify-around">
               <div>
+                 <ShopCard/>
+              </div>
+              <div>
                 {session && <OpenProjectsCard/>}
               </div>
-             <div className="justify-center justify-self-center pt-3">
-             { session ? <Button variant="contained" href="./projects/create">Create A Project</Button> : <Button variant="contained" href="/api/auth/signin">login</Button> }
+             <div className="justify-center justify-self-center pt-3 w-max">
+             { session ? <Button size="medium" className="justify-self-center justify-between" variant="contained" href="./projects/create">Add Project</Button> : <Button size="medium" className="justify-self-center justify-between min-w-full" variant="contained" href="/api/auth/signin">login</Button> }
              </div>
             </div>
           </main>

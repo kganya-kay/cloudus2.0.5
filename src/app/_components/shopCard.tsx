@@ -17,21 +17,21 @@ const bull = (
 
 const card = (
   <React.Fragment>
-    <CardContent className='bg-green-200 place-items-center'>
+    <CardContent className='bg-blue-400 place-items-center'>
       <div>
       <Typography variant="h2" component="div" >
-        15
+        Shop
       </Typography>
       
       </div>
       <Typography variant="h5" component="div">
-        Open Projects
+        Best Quality, You Can Trust
       </Typography>
       
       
     </CardContent>
     <CardActions>
-      <Button variant='outlined'  size="medium" href='./projects'>View Projects</Button>
+      <Button variant='outlined'  size="medium" href='./shop'>Shop</Button>
     </CardActions>
   </React.Fragment>
 );

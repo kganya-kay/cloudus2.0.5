@@ -43,7 +43,7 @@ export default async function Home() {
   const userNavigation = [
     { name: "Your Profile", href: "#" },
     { name: "Settings", href: "#" },
-    { name: "Sign out", href:session ? "/api/auth/signout" : "/api/auth/signin" },
+    { name: session ? "Sign out" :"Sign In", href:session ? "/api/auth/signout" : "/api/auth/signin" },
   ];
 
   if (session?.user) {
@@ -227,7 +227,8 @@ export default async function Home() {
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               
-              <LatestProject/>
+              {session?.user && <LatestProject/>}
+              {!session?.user && <Button variant="contained" href="/api/auth/signin">Sign In</Button>}
               
             </div>
           </main>
