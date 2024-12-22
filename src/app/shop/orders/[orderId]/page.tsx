@@ -1,29 +1,40 @@
 "use client";
 
+import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { api } from "~/trpc/react";
 
+export default function LatestProject() {
 
-export default function LatestProject({params} : {params : {orderId: number}}) {
-  const selectedItem = api.shopItem.select.useQuery({id : parseInt(params.orderId.toString())});
-  console.log(params.orderId)
+  const params = useParams();
+  let itemId = 0;
+
+  if (params.orderId) {
+      itemId = parseInt(params.orderId.toString())
+  } else {
+     itemId = 5
+  }
+  
+  
+  const selectedItem = api.shopItem.select.useQuery({id : itemId });
+  console.log(selectedItem);
   const utils = api.useUtils();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
-  const createProject = api.project.create.useMutation({
+  const createOrder = api.order.create.useMutation({
     onSuccess: async () => {
       await utils.project.invalidate();
       setName("");
       setDescription("");
       setType("");
+      alert("Order Created Successfully")
     },
   });
 
   return (
     <div className="w-full max-w-xs gap-4 justify-self-center">
-      
       {selectedItem ? (
         <>
           <p className="truncate text-gray-700">
@@ -44,55 +55,55 @@ export default function LatestProject({params} : {params : {orderId: number}}) {
           
         </> 
       ) : (
-        <p>You have no projects yet.</p>
+        <p>You have no Orders yet.</p>
       )}
       <br />
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createProject.mutate({ name, description, type });
+          createOrder.mutate({ name, description, type });
         }}
         className="flex flex-col gap-2"
       >
         <input
           type="text"
-          placeholder="Project Name"
+          placeholder="Order Reference"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
         />
         <input
           type="text"
-          placeholder="Describe your Project"
+          placeholder="Additional info"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
         />
 
         <label htmlFor="">
-          Project Type
+          Quantity
           <select
-            name="projectType"
+            name="OrderType"
             id="pt"
             onChange={(e) => setType(e.target.value)}
             className="w-full rounded-full px-4 py-2 text-gray-500"
           >
-            <option value="Print">Print</option>
-            <option value="Development">Development</option>
-            <option value="Design">Design</option>
-            <option value="Audio">Audio</option>
-            <option value="Visual">Visual</option>
-            <option value="Academic">Academic</option>
-            <option value="Craft">Craft</option>
+            <option value="Print">1</option>
+            <option value="Development">5</option>
+            <option value="Design">10</option>
+            <option value="Audio">50</option>
+            <option value="Visual">100</option>
+            <option value="Academic">1000</option>
+            <option value="Pastry">Custom</option>
           </select>
         </label>
         <h1>{type}</h1>
         <button
           type="submit"
           className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700"
-          disabled={createProject.isPending}
+          disabled={createOrder.isPending}
         >
-          {createProject.isPending ? "Submitting..." : "Submit"}
+          {createOrder.isPending ? "Submitting Order..." : "Submit"}
         </button>
       </form>
     </div>
