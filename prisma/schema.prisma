@@ -31,7 +31,7 @@ model Project {
     link         String
     contributors User[]  @relation("name")
     api          String
-    Orders       Order[]
+    
 
     @@index([name])
 }
@@ -54,10 +54,11 @@ model ShopItem {
     contributors User[]          @relation("name")
     api          String
     links        String[]
-    order        OrderShopItem[]
-    orderId     String      
+    
+    orders     Order []
+    orderId Int @default(autoincrement())
     @@index([name])
-    OrderToShopItem OrderToShopItem[]
+ 
 }
 
 model Order {
@@ -77,30 +78,15 @@ model Order {
     link        String
     api         String
     links       String[]
-    Project     Project[]
+  
     @@index([name])
+    createdFor   ShopItem   @relation(fields: [createdForId], references: [id])
+    createdForId Int
     
-    OrderShopItem OrderShopItem[]
-    OrderToShopItem OrderToShopItem[]
+    
 }
 
-model OrderShopItem {
-    id Int
-    orderId Int
-    order   Order @relation(fields: [orderId],references: [id])
-    shopItemId Int
-    shopItem ShopItem  @relation(fields: [shopItemId], references: [id])
-    
-    @@id([orderId,shopItemId])
-}
-model OrderToShopItem {
-    orderId Int
-    order   Order @relation(fields: [orderId],references: [id])
-    shopItemId Int
-    shopItem ShopItem  @relation(fields: [shopItemId], references: [id])
-    
-    @@id([orderId,shopItemId])
-}
+
 
 model Post {
     id        Int      @id @default(autoincrement())

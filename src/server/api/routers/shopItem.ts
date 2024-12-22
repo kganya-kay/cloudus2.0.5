@@ -20,6 +20,7 @@ export const shopItemRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.db.shopItem.create({
         data: {
+          orderId :2,
           name: input.name,
           createdBy: { connect: { id: ctx.session.user.id } },
           type: input.type,
@@ -34,11 +35,11 @@ export const shopItemRouter = createTRPCRouter({
   order: protectedProcedure
     .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string()}))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.shopItem.create({
+      return ctx.db.order.create({
         data: {
           name: input.name,
           createdBy: { connect: { id: ctx.session.user.id } },
-          type: input.type,
+          createdFor:{ connect: { id : 2}},
           price: 50,
           description: input.description,
           link: "Link to item not set",

@@ -27,7 +27,9 @@ export const orderRouter = createTRPCRouter({
           
           link: "Link to item not set",
           api:"api empty",
-
+          createdFor:  {connect: {
+            id : 1
+          }}        
         },
       });
     }),
