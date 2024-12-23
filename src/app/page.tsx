@@ -230,7 +230,8 @@ export default async function Home() {
               <div className="w-max justify-center justify-self-center pt-3">
                 {session ? (
                   <Button
-                    size="medium"
+
+                    style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}}
                     className="justify-between justify-self-center"
                     variant="contained"
                     href="./projects/create"

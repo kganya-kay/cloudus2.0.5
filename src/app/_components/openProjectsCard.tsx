@@ -30,8 +30,8 @@ const card = (
       
       
     </CardContent>
-    <CardActions>
-      <Button variant='outlined'  size="medium" href='./projects'>View Projects</Button>
+    <CardActions className='justify-center'>
+      <Button style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}} variant='outlined'  size="medium" href='./projects'>View Projects</Button>
     </CardActions>
   </React.Fragment>
 );
