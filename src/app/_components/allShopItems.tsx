@@ -51,7 +51,7 @@ export default function AllShopItems() {
             </div>
             
             <div className="justify-self-center py-3">
-              <Button variant="contained" className=" w-full bg-slate-400" href={`shop/orders/${shopItem.id}`}>
+              <Button style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}} variant="contained" className=" w-full bg-slate-400" href={`shop/orders/${shopItem.id}`}>
                 Order Now!
               </Button>
             </div>
