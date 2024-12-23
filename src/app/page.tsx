@@ -221,7 +221,7 @@ export default async function Home() {
                 Dashboard
               </h1>
               <p className="text-2xl text-gray-400">
-                Welcome Back {user.name}
+                Welcome {user.name}
               </p>
             </div>
           </header>

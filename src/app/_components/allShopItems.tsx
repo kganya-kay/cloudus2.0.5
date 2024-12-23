@@ -39,13 +39,11 @@ export default function AllShopItems() {
               </div>
             </li>
             <div className="flex justify-between gap-2">
-              
               <div><img className="size-12 md:size-40 rounded-lg" src={shopItem.links[0]} alt="" /></div>
               <div><img className="size-12 md:size-40 rounded-lg" src={shopItem.links[1]} alt="" /></div>
               <div><img className="size-12 md:size-40 rounded-lg" src={shopItem.links[2]} alt="" /></div>
-
             </div>
-            <br />
+            <br/>
             <div>
             <p className="mt-1 truncate text-xs/5 text-gray-500 text-center max-w-56">
                     {shopItem.description}

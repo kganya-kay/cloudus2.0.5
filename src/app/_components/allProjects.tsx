@@ -1,4 +1,5 @@
 "use client";
+import Button from "@mui/material/Button/Button";
 import { api } from "~/trpc/react";
 
 export default function AllProjects() {
@@ -6,46 +7,58 @@ export default function AllProjects() {
 
   return (
     <div>
-
-      {(allProjects.length == 0) ? "You Have No Projects Yet" : "These Are Your Projects"}
+      {allProjects.length == 0
+        ? "You Have No Projects Yet"
+        : ""}
       <ul
         role="list"
-        className="flex flex-col gap-2 divide-y divide-gray-100 px-4"
+        className="flex flex-col gap-2 divide-y divide-white px-4"
       >
         {allProjects.map((project) => (
-          <li key={project.id} className="flex justify-between gap-x-6 py-5">
-            <div className="flex min-w-0 gap-x-4">
-              <img
-                alt=""
-                src={project.image}
-                className="size-12 flex-none rounded-full bg-slate-400"
-              />
-              <div className="min-w-0 flex-auto">
-                <p className="text-sm/6 font-semibold text-gray-900">
-                  {project.name}
-                </p>
-                <p className="mt-1 truncate text-xs/5 text-gray-500">
-                  {project.description}
-                </p>
+          <li key={project.id} className="gap-x-6 py-5 bg-gray-100 p-3 rounded-md">
+            <div className="flex justify-between ">
+              <div className="flex min-w-0 gap-x-4">
+                <img
+                  alt=""
+                  src={project.image}
+                  className="size-12 flex-none rounded-full"
+                />
+                <div className="min-w-0 flex-auto">
+                  <p className="text-sm/6 font-semibold text-gray-900">
+                    {project.name}
+                  </p>
+                  <p className="text-sm/6 font-semibold rounded-se-xl bg-red-500 px-1">
+                    R {project.price}
+                  </p>
+                </div>
+              </div>
+              <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+                <time dateTime={project.updatedAt.toDateString()}>
+                  {project.updatedAt.toLocaleString()}
+                </time>
               </div>
             </div>
-            <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
-              <p className="text-sm/6 text-gray-900">{project.type}</p>
-              {project.updatedAt ? (
-                <p className="mt-1 text-xs/5 text-gray-500">
-                  Last Updated At{" "}
-                  <time dateTime={project.updatedAt.toDateString()}>
-                    {project.updatedAt.toLocaleString()}
-                  </time>
-                </p>
-              ) : (
-                <div className="mt-1 flex items-center gap-x-1.5">
-                  <div className="flex-none rounded-full bg-emerald-500/20 p-1">
-                    <div className="size-1.5 rounded-full bg-emerald-500" />
-                  </div>
-                  <p className="text-xs/5 text-gray-500">Online</p>
-                </div>
-              )}
+            <div className="flex justify-between">
+              <div>
+               <img src={project.image} className="rounded-xl" alt="" />
+              </div>
+              <div>
+               <img src={project.image} className="rounded-xl" alt="" />
+              </div>
+              <div>
+               <img src={project.image} className="rounded-xl" alt="" />
+              </div>
+              
+            </div>
+            <div className=" w-full">
+              <p className="mt-1 truncate text-xs/5 text-black text-center max-w-56 ">
+                {project.description}
+              </p>
+            </div>
+            <div className="justify-self-center py-3">
+              <Button variant="contained" className=" w-full bg-slate-400" href={`shop/orders/${project.id}`}>
+                Request a Quote!
+              </Button>
             </div>
           </li>
         ))}

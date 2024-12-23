@@ -29,6 +29,7 @@ model Project {
     image        String  @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
     count        Int     @default(autoincrement())
     link         String
+    links         String[]
     contributors User[]  @relation("name")
     api          String
     
