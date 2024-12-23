@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { api } from "~/trpc/react";
@@ -24,10 +25,10 @@ export function LatestProject() {
     <div className="w-full max-w-xs gap-4 justify-self-center">
       {latestProject ? (
         <>
-          <p className="truncate text-gray-700">
+          <h4 className="truncate text-gray-700">
             Create Another Project Like:{" "}
-            <span className="text-red-300">{latestProject.name}</span>
-          </p>
+            <span className="text-red-300"><Link href={`./${latestProject.id}`}>{latestProject.name}</Link></span>
+          </h4>
        
           <div className="flex justify-between border-y border-y-white py-1">
             <div>
@@ -42,7 +43,7 @@ export function LatestProject() {
           
         </> 
       ) : (
-        <p>You have no projects yet.</p>
+        <h2>You have no projects yet.</h2>
       )}
       <br />
       <form
