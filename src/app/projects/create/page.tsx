@@ -211,9 +211,7 @@ export default async function Home() {
                 </div>
               </div>
             </DisclosurePanel>
-          </Disclosure>
-
-          <header className="bg-white shadow sticky top-16">
+            <header className="bg-white shadow sticky top-16">
           <div className="mx-auto flex max-w-7xl px-4 py-6 sm:px-6 lg:px-8 justify-between">
               <div>
               <h1 className="text-3xl font-bold tracking-tight text-gray-700">
@@ -224,6 +222,9 @@ export default async function Home() {
               
             </div>
           </header>
+          </Disclosure>
+
+          
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               
