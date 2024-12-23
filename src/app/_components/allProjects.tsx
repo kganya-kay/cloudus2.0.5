@@ -56,7 +56,7 @@ export default function AllProjects() {
               </p>
             </div>
             <div className="justify-self-center py-3">
-              <Button style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}} variant="contained" className=" w-full bg-slate-400" href="./">
+              <Button style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}} variant="contained" className=" w-full bg-slate-400" href={`projects/${project.id}`}>
                 View Project
               </Button>
             </div>
