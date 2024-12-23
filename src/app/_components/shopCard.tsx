@@ -31,6 +31,7 @@ const card = (
       
     </CardContent>
     <CardActions>
+      
       <Button variant='outlined'  size="medium" href='./shop'>Shop</Button>
     </CardActions>
   </React.Fragment>
