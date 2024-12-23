@@ -56,8 +56,8 @@ export default function AllProjects() {
               </p>
             </div>
             <div className="justify-self-center py-3">
-              <Button variant="contained" className=" w-full bg-slate-400" href={`shop/orders/${project.id}`}>
-                Request a Quote!
+              <Button variant="contained" className=" w-full bg-slate-400" href="./">
+                View Project
               </Button>
             </div>
           </li>
