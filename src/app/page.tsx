@@ -4,13 +4,12 @@ import { LatestPost } from "~/app/_components/post";
 import { LatestProject } from "./_components/project";
 import AllProjects from "./_components/allProjects";
 import OpenProjectsCard from "./_components/openProjectsCard";
-import ShopCard from "./_components/shopCard"
+import ShopCard from "./_components/shopCard";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-import Button from '@mui/material/Button';
+import Button from "@mui/material/Button";
 
 import {
-  
   Disclosure,
   DisclosureButton,
   DisclosurePanel,
@@ -29,7 +28,6 @@ const navigation = [
   { name: "Calendar", href: "/calendar", current: false },
 ];
 
-
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
@@ -46,22 +44,24 @@ export default async function Home() {
   const userNavigation = [
     { name: "Your Profile", href: "#" },
     { name: "Settings", href: "#" },
-    { name: session ? "Sign out" :"Sign In", href:session ? "/api/auth/signout" : "/api/auth/signin" },
+    {
+      name: session ? "Sign out" : "Sign In",
+      href: session ? "/api/auth/signout" : "/api/auth/signin",
+    },
   ];
 
   if (session?.user) {
     void api.post.getLatest.prefetch();
-    
   }
-  if ( session?.user.image !== undefined && session?.user.image !== null ) {
-    user.image = session?.user.image
+  if (session?.user.image !== undefined && session?.user.image !== null) {
+    user.image = session?.user.image;
   }
 
   return (
     <HydrateClient>
       <>
         <div className="min-h-full">
-          <Disclosure as="nav" className="bg-gray-300 sticky top-0">
+          <Disclosure as="nav" className="sticky top-0 bg-gray-300">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
@@ -106,13 +106,12 @@ export default async function Home() {
                     {/* Profile dropdown */}
                     <Menu as="div" className="relative ml-3">
                       <div>
-                        
                         <MenuButton className="relative flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                           <span className="absolute -inset-1.5" />
                           <span className="sr-only">Open user menu</span>
                           <img
                             alt=""
-                            src={ user.image}
+                            src={user.image}
                             className="size-8 rounded-full"
                           />
                         </MenuButton>
@@ -175,7 +174,6 @@ export default async function Home() {
               <div className="border-t border-gray-700 pb-3 pt-4">
                 <div className="flex items-center px-5">
                   <div className="shrink-0">
-                    
                     <img
                       alt=""
                       src={user.image}
@@ -213,29 +211,43 @@ export default async function Home() {
                 </div>
               </div>
             </DisclosurePanel>
+            <header className="sticky top-16 bg-white shadow">
+              <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <h1 className="text-3xl font-bold tracking-tight text-gray-700">
+                  Dashboard
+                </h1>
+                <p className="text-2xl text-gray-400">Welcome {user.name}</p>
+              </div>
+            </header>
           </Disclosure>
 
-          <header className="bg-white shadow sticky top-16">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-700">
-                Dashboard
-              </h1>
-              <p className="text-2xl text-gray-400">
-                Welcome {user.name}
-              </p>
-            </div>
-          </header>
-          <main className="flex min-h-screen flex-col  justify-center bg-gray-200 text-white">
+          <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="justify-around">
               <div>
-                 <ShopCard/>
+                <ShopCard />
               </div>
-              <div>
-                {session && <OpenProjectsCard/>}
+              <div>{session && <OpenProjectsCard />}</div>
+              <div className="w-max justify-center justify-self-center pt-3">
+                {session ? (
+                  <Button
+                    size="medium"
+                    className="justify-between justify-self-center"
+                    variant="contained"
+                    href="./projects/create"
+                  >
+                    Add Project
+                  </Button>
+                ) : (
+                  <Button
+                    size="medium"
+                    className="min-w-full justify-between justify-self-center"
+                    variant="contained"
+                    href="/api/auth/signin"
+                  >
+                    login
+                  </Button>
+                )}
               </div>
-             <div className="justify-center justify-self-center pt-3 w-max">
-             { session ? <Button size="medium" className="justify-self-center justify-between" variant="contained" href="./projects/create">Add Project</Button> : <Button size="medium" className="justify-self-center justify-between min-w-full" variant="contained" href="/api/auth/signin">login</Button> }
-             </div>
             </div>
           </main>
         </div>

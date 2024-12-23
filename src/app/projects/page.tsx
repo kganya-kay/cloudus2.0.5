@@ -209,25 +209,25 @@ export default async function Home() {
                 </div>
               </div>
             </DisclosurePanel>
+            <header className="sticky top-16 z-0 bg-white shadow">
+              <div className="mx-auto flex max-w-7xl justify-between gap-2 px-4 py-6 sm:px-6 lg:px-8">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight text-gray-700">
+                    Projects
+                  </h1>
+                </div>
+                <div>
+                  <Button
+                    variant="contained"
+                    href={session ? "./projects/create" : "./api/auth/signin"}
+                  >
+                    {session ? "Add Project" : "Sign In"}
+                  </Button>
+                </div>
+              </div>
+            </header>
           </Disclosure>
 
-          <header className="sticky top-16 z-0 bg-white shadow ">
-            <div className="mx-auto flex max-w-7xl justify-between gap-2 px-4 py-6 sm:px-6 lg:px-8">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-700">
-                  Projects
-                </h1>
-              </div>
-              <div>
-                <Button
-                  variant="contained"
-                  href={session ? "./projects/create" : "./api/auth/signin"}
-                >
-                  {session ? "Add Project" :"Sign In"}
-                </Button>
-              </div>
-            </div>
-          </header>
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               {session?.user && <AllProjects />}
@@ -236,7 +236,15 @@ export default async function Home() {
                   Sign In To View Projects
                 </h1>
               )}
-              {!session?.user && <Button className=" justify-self-center" variant="contained" href="/api/auth/signin">Sign In</Button>}
+              {!session?.user && (
+                <Button
+                  className="justify-self-center"
+                  variant="contained"
+                  href="/api/auth/signin"
+                >
+                  Sign In
+                </Button>
+              )}
             </div>
           </main>
         </div>
