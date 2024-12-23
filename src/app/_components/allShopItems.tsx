@@ -47,7 +47,7 @@ export default function AllShopItems() {
             </div>
             <br />
             <div>
-            <p className="mt-1 truncate text-xs/5 text-gray-500 text-center max-w-80">
+            <p className="mt-1 truncate text-xs/5 text-gray-500 text-center max-w-56">
                     {shopItem.description}
                   </p>
             </div>
