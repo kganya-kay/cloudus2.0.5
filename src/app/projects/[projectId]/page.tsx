@@ -46,7 +46,7 @@ export default function LatestProject() {
     <div className="w-full gap-4 justify-self-center bg-gray-100 p-3">
       {selectedProject ? (
         <>
-          <div className="flex justify-between border-y border-y-white py-2">
+          <div className="flex justify-between border-b border-y-white py-2">
             <div>
               <img
                 alt=""
@@ -55,13 +55,13 @@ export default function LatestProject() {
               />
             </div>
             <div>
-              <p className="truncate text-gray-900">
+              <p className="truncate text-gray-900 text-sm">
                 Project Name:
                 <span className="text-red-300">
                   {selectedProject.data?.name}
                 </span>
               </p>
-              <p className="truncate text-gray-700">
+              <p className="truncate text-gray-700 text-sm">
                 Created By:
                 <span className="text-red-300">
                   {selectedProjectUser.data?.name}
@@ -74,41 +74,40 @@ export default function LatestProject() {
         <p>No Selected Project</p>
       )}
 
-      <div className="flex justify-between">
+      <div className="flex justify-between pt-2">
         <div>
-          <p className="text-blue-500">{selectedProjectUser.data?.email}</p>
-          <p>
+          <p className="text-blue-500 text-xs">{selectedProjectUser.data?.email}</p>
+          <p className="text-xs pb-2">
             Project Type:{" "}
             <span className="text-red-300">{selectedProject.data?.type}</span>
           </p>
-          <br />
-          <a href={selectedProject.data?.link}>
-            {" "}
-            Project Link:{" "}
-            <span className="rounded-md bg-gray-400 px-3 py-1">
+          
+          <a href={selectedProject.data?.link} className="text-xs text-white">
+            
+            <span className="rounded-md bg-gray-400 px-3 py-1 ">
               {selectedProject.data?.link}
             </span>
           </a>
         </div>
         <div>
-          <p>
+          <p className="text-xs">
             Created On:{" "}
             <span className="text-blue-400">
-              {selectedProject.data?.createdAt.toUTCString()}
+              {selectedProject.data?.createdAt.toDateString()}
             </span>
           </p>
-          <p className="rounded-e-lg bg-red-400 px-3 text-white">
+          <p className="rounded-e-lg bg-red-400 px-3 text-white text-xs">
             Project Budget: <span>R {selectedProject.data?.price}</span>
           </p>
         </div>
       </div>
 
       <br />
-      <div className="flex-col">
-        <p>Project Media</p>
-        <div className="bg-gray-50">
+      <div className="flex-col border-t border-y-gray-200">
+        <p className="pt-2 text-sm text-blue-400">Project Media</p>
+        <div className="bg-gray-50 rounded-lg">
           {selectedProject.data?.links ? (
-            <p className="text-center">Project Has No Media</p>
+            <p className="text-center text-xs  ">Project Has No Media</p>
           ) : (
             selectedProject.data?.links.map((link) => (
               <div key={link.toString()}>
@@ -120,9 +119,9 @@ export default function LatestProject() {
       </div>
       <br />
       <div>
-        <p>Project Description</p>
-        <div className="bg-gray-50">
-          <p className="text-center text-sm">
+        <p className="text-sm text-blue-400">Project Description</p>
+        <div className="bg-gray-50 rounded-md">
+          <p className="text-center text-xs ">
             {selectedProject.data?.description}
           </p>
         </div>
@@ -130,9 +129,9 @@ export default function LatestProject() {
       <br />
 
       <div>
-        <p>Contributors To: {selectedProject.data?.name}</p>
+        <p className="text-sm text-blue-400">Contributors To: {selectedProject.data?.name}</p>
         <div className="bg-gray-50">
-          <p className="rounded-lg bg-red-400 text-center">
+          <p className="rounded-lg bg-red-400 text-center text-xs">
             {selectedProject.data?.api}
           </p>
         </div>
@@ -189,6 +188,7 @@ export default function LatestProject() {
         >
           {createOrder.isPending ? "Submitting Order..." : "Submit"}
         </button>
+        <br />
       </form>
     </div>
   );
