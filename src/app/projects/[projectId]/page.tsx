@@ -214,7 +214,7 @@ export default function LatestProject() {
           type="tel"
           placeholder="Your Whatsapp Number"
           value={contactNumber}
-          onChange={(e) => setContactNumber(e.target.value)}
+          onChange={(e) => setContactNumber(parseInt(e.target.value))}
           className="w-full rounded-full px-4 py-2 text-black"
         />
         <input
