@@ -36,6 +36,7 @@ export default function LatestProject() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
   const [price, setPrice] = useState(0);
+  const [contactNumber, setContactNumber] = useState(0);
   const [link, setLink] = useState("");
   const createProject = api.project.create.useMutation({
     onSuccess: async () => {
@@ -197,6 +198,7 @@ export default function LatestProject() {
             type,
             link,
             price,
+            contactNumber
           });
         }}
         className="flex flex-col gap-2 bg-blue-100 px-2"
@@ -206,6 +208,13 @@ export default function LatestProject() {
           placeholder="Project Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-full px-4 py-2 text-black"
+        />
+        <input
+          type="tel"
+          placeholder="Your Whatsapp Number"
+          value={contactNumber}
+          onChange={(e) => setContactNumber(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
         />
         <input
