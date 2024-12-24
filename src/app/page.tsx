@@ -225,18 +225,18 @@ export default async function Home() {
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
               <div>{session && <AllPublicProjects />}</div>
-
-              <div className="sticky bottom-0  bg-slate-400  border-y-2 border-white">
-                <div className="  flex justify-center justify-self-center bg-green-300  rounded-full border-2 py-2 border-white">
+                      <br />
+             
+                <div className="  flex justify-center justify-self-center bg-green-300  rounded-full border-1  border-white">
                   {session ? (
                     <Button
                       style={{
-                        minWidth: "60px",
-                        minHeight: "48px",
+                        minWidth: "50px",
+                        minHeight: "30px",
                         position: "inherit",
                         
                       }}
-                      className="justify-between justify-self-center align-top "
+                      className="justify-between justify-self-center py-2 align-top "
                       
                       href="./projects/create"
                     >
@@ -253,7 +253,7 @@ export default async function Home() {
                     </Button>
                   )}
                 </div>
-              </div>
+              
 
               <br />
             </div>

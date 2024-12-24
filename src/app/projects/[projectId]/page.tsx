@@ -102,7 +102,7 @@ export default function LatestProject() {
           </p>
           {selectedProject.data?.link && (
             <Link
-              className="rounded-lg bg-slate-400 px-3 text-sm text-white"
+              className="rounded-lg bg-slate-400 px-3 text-xs text-white"
               href=""
             >
               Project Link: {selectedProject.data?.link}
