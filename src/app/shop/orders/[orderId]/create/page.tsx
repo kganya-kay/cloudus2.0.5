@@ -11,7 +11,7 @@ export default function LatestProject() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
-  const createOrder = api.project.create.useMutation({
+  const createOrder = api.order.create.useMutation({
     onSuccess: async () => {
       await utils.project.invalidate();
       setName("");
@@ -25,7 +25,7 @@ export default function LatestProject() {
       {latestOrder ? (
         <>
           <p className="truncate text-gray-700">
-            Create Another Project Like:{" "}
+            Create Another Order Like:{" "}
             <span className="text-red-300">{latestOrder.name}</span>
           </p>
        
