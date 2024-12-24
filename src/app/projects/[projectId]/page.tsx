@@ -111,7 +111,7 @@ export default function LatestProject() {
             <p className="text-center">Project Has No Media</p>
           ) : (
             selectedProject.data?.links.map((link) => (
-              <div>
+              <div key={link.toString()}>
                 <img src={link} className="size-16" alt="" />
               </div>
             ))
@@ -151,14 +151,14 @@ export default function LatestProject() {
       >
         <input
           type="text"
-          placeholder="Name"
+          placeholder="Project Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
         />
         <input
           type="text"
-          placeholder="Additional info"
+          placeholder="Project Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
@@ -184,7 +184,7 @@ export default function LatestProject() {
         <h1>{type}</h1>
         <button
           type="submit"
-          className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700"
+          className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700 hover:text-white"
           disabled={createOrder.isPending}
         >
           {createOrder.isPending ? "Submitting Order..." : "Submit"}
