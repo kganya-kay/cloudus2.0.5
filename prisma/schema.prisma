@@ -21,20 +21,48 @@ model Project {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    createdBy    User    @relation(fields: [createdById], references: [id])
+    createdBy    User     @relation(fields: [createdById], references: [id])
     createdById  String
     type         String
-    price        Int
+    price        Int      @default(000)
     description  String
-    image        String  @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-    count        Int     @default(autoincrement())
+    image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+    count        Int      @default(autoincrement())
     link         String
-    links         String[]
-    contributors User[]  @relation("name")
+    links        String[]
+    contributors User[]   @relation("name")
     api          String
+    openSource   Boolean  @default(true)
+    privacy      Boolean  @default(false)
+    completed    Boolean  @default(false)
+    status       String   @default("Initialized")
+    likes        Like[]   @relation("name")
+    upvotes      Upvote[] @relation("name")
     
-
+    comments    Comment [] @relation("name")
+    cost            Int @default(0)
+    rating      Int @default(5)
     @@index([name])
+}
+model Comment {
+    id      Int       @id @default(autoincrement())
+    Project Project[] @relation("name")
+    shopItem ShopItem[] @relation("name")
+    createdById String
+}
+
+model Upvote {
+    id      Int       @id @default(autoincrement())
+    Project Project[] @relation("name")
+    shopItem ShopItem[] @relation("name")
+    createdById String
+}
+
+model Like {
+    id      Int       @id @default(autoincrement())
+    Project Project[] @relation("name")
+    shopItem ShopItem [] @relation("name")
+    createdById String
 }
 
 model ShopItem {
@@ -44,22 +72,26 @@ model ShopItem {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    createdBy    User            @relation(fields: [createdById], references: [id])
+    createdBy    User     @relation(fields: [createdById], references: [id])
     createdById  String
     type         String
     price        Int
     description  String
-    image        String          @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-    count        Int             @default(autoincrement())
+    image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+    count        Int      @default(autoincrement())
     link         String
-    contributors User[]          @relation("name")
+    contributors User[]   @relation("name")
     api          String
     links        String[]
-    
-    orders     Order []
-    orderId Int @default(autoincrement())
+
+    orders  Order[]
+    orderId Int     @default(autoincrement())
+
     @@index([name])
- 
+    Order Order[] @relation("name")
+    Comment Comment[] @relation("name")
+    Upvote Upvote[] @relation("name")
+    Like Like[] @relation("name")
 }
 
 model Order {
@@ -72,22 +104,18 @@ model Order {
     createdBy   User   @relation(fields: [createdById], references: [id])
     createdById String
 
-    price       Int
-    description String
-    image       String    @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-    count       Int       @default(autoincrement())
-    link        String
-    api         String
-    links       String[]
-  
-    @@index([name])
-    createdFor   ShopItem   @relation(fields: [createdForId], references: [id])
+    price        Int
+    description  String
+    image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+    count        Int      @default(autoincrement())
+    link         String
+    api          String
+    links        String[]
+    createdFor   ShopItem @relation(fields: [createdForId], references: [id])
     createdForId Int
-    
-    
+    shopItems ShopItem [] @relation("name")
+    @@index([name])
 }
-
-
 
 model Post {
     id        Int      @id @default(autoincrement())
@@ -136,10 +164,10 @@ model User {
     emailVerified DateTime?
     image         String?
 
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
-    
+    accounts Account[]
+    sessions Session[]
+    posts    Post[]
+
     projects Project[]
 
     Project Project[] @relation("name")
@@ -147,7 +175,6 @@ model User {
     ShopItem ShopItem[] @relation("name")
 
     ShopItems ShopItem[]
-
 
     Orders Order[]
 }
