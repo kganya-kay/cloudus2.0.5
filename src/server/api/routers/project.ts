@@ -16,7 +16,7 @@ export const projectRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string(), price: z.number(), link: z.string()}))
+    .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string(), price: z.number(), link: z.string(), contactNumber: z.number()}))
     .mutation(async ({ ctx, input }) => {
       return ctx.db.project.create({
         data: {
@@ -26,7 +26,8 @@ export const projectRouter = createTRPCRouter({
           price: input.price,
           description: input.description,
           link: input.link,
-          api:"api empty"
+          api:"api empty",
+          contactNumber: input.contactNumber
         },
       });
     }),

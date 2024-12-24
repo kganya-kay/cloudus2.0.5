@@ -38,7 +38,7 @@ model Project {
     status       String   @default("Initialized")
     likes        Like[]   @relation("name")
     upvotes      Upvote[] @relation("name")
-    
+    contactNumber Int @default(00000000000)
     comments    Comment [] @relation("name")
     cost            Int @default(0)
     rating      Int @default(5)
