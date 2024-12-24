@@ -19,6 +19,7 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import AllPublicProjects from "./_components/allPublicProjects";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: true },
@@ -226,8 +227,11 @@ export default async function Home() {
               <div>
                 <ShopCard />
               </div>
+              
+              <br />
               <div>{session && <OpenProjectsCard />}</div>
-              <div className="w-max justify-center justify-self-center pt-3">
+              <div>{session && <AllPublicProjects />}</div>
+              <div className="flex justify-center justify-self-center pt-3">
                 {session ? (
                   <Button
 
@@ -247,8 +251,10 @@ export default async function Home() {
                   >
                     login
                   </Button>
+                  
                 )}
               </div>
+              <br />
             </div>
           </main>
         </div>

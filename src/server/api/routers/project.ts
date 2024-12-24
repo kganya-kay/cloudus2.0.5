@@ -16,16 +16,16 @@ export const projectRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string()}))
+    .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string(), price: z.number(), link: z.string()}))
     .mutation(async ({ ctx, input }) => {
       return ctx.db.project.create({
         data: {
           name: input.name,
           createdBy: { connect: { id: ctx.session.user.id } },
           type: input.type,
-          price: 50,
+          price: input.price,
           description: input.description,
-          link: "Link to Project not set",
+          link: input.link,
           api:"api empty"
         },
       });
@@ -52,6 +52,15 @@ export const projectRouter = createTRPCRouter({
     const projects = await ctx.db.project.findMany({
       orderBy: { createdAt: "desc" },
       where: { createdBy: { id: ctx.session.user.id } },
+    });
+
+    return projects ?? null;
+  }),
+
+  getOpenSource: publicProcedure.query(async ({ ctx }) => {
+    const projects = await ctx.db.project.findMany({
+      orderBy: { createdAt: "desc" },
+      where: { openSource: true }
     });
 
     return projects ?? null;

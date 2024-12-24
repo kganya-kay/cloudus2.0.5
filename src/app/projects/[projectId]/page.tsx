@@ -1,5 +1,8 @@
 "use client";
 
+import Button from "@mui/material/Button";
+import Link from "next/link";
+
 import { useParams } from "next/navigation";
 import path from "path";
 import { useState } from "react";
@@ -32,13 +35,17 @@ export default function LatestProject() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
-  const createOrder = api.order.create.useMutation({
+  const [price, setPrice] = useState(0);
+  const [link, setLink] = useState("");
+  const createProject = api.project.create.useMutation({
     onSuccess: async () => {
       await utils.project.invalidate();
       setName("");
       setDescription("");
       setType("");
-      alert("Order Created Successfully");
+      setLink("");
+      setPrice(0);
+      alert("Project Created Successfully: View Projects");
     },
   });
 
@@ -46,6 +53,16 @@ export default function LatestProject() {
     <div className="w-full gap-4 justify-self-center bg-gray-100 p-3">
       {selectedProject ? (
         <>
+          <div className="flex justify-center">
+            <Button
+              href="./"
+              type="submit"
+              variant="outlined"
+              className="rounded-full px-10 py-3 font-semibold transition hover:bg-gray-700 hover:text-white"
+            >
+              Exit Project Mode
+            </Button>
+          </div>
           <div className="flex justify-between border-b border-y-white py-2">
             <div>
               <img
@@ -55,13 +72,13 @@ export default function LatestProject() {
               />
             </div>
             <div>
-              <p className="truncate text-gray-900 text-sm">
+              <p className="truncate text-sm text-gray-900">
                 Project Name:
                 <span className="text-red-300">
                   {selectedProject.data?.name}
                 </span>
               </p>
-              <p className="truncate text-gray-700 text-sm">
+              <p className="truncate text-sm text-gray-700">
                 Created By:
                 <span className="text-red-300">
                   {selectedProjectUser.data?.name}
@@ -76,18 +93,21 @@ export default function LatestProject() {
 
       <div className="flex justify-between pt-2">
         <div>
-          <p className="text-blue-500 text-xs">{selectedProjectUser.data?.email}</p>
-          <p className="text-xs pb-2">
+          <p className="text-xs text-blue-500">
+            {selectedProjectUser.data?.email}
+          </p>
+          <p className="pb-2 text-xs">
             Project Type:{" "}
             <span className="text-red-300">{selectedProject.data?.type}</span>
           </p>
-          
-          <a href={selectedProject.data?.link} className="text-xs text-white">
-            
-            <span className="rounded-md bg-gray-400 px-3 py-1 ">
-              {selectedProject.data?.link}
-            </span>
-          </a>
+          {selectedProject.data?.link && (
+            <Link
+              className="rounded-lg bg-slate-400 px-3 text-sm text-white"
+              href=""
+            >
+              Project Link: {selectedProject.data?.link}
+            </Link>
+          )}
         </div>
         <div>
           <p className="text-xs">
@@ -96,18 +116,32 @@ export default function LatestProject() {
               {selectedProject.data?.createdAt.toDateString()}
             </span>
           </p>
-          <p className="rounded-e-lg bg-red-400 px-3 text-white text-xs">
+          <p className="rounded-e-lg bg-red-400 px-3 text-xs text-white">
             Project Budget: <span>R {selectedProject.data?.price}</span>
           </p>
+        </div>
+      </div>
+      <br />
+      <div className="flex justify-between">
+        <div className="w-full bg-orange-300 text-center text-sm">
+          Status: {selectedProject.data?.status}
+        </div>
+        <div className="w-full bg-green-300 text-center text-sm">
+          {selectedProject.data?.openSource
+            ? "OpenSource: Yes"
+            : "OpenSource: No"}
+        </div>
+        <div className="w-full bg-green-600 text-center text-sm">
+          {selectedProject.data?.completed ? "Completed" : "Active"}
         </div>
       </div>
 
       <br />
       <div className="flex-col border-t border-y-gray-200">
         <p className="pt-2 text-sm text-blue-400">Project Media</p>
-        <div className="bg-gray-50 rounded-lg">
+        <div className="rounded-lg bg-gray-50">
           {selectedProject.data?.links ? (
-            <p className="text-center text-xs  ">Project Has No Media</p>
+            <p className="text-center text-xs">Project Has No Media</p>
           ) : (
             selectedProject.data?.links.map((link) => (
               <div key={link.toString()}>
@@ -120,8 +154,8 @@ export default function LatestProject() {
       <br />
       <div>
         <p className="text-sm text-blue-400">Project Description</p>
-        <div className="bg-gray-50 rounded-md">
-          <p className="text-center text-xs ">
+        <div className="rounded-md bg-gray-50">
+          <p className="text-center text-xs">
             {selectedProject.data?.description}
           </p>
         </div>
@@ -129,7 +163,9 @@ export default function LatestProject() {
       <br />
 
       <div>
-        <p className="text-sm text-blue-400">Contributors To: {selectedProject.data?.name}</p>
+        <p className="text-sm text-blue-400">
+          Contributors To: {selectedProject.data?.name}
+        </p>
         <div className="bg-gray-50">
           <p className="rounded-lg bg-red-400 text-center text-xs">
             {selectedProject.data?.api}
@@ -137,14 +173,31 @@ export default function LatestProject() {
         </div>
       </div>
       <br />
+      <div className="flex justify-between">
+        <div className="w-full bg-orange-300 text-center text-sm">
+          Cost: {selectedProject.data?.cost}
+        </div>
+        <div className="w-full bg-green-300 text-center text-sm">
+          Available:{" "}
+          {selectedProject.data &&
+            selectedProject.data?.price - selectedProject.data?.cost}
+        </div>
+        <div className="w-full bg-red-300 text-center text-sm">Bids</div>
+      </div>
       <br />
-      <div className="bg-blue-100 rounded-t-lg p-2">
+      <div className="rounded-t-lg bg-blue-100 p-2">
         <p className="text-center">Want A Similar Project For Your Business?</p>
       </div>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createOrder.mutate({ name, description, type });
+          createProject.mutate({
+            name,
+            description,
+            type,
+            link,
+            price,
+          });
         }}
         className="flex flex-col gap-2 bg-blue-100 px-2"
       >
@@ -184,10 +237,20 @@ export default function LatestProject() {
         <button
           type="submit"
           className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700 hover:text-white"
-          disabled={createOrder.isPending}
+          disabled={createProject.isPending}
         >
-          {createOrder.isPending ? "Submitting Order..." : "Submit"}
+          {createProject.isPending ? "Initializing Project..." : "Submit"}
         </button>
+        <br />
+
+        <Button
+          href="./"
+          type="submit"
+          variant="outlined"
+          className="rounded-full px-10 py-3 font-semibold transition hover:bg-gray-700 hover:text-white"
+        >
+          View Your Projects
+        </Button>
         <br />
       </form>
     </div>

@@ -31,7 +31,7 @@ const card = (
       
     </CardContent>
     <CardActions className='justify-center'>
-      <Button style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}} variant='outlined'  size="medium" href='./projects'>View Projects</Button>
+      <Button style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}} variant='outlined'  size="medium" href='./projects'>View Your Projects</Button>
     </CardActions>
   </React.Fragment>
 );
