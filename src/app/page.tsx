@@ -224,7 +224,7 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
-              <div>{session && <AllPublicProjects />}</div>
+              <div>{<AllPublicProjects />}</div>
                       <br />
              
                 <div className="  flex justify-center justify-self-center bg-green-300  rounded-full border-1  border-white">
@@ -246,7 +246,7 @@ export default async function Home() {
                     <Button
                       size="medium"
                       className="min-w-full justify-between justify-self-center"
-                      variant="contained"
+                      
                       href="/api/auth/signin"
                     >
                       login

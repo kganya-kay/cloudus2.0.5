@@ -219,7 +219,101 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-              <h1>Get To Know The Team</h1>
+              <h1 className="text-orange-500">Get To Know The Team</h1>
+            </div>
+
+            <div className="overflow-hidden bg-white py-24 sm:py-32">
+              <div className="mx-auto max-w-7xl px-6 lg:px-8">
+                <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
+                  <div className="lg:pr-8 lg:pt-4">
+                    <div className="lg:max-w-lg">
+                    <p className="mt-2 text-pretty text-4xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+                        Doctor Kganya Kekana
+                      </p>
+                      <h2 className="text-base/7 font-semibold text-indigo-600">
+                        Developer
+                      </h2>
+                      
+                      <p className="mt-6 text-lg/8 text-gray-600">
+                      I’m Doctor Kganya Kekana, a Full Stack Developer with over four years of experience in web development, digital marketing, and design. Skilled in JavaScript, TypeScript, and the MERN and T3 stacks, I create responsive and engaging web applications. As a Microsoft Azure-certified professional, I integrate secure, scalable cloud solutions. My experience spans UX/UI design, React, Next.js, and Prisma. I stay updated on the latest technologies to deliver innovative and impactful solutions.
+                      </p>
+                      <dl className="mt-10 max-w-xl space-y-8 text-base/7 text-gray-600 lg:max-w-none">
+                        <div className=" pl-9">
+                          <dt className="inline font-semibold text-gray-900">
+                            <svg
+                              className=" left-1 top-1 size-5 text-indigo-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                              data-slot="icon"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M5.5 17a4.5 4.5 0 0 1-1.44-8.765 4.5 4.5 0 0 1 8.302-3.046 3.5 3.5 0 0 1 4.504 4.272A4 4 0 0 1 15 17H5.5Zm3.75-2.75a.75.75 0 0 0 1.5 0V9.66l1.95 2.1a.75.75 0 1 0 1.1-1.02l-3.25-3.5a.75.75 0 0 0-1.1 0l-3.25 3.5a.75.75 0 1 0 1.1 1.02l1.95-2.1v4.59Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Push to deploy.
+                          </dt>
+                          <dd className="inline">
+                          With expertise in Microsoft Azure, Vercel, and GitHub, I integrate scalable cloud solutions and efficient deployment pipelines. My skills in React, Next.js, and UX/UI design enable me to create innovative, user-focused digital experiences.
+                          </dd>
+                        </div>
+                        <div className=" pl-9">
+                          <dt className="inline font-semibold text-gray-900">
+                            <svg
+                              className=" left-1 top-1 size-5 text-indigo-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                              data-slot="icon"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Authentification and Security.
+                          </dt>
+                          <dd className="inline">
+                            Sign In Users With Discord Provider on your Web Applications and Next Auth To Protect and Secure your Data.
+                          </dd>
+                        </div>
+                        <div className=" pl-9">
+                          <dt className="inline font-semibold text-gray-900">
+                            <svg
+                              className=" left-1 top-1 size-5 text-indigo-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                              data-slot="icon"
+                            >
+                              <path d="M4.632 3.533A2 2 0 0 1 6.577 2h6.846a2 2 0 0 1 1.945 1.533l1.976 8.234A3.489 3.489 0 0 0 16 11.5H4c-.476 0-.93.095-1.344.267l1.976-8.234Z" />
+                              <path
+                                fillRule="evenodd"
+                                d="M4 13a2 2 0 1 0 0 4h12a2 2 0 1 0 0-4H4Zm11.24 2a.75.75 0 0 1 .75-.75H16a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75h-.01a.75.75 0 0 1-.75-.75V15Zm-2.25-.75a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75H13a.75.75 0 0 0 .75-.75V15a.75.75 0 0 0-.75-.75h-.01Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Databases.
+                          </dt>
+                          <dd className="inline">
+                            We Use Vercel Postgres, MongoDB and Microsoft Azure CosmosDB to offer custom solutions to your Custom Needs. 
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </div>
+                  <img
+                    src="https://utfs.io/f/zFJP5UraSTwKTLYJoDBehcnS59R2JXpW3jGUOy7wI4kfgiZE"
+                    alt="Product screenshot"
+                    className="w-[20rem] max-w-96 rounded-xl shadow-xl ring-1 ring-gray-400/10 sm:w-[57rem] md:-ml-4 lg:-ml-0 justify-self-center"
+                    width="2432"
+                    height="1442"
+                  />
+                </div>
+              </div>
             </div>
           </main>
         </div>
