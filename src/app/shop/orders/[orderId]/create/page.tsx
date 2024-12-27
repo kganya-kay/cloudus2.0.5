@@ -48,7 +48,12 @@ export default function LatestProject() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createOrder.mutate({ name, description, type });
+          createOrder.mutate({
+            name, description, type,
+            price: 0,
+            contactNumber: 0,
+            itemId: 0
+          });
         }}
         className="flex flex-col gap-2"
       >
