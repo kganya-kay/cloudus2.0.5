@@ -6,12 +6,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import path from "path";
 import { useState } from "react";
-import { auth } from "~/server/auth";
+
 
 import { api } from "~/trpc/react";
 
-
-const session = await auth();
 
 export default function LatestProject() {
   const params = useParams();
@@ -52,6 +50,9 @@ export default function LatestProject() {
       setPrice(0);
       alert("Project Created Successfully: View Projects");
     },
+    onError: async () => {
+      alert("Error: Please Make sure you are signed In to Create Project")
+    }
   });
 
   return (
@@ -196,10 +197,6 @@ export default function LatestProject() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if(!session){
-            console.error("Sign In to Create Project")
-            
-          };
           createProject.mutate({
             name,
             description,
