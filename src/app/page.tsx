@@ -224,36 +224,35 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
-              <div className="max-w-screen-lg justify-self-center">{<AllPublicProjects />}</div>
-                      <br />
-             
-                <div className="  flex justify-center justify-self-center bg-green-300  rounded-full border-1  border-white">
-                  {session ? (
-                    <Button
-                      style={{
-                        minWidth: "50px",
-                        minHeight: "30px",
-                        position: "inherit",
-                        
-                      }}
-                      className="justify-between justify-self-center py-2 align-top "
-                      
-                      href="./projects/create"
-                    >
-                      +
-                    </Button>
-                  ) : (
-                    <Button
-                      size="medium"
-                      className="min-w-full justify-between justify-self-center"
-                      
-                      href="/api/auth/signin"
-                    >
-                      login
-                    </Button>
-                  )}
-                </div>
-              
+              <br />
+              <div className="max-w-screen-lg justify-self-center">
+                {<AllPublicProjects />}
+              </div>
+              <br />
+
+              <div className="border-1 flex justify-center justify-self-center rounded-full border-white bg-green-300">
+                {session ? (
+                  <Button
+                    style={{
+                      minWidth: "50px",
+                      minHeight: "30px",
+                      position: "inherit",
+                    }}
+                    className="justify-between justify-self-center py-2 align-top"
+                    href="./projects/create"
+                  >
+                    +
+                  </Button>
+                ) : (
+                  <Button
+                    size="medium"
+                    className="min-w-full justify-between justify-self-center"
+                    href="/api/auth/signin"
+                  >
+                    login
+                  </Button>
+                )}
+              </div>
 
               <br />
             </div>
