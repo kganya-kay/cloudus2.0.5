@@ -43,7 +43,7 @@ export default function LatestProject() {
   });
 
   return (
-    <div className="w-full max-w-xl gap-4 justify-self-center justify-center ">
+    <div className="w-full max-w-xl gap-4 justify-self-center justify-center p-2">
       {selectedItem ? (
         <>
         <div className="bg-gray-500 rounded-t-lg">
