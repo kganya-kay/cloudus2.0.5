@@ -38,13 +38,13 @@ export default function AllShopItems() {
                 </p>
               </div>
             </li>
-            <div className="flex justify-between gap-2">
-              <div><img className="size-12 md:size-40 rounded-lg" src={shopItem.links[0]} alt="" /></div>
-              <div><img className="size-12 md:size-40 rounded-lg" src={shopItem.links[1]} alt="" /></div>
-              <div><img className="size-12 md:size-40 rounded-lg" src={shopItem.links[2]} alt="" /></div>
+            <div className="flex justify-between">
+              <div><img className="size-40 md:size-60 rounded-lg p-1" src={shopItem.links[0]} alt="" /></div>
+              <div><img className="size-40 md:size-60 rounded-lg p-1" src={shopItem.links[1]} alt="" /></div>
+              <div><img className="size-40 md:size-60 rounded-lg p-1" src={shopItem.links[2]} alt="" /></div>
             </div>
             <br/>
-            <div>
+            <div className="flex justify-center">
             <p className="mt-1 truncate text-xs/5 text-gray-500 text-center max-w-56">
                     {shopItem.description}
                   </p>
