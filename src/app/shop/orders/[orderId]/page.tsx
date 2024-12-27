@@ -43,19 +43,19 @@ export default function LatestProject() {
   });
 
   return (
-    <div className="w-full max-w-xs gap-4 justify-self-center">
+    <div className="w-full max-w-xs gap-4 justify-self-center justify-center ">
       {selectedItem ? (
         <>
-        <div className="bg-blue-500 rounded-t-lg">
-        <h1 className=" text-center truncate text-gray-700 font-extrabold">
+        <div className="bg-gray-500 rounded-t-lg">
+        <h1 className=" text-center truncate text-blue-500 font-extrabold">
             Confirm Order:     
           </h1>
-          <p className="text-white text-center">{selectedItem.data?.name}</p>
+          <p className="text-white text-center font-semibold">{selectedItem.data?.name}</p>
         </div>
           
        
-          <div className="flex-col justify-between border-y border-y-white py-1">
-            <div className="">
+          <div className="flex-col justify-between justify-items-center border-y border-y-white py-1">
+            <div className="justify-center">
             <img
             alt=""
             src={selectedItem.data?.image}
@@ -65,7 +65,7 @@ export default function LatestProject() {
             <div><p className="text-sm text-center">{selectedItem.data?.description}</p></div>
           </div>
           <br />
-          <p className="font-semibold">Total: R {selectedItem.data?.price}</p>
+          <p className="font-semibold bg-green-500 p-2">Total: R {selectedItem.data?.price}</p>
           
         </> 
       ) : (
