@@ -214,6 +214,7 @@ export default function LatestProject() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
+          required
         />
         <br />
         <p>Contact Number</p>
@@ -223,6 +224,7 @@ export default function LatestProject() {
           value={contactNumber}
           onChange={(e) => setContactNumber(parseInt(e.target.value))}
           className="w-full rounded-full px-4 py-2 text-black"
+          required
         />
         <input
           type="text"
