@@ -7,7 +7,7 @@ export default function AllProjects() {
 
   return (
     <div>
-      {allProjects.length == 0 ? "You Have No Projects Yet" : ""}
+      {allProjects.length == 0 ? <p className="text-center">No Projects</p> : ""}
       <ul
         role="list"
         className="flex flex-col gap-2 divide-y divide-white px-4"
@@ -33,8 +33,8 @@ export default function AllProjects() {
                   Project Budget: R {project.price}
                 </p>
 
-                <p className="text-sm/6 font-semibold text-gray-900">
-                  {project.type}
+                <p className="rounded-xs bg-green-500 px-1 text-xs font-semibold my-2">
+                  Project Type: {project.type}
                 </p>
               </div>
             </div>
@@ -42,21 +42,21 @@ export default function AllProjects() {
               <div>
                 <img
                   src={project.links[0]}
-                  className="size-40 rounded-xl"
+                  className="size-40 rounded-xl p-1"
                   alt=""
                 />
               </div>
               <div>
                 <img
                   src={project.links[1]}
-                  className="size-40 rounded-xl"
+                  className="size-40 rounded-xl p-1"
                   alt=""
                 />
               </div>
               <div>
                 <img
                   src={project.links[2]}
-                  className="size-40 rounded-xl"
+                  className="size-40 rounded-xl p-1"
                   alt=""
                 />
               </div>

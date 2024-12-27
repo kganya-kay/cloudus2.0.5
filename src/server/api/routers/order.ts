@@ -15,20 +15,21 @@ export const orderRouter = createTRPCRouter({
       };
     }),
 
-  create: protectedProcedure
-    .input(z.object({ name: z.string(), description : z.string(), type: z.string()}))
+  create: publicProcedure
+    .input(z.object({ name: z.string(), description : z.string(), type: z.string(), itemId: z.number(), contactNumber: z.number(),price: z.number()}))
     .mutation(async ({ ctx, input }) => {
       return ctx.db.order.create({
         data: {
           name: input.name,
-          createdBy: { connect: { id: ctx.session.user.id } },
-          price: 50,
-          description: input.description,
-          
+          createdBy: { connect: { id: ctx.session? ctx.session.user.id : "cm55nwppt000013smfhzgcutj"} } ,
+          price: input.price,
+          description: input.description + "contact Number=" + input.contactNumber,      
           link: "Link to item not set",
-          api:"api empty",
+          links: [input.contactNumber.toString()],
+          api: ctx.session ? input.type : "Signed Out Order" ,
+           
           createdFor:  {connect: {
-            id : 1
+            id : input.itemId
           }}        
         },
       });

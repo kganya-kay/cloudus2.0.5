@@ -9,9 +9,11 @@ export default function LatestProject() {
 
   const params = useParams();
   let itemId = 0;
+  let price = 0;
 
   if (params.orderId) {
       itemId = parseInt(params.orderId.toString())
+      
   } else {
      itemId = 5
   }
@@ -20,15 +22,22 @@ export default function LatestProject() {
   const selectedItem = api.shopItem.select.useQuery({id : itemId });
   console.log(selectedItem);
   const utils = api.useUtils();
+
+  if (selectedItem.data?.price) {
+    price = selectedItem.data?.price
+  } 
+  
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
+  const [contactNumber, setContactNumber] = useState(0);
   const createOrder = api.order.create.useMutation({
     onSuccess: async () => {
       await utils.project.invalidate();
       setName("");
       setDescription("");
       setType("");
+      setContactNumber(0);
       alert("Order Created Successfully")
     },
   });
@@ -37,21 +46,26 @@ export default function LatestProject() {
     <div className="w-full max-w-xs gap-4 justify-self-center">
       {selectedItem ? (
         <>
-          <p className="truncate text-gray-700">
-            Thank You for Ordering:{" "}
-            <span className="text-red-300">{selectedItem.data?.name}</span>
-          </p>
+        <div className="bg-blue-500 rounded-t-lg">
+        <h1 className=" text-center truncate text-gray-700 font-extrabold">
+            Confirm Order:     
+          </h1>
+          <p className="text-white text-center">{selectedItem.data?.name}</p>
+        </div>
+          
        
-          <div className="flex justify-between border-y border-y-white py-1">
-            <div>
+          <div className="flex-col justify-between border-y border-y-white py-1">
+            <div className="">
             <img
             alt=""
             src={selectedItem.data?.image}
-            className="size-12 flex-none rounded-full bg-slate-400"
+            className="size-12 flex-none rounded-full bg-slate-400 justify-self-center"
           />
             </div>
-            <div><p className="text-sm">{selectedItem.data?.description}</p></div>
+            <div><p className="text-sm text-center">{selectedItem.data?.description}</p></div>
           </div>
+          <br />
+          <p className="font-semibold">Total: R {selectedItem.data?.price}</p>
           
         </> 
       ) : (
@@ -61,16 +75,17 @@ export default function LatestProject() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createOrder.mutate({ name, description, type });
+          createOrder.mutate({ name, description, type, contactNumber, itemId, price });
         }}
         className="flex flex-col gap-2"
       >
         <input
           type="text"
-          placeholder="Order Reference"
+          placeholder="Customer Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
+          required
         />
         <input
           type="text"
@@ -78,6 +93,14 @@ export default function LatestProject() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="w-full rounded-full px-4 py-2 text-black"
+        />
+        <p>Contact Number</p>
+        <input
+          type="tel"
+          value={contactNumber}
+          onChange={(e) => setContactNumber(parseInt(e.target.value))}
+          className="w-full rounded-full px-4 py-2 text-black"
+          required
         />
 
         <label htmlFor="">
@@ -88,13 +111,13 @@ export default function LatestProject() {
             onChange={(e) => setType(e.target.value)}
             className="w-full rounded-full px-4 py-2 text-gray-500"
           >
-            <option value="Print">1</option>
-            <option value="Development">5</option>
-            <option value="Design">10</option>
-            <option value="Audio">50</option>
-            <option value="Visual">100</option>
-            <option value="Academic">1000</option>
-            <option value="Pastry">Custom</option>
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="1000">1000</option>
+            <option value="custom">Custom</option>
           </select>
         </label>
         <h1>{type}</h1>

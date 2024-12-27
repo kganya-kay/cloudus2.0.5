@@ -224,7 +224,7 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
-              <div>{<AllPublicProjects />}</div>
+              <div className="max-w-screen-lg justify-self-center">{<AllPublicProjects />}</div>
                       <br />
              
                 <div className="  flex justify-center justify-self-center bg-green-300  rounded-full border-1  border-white">
