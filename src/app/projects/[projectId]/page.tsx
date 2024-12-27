@@ -198,8 +198,8 @@ export default function LatestProject() {
           e.preventDefault();
           if(!session){
             console.error("Sign In to Create Project")
-            return
-          }
+            
+          };
           createProject.mutate({
             name,
             description,
