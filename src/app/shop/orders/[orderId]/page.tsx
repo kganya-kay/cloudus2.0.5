@@ -53,7 +53,7 @@ export default function LatestProject() {
           </div>
 
           <div className="flex-col justify-between justify-items-center border-y border-y-white py-1">
-            <div className="justify-center">
+            <div className="flex justify-center">
               <img
                 alt=""
                 src={selectedItem.data?.image}
