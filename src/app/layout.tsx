@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} h-full bg-gray-100`}>
       <body className="h-full">
-
+        <div>Search</div>
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>

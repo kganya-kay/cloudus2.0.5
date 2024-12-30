@@ -6,10 +6,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import path from "path";
 import { useState } from "react";
-
+import Uploader from "~/app/_components/uploader";
 
 import { api } from "~/trpc/react";
-
 
 export default function LatestProject() {
   const params = useParams();
@@ -51,8 +50,8 @@ export default function LatestProject() {
       alert("Project Created Successfully: View Projects");
     },
     onError: async () => {
-      alert("Error: Please Make sure you are signed In to Create Project")
-    }
+      alert("Error: Please Make sure you are signed In to Create Project");
+    },
   });
 
   return (
@@ -144,18 +143,29 @@ export default function LatestProject() {
 
       <br />
       <div className="flex-col border-t border-y-gray-200">
-        <p className="pt-2 text-sm text-blue-400">Project Media</p>
-        <div className="rounded-lg bg-gray-50">
+        <div>
+          <p className="pt-2 text-sm text-blue-400">Project Media</p>
+        </div>
+
+        <div className="flex rounded-lg bg-gray-50 max-w-full overflow-scroll">
           {selectedProject.data?.links ? (
-            <p className="text-center text-xs">Project Has No Media</p>
-          ) : (
             selectedProject.data?.links.map((link) => (
-              <div key={link.toString()}>
-                <img src={link} className="size-16" alt="" />
+              <div key={link.toString()} className="flex">
+                <img
+                  src={link}
+                  className="flex size-16 divide-slate-400 p-2"
+                  alt=""
+                />
               </div>
             ))
+          ) : (
+            <p className="text-center text-xs">Project Has No Media</p>
           )}
         </div>
+          <div>
+            <Uploader/>
+          </div>
+
       </div>
       <br />
       <div>
@@ -203,7 +213,7 @@ export default function LatestProject() {
             type,
             link,
             price,
-            contactNumber
+            contactNumber,
           });
         }}
         className="flex flex-col gap-2 bg-blue-100 px-2"
