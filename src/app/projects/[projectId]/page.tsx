@@ -1,12 +1,14 @@
 "use client";
 
 import Button from "@mui/material/Button";
+import { UploadButton } from "@uploadthing/react";
 import Link from "next/link";
 
 import { useParams } from "next/navigation";
 import path from "path";
 import { useState } from "react";
 import Uploader from "~/app/_components/uploader";
+import { OurFileRouter } from "~/app/api/uploadthing/core";
 
 import { api } from "~/trpc/react";
 
@@ -31,7 +33,6 @@ export default function LatestProject() {
     id: selectedProjectUserId,
   });
 
-  console.log(selectedProject);
   const utils = api.useUtils();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -147,7 +148,7 @@ export default function LatestProject() {
           <p className="pt-2 text-sm text-blue-400">Project Media</p>
         </div>
 
-        <div className="flex rounded-lg bg-gray-50 max-w-full overflow-scroll">
+        <div className="flex max-w-full overflow-scroll rounded-lg bg-gray-50">
           {selectedProject.data?.links ? (
             selectedProject.data?.links.map((link) => (
               <div key={link.toString()} className="flex">
@@ -162,10 +163,20 @@ export default function LatestProject() {
             <p className="text-center text-xs">Project Has No Media</p>
           )}
         </div>
-          <div>
-            <Uploader/>
-          </div>
-
+      </div>
+      <div>
+        <UploadButton<OurFileRouter, "imageUploader">
+                endpoint="imageUploader"
+                onClientUploadComplete={(res) => {
+                  // Do something with the response
+                  console.log("Files: ", res);
+                  alert("Upload Completed");
+                }}
+                onUploadError={(error: Error) => {
+                  // Do something with the error.
+                  alert(`ERROR! ${error.message}`);
+                }}
+              />
       </div>
       <br />
       <div>

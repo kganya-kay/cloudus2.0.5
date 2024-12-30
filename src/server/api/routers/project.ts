@@ -1,3 +1,4 @@
+import { Input } from "postcss";
 import { z } from "zod";
 
 import {
@@ -66,6 +67,19 @@ export const projectRouter = createTRPCRouter({
 
     return projects ?? null;
   }),
+
+  addLink: protectedProcedure.input(z.object({projectId: z.number(),link: z.string()})).query(async({ctx,input}) => {
+    
+
+    const updatedLinks = await ctx.db.project.update({
+      where:{
+        id: input.projectId
+      },
+      data: {
+        links: [input.link]
+      }
+    })
+  } ),
 
   getSecretMessage: protectedProcedure.query(() => {
     return "you can now see this secret message!";
