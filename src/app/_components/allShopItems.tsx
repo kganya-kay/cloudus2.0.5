@@ -33,6 +33,12 @@ export default function AllShopItems() {
                 </div>
               </div>
             </li>
+
+            <div className="flex justify-center">
+              <p className="mt-1 max-w-56 truncate text-center text-xs/5 text-gray-500">
+                {shopItem.description}
+              </p>
+            </div>
             <div className="flex justify-between">
               <div>
                 <img
@@ -56,14 +62,10 @@ export default function AllShopItems() {
                 />
               </div>
             </div>
-            <br />
-            <div className="flex justify-center">
-              <p className="mt-1 max-w-56 truncate text-center text-xs/5 text-gray-500">
-                {shopItem.description}
-              </p>
-            </div>
+            
+            
 
-            <div className="justify-self-center py-3">
+            <div className="justify-self-center py-2">
               <Button
                 style={{
                   minWidth: "200px",

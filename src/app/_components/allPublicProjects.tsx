@@ -38,6 +38,11 @@ export default function AllProjects() {
                 </p>
               </div>
             </div>
+            <div className="flex justify-center">
+              <p className="mt-1 max-w-56 truncate text-center text-xs/5 text-black">
+                {project.description}
+              </p>
+            </div>
             <div className="flex justify-between">
               <div>
                 <img
@@ -61,12 +66,8 @@ export default function AllProjects() {
                 />
               </div>
             </div>
-            <div className="flex justify-center">
-              <p className="mt-1 max-w-56 truncate text-center text-xs/5 text-black">
-                {project.description}
-              </p>
-            </div>
-            <div className="justify-self-center py-3">
+         
+            <div className="justify-self-center py-2">
               <Button
                 style={{
                   minWidth: "200px",
