@@ -225,6 +225,12 @@ export default async function Home() {
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
               <br />
+              <div className="p-4 ">
+                <Link href={"/shop/orders/6"}>
+                  <img src="https://utfs.io/f/zFJP5UraSTwKwlar0j7FNcaSY213do5B9V4M86IGzyjZTAeJ" className="rounded-lg border-spacing-3 border-gray-400" alt="" />
+                </Link>
+              </div>
+              <br />
               <div className="max-w-screen-lg justify-self-center">
                 {<AllPublicProjects />}
               </div>
