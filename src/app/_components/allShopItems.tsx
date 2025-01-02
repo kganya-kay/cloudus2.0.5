@@ -42,21 +42,21 @@ export default function AllShopItems() {
             <div className="flex justify-between">
               <div>
                 <img
-                  className="size-40 rounded-lg p-1 md:size-60"
+                  className="size-40 rounded-lg p-1 md:size-60 object-cover"
                   src={shopItem.links[0]}
                   alt=""
                 />
               </div>
               <div>
                 <img
-                  className="size-40 rounded-lg p-1 md:size-60"
+                  className="size-40 rounded-lg p-1 md:size-60 object-cover"
                   src={shopItem.links[1]}
                   alt=""
                 />
               </div>
               <div>
                 <img
-                  className="size-40 rounded-lg p-1 md:size-60"
+                  className="size-40 rounded-lg p-1 md:size-60 object-cover"
                   src={shopItem.links[2]}
                   alt=""
                 />

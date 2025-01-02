@@ -47,21 +47,21 @@ export default function AllProjects() {
               <div>
                 <img
                   src={project.links[0]}
-                  className="size-40 rounded-xl p-1"
+                  className="size-40 rounded-xl p-1 object-cover"
                   alt=""
                 />
               </div>
               <div>
                 <img
                   src={project.links[1]}
-                  className="size-40 rounded-xl p-1"
+                  className="size-40 rounded-xl p-1 object-cover"
                   alt=""
                 />
               </div>
               <div>
                 <img
                   src={project.links[2]}
-                  className="size-40 rounded-xl p-1"
+                  className="size-40 rounded-xl p-1 object-cover"
                   alt=""
                 />
               </div>

@@ -12,6 +12,7 @@ import {
 } from "@headlessui/react";
 import Link from "next/link";
 import { CheckIcon } from "@heroicons/react/16/solid";
+import Image from "next/image";
 
 export default function LatestProject() {
   const [open, setOpen] = useState(false);
@@ -72,6 +73,16 @@ export default function LatestProject() {
               <p className="text-center text-sm">
                 {selectedItem.data?.description}
               </p>
+            </div>
+            <div className="relative h-52 w-full">
+              {selectedItem.data && (
+                <Image
+                  src={selectedItem.data.image}
+                  alt="Cloudus Order Item"
+                  fill
+                  className="object-cover"
+                ></Image>
+              )}
             </div>
           </div>
           <br />
@@ -211,6 +222,16 @@ export default function LatestProject() {
           {createOrder.isPending ? "Submitting Order..." : "Submit"}
         </button>
       </form>
+      <br />
+      <div>
+        <Link
+          href={"../"}
+          className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700"
+         
+        >
+          {createOrder.isPending ? "Submitting Order..." : "Home"}
+        </Link>
+      </div>
     </div>
   );
 }
