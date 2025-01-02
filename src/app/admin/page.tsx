@@ -1,13 +1,7 @@
 import Link from "next/link";
 
-import { LatestPost } from "~/app/_components/post";
-import { LatestProject } from "./_components/project";
-import AllProjects from "./_components/allProjects";
-import OpenProjectsCard from "./_components/openProjectsCard";
-import ShopCard from "./_components/shopCard";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-import Button from "@mui/material/Button";
 
 import {
   Disclosure,
@@ -19,8 +13,7 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import AllPublicProjects from "./_components/allPublicProjects";
-import Special from "./_components/specials";
+import AllUsers from "../_components/allUsers";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: true },
@@ -216,8 +209,8 @@ export default async function Home() {
             </DisclosurePanel>
             <header className="sticky top-16 bg-white shadow">
               <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                <h1 className="text-3xl font-bold tracking-tight text-gray-700">
-                  Dashboard
+                <h1 className="text-3xl font-bold tracking-tight text-blue-700">
+                  Admin
                 </h1>
                 <p className="text-2xl text-gray-400">Welcome {user.name}</p>
               </div>
@@ -226,36 +219,18 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
-              <br />
-
-              <Special />
-              <br />
-              <div className="max-w-screen-lg justify-self-center">
-                {<AllPublicProjects />}
-              </div>
-              <br />
-
-              <div className="border-1 flex justify-center justify-self-center rounded-full border-white bg-green-300">
-                {session ? (
-                  <Button
-                    style={{
-                      minWidth: "50px",
-                      minHeight: "30px",
-                      position: "inherit",
-                    }}
-                    className="justify-between justify-self-center py-2 align-top"
-                    href="./projects/create"
-                  >
-                    +
-                  </Button>
+              <div className="py-3">
+                {user.email == "kganyakekana@gmail.com" ? (
+                  <div className="flex justify-between">
+                    <div className="max-w-screen-lg justify-self-center">
+                      {session && <AllUsers />}
+                    </div>
+                    <div className="max-w-screen-lg justify-self-center">
+                      {session && <AllUsers />}
+                    </div>
+                  </div>
                 ) : (
-                  <Button
-                    size="medium"
-                    className="min-w-full justify-between justify-self-center"
-                    href="/api/auth/signin"
-                  >
-                    login
-                  </Button>
+                  <h1 className="text-center text-black">You are not The Admin</h1>
                 )}
               </div>
 
