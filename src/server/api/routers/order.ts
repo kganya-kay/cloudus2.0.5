@@ -1,4 +1,10 @@
 import { z } from "zod";
+import sgMail from '@sendgrid/mail';
+if (!process.env.SENDGRID_API_KEY) {
+  throw new Error("SENDGRID_API_KEY environment variable is not set");
+}
+sgMail.setApiKey(process.env.SENDGRID_API_KEY );
+
 
 import {
   createTRPCRouter,
@@ -18,6 +24,27 @@ export const orderRouter = createTRPCRouter({
   create: publicProcedure
     .input(z.object({ name: z.string(), description : z.string(), type: z.string(), itemId: z.number(), contactNumber: z.number(),price: z.number()}))
     .mutation(async ({ ctx, input }) => {
+
+      if (input.name) {
+
+        const msg = {
+          to: 'kganyakekana@gmail.com', // Change to your recipient
+          from: 'kganyakekana@gmail.com', // Change to your verified sender
+          subject: 'Sending with SendGrid is Fun',
+          text: 'and easy to do anywhere, even with Node.js',
+          html: '<strong>Order Received from</strong>' + input?.name + '<br> <strong>Contact Number</strong>' + input?.contactNumber + '<br> <strong>Item Type</strong>' + input?.type + '<br> <strong>Item Description</strong>' + input?.description,
+        }
+        sgMail
+          .send(msg)
+          .then(() => {
+            console.log('Email sent')
+          })
+          .catch((error) => {
+            console.error(error)
+          })
+      }
+
+
       return ctx.db.order.create({
         data: {
           name: input.name,
