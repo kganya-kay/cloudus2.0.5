@@ -31,7 +31,7 @@ export const orderRouter = createTRPCRouter({
           to: 'kganyakekana@gmail.com', // Change to your recipient
           from: 'kganyakekana@gmail.com', // Change to your verified sender
           subject: 'Sending with SendGrid is Fun',
-          text: 'and easy to do anywhere, even with Node.js',
+          text: 'Order received',
           html: '<strong>Order Received from</strong>' + input?.name + '<br> <strong>Contact Number</strong>' + input?.contactNumber + '<br> <strong>Item Type</strong>' + input?.type + '<br> <strong>Item Description</strong>' + input?.description,
         }
         sgMail
