@@ -17,6 +17,16 @@ import {
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
+
+import jsforce from 'jsforce';
+
+const conn = new jsforce.Connection();
+await conn.login('kganyaomnistudio@gmail.com', '542692kK.')
+
+const res = await conn.query('SELECT Id, Subject FROM Event')
+console.log(res)
+
+
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
   { name: "Shop", href: "/shop", current: false },
@@ -219,7 +229,34 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-              <h1>Events and Project Timelines</h1>
+              
+              <div className="overflow-hidden bg-white shadow sm:rounded-lg">
+                <div className="px-4 py-5 sm:px-6">
+                  <h2 className="text-lg font-medium leading-6 text-gray-900">
+                    Upcoming Events
+                  </h2>
+                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                    A list of all your upcoming events.
+                  </p>
+                </div>
+                <div className="border-t border-gray-200">
+                  <dl>
+                    {res.records.map((record) => (
+                      <div
+                        key={record.Id}
+                        className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                      >
+                        <dt className="text-sm font-medium text-gray-500">
+                          {record.Subject}
+                        </dt>
+                        <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                          {record.Id}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              </div>
             </div>
           </main>
         </div>
