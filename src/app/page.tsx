@@ -232,6 +232,7 @@ export default async function Home() {
               <Special />
               <br />
               <div className="max-w-screen-lg justify-self-center">
+ 
                 {<AllPublicProjects />}
               </div>
               <br />
@@ -239,7 +240,7 @@ export default async function Home() {
               <div>
                 <NewLead />
               </div>
-
+              <br />
               <div className="border-1 flex justify-center justify-self-center rounded-full border-white bg-green-300">
                 {session ? (
                   <Button

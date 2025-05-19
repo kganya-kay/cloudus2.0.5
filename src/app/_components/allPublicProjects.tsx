@@ -8,6 +8,30 @@ export default function AllProjects() {
   return (
     <div>
       {allProjects.length == 0 ? <p className="text-center">No Projects</p> : ""}
+
+      <div className="flex justify-center">
+                      <h1
+          className="
+            inline-block               /* shrink‐wrap to the border */
+            mx-auto                    /* center the element horizontally */
+            text-3xl
+            font-bold
+            tracking-tight
+            text-gray-700
+            text-center                /* center text inside */
+            border-2                   /* 2px border */
+            border-red-500             /* red color */
+            p-4                        /* padding so the border isn’t flush */
+            animate-pulse              /* Tailwind’s built‑in pulse animation */
+            rounded-lg                /* rounded corners */
+            w-full
+            sm:w-1/2                  /* 50% width on small screens */  
+          "
+        >
+          Our Projects
+        </h1> 
+      </div>
+      <br />
       <ul
         role="list"
         className="flex flex-col gap-2 divide-y divide-white px-4"
