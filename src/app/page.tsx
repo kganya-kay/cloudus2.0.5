@@ -8,6 +8,7 @@ import ShopCard from "./_components/shopCard";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import Button from "@mui/material/Button";
+import NewLead from "./_components/newLead";
 
 import {
   Disclosure,
@@ -234,6 +235,10 @@ export default async function Home() {
                 {<AllPublicProjects />}
               </div>
               <br />
+
+              <div>
+                <NewLead />
+              </div>
 
               <div className="border-1 flex justify-center justify-self-center rounded-full border-white bg-green-300">
                 {session ? (
