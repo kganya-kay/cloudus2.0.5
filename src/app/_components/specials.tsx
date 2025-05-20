@@ -23,7 +23,7 @@ export default function Special() {
                  Get A Web Application for your Business.
               </h2>
               <p className="mt-6 text-pretty text-lg/8 text-gray-300">
-                Simplify and digitize your business To laverage the power of the internet
+                Simplify and digitize your business to leverage the power of the Cloud.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
                 <Link
