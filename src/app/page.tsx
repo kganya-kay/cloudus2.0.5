@@ -9,6 +9,7 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import Button from "@mui/material/Button";
 import NewLead from "./_components/newLead";
+import GetWebApplication from "./_components/getWebApplication";
 
 import {
   Disclosure,
@@ -228,9 +229,11 @@ export default async function Home() {
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
               <br />
-
-              <Special />
+                <GetWebApplication />
               <br />
+               <Special />
+              <br />
+                 
               <div className="max-w-screen-lg justify-self-center">
  
                 {<AllPublicProjects />}
