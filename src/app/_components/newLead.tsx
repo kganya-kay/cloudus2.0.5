@@ -10,6 +10,7 @@ const SalesforceLeadForm = () => {
     phone: '',
     company: '',
     product_interest: '',
+    description: '',
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -18,7 +19,7 @@ const SalesforceLeadForm = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div id='contactSales' className="flex items-center justify-center min-h-screen bg-gray-100">
       <form
         action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00DWU00000LaXxh"
         method="POST"
@@ -99,6 +100,21 @@ const SalesforceLeadForm = () => {
               type="text"
               maxLength={40}
               value={formData.company}
+              onChange={handleChange}
+              required
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="description" className="block font-medium">Description:</label>
+            <input
+              id="description"
+              name="description"
+              type="text-area"
+              placeholder="Please provide a brief description of your inquiry."
+              maxLength={40}
+              value={formData.description}
               onChange={handleChange}
               required
               className="w-full border rounded px-3 py-2"

@@ -17,7 +17,7 @@ const solutions = [
 ]
 const callsToAction = [
   { name: 'Watch demo', href: '#', icon: PlayCircleIcon },
-  { name: 'Contact sales', href: '#', icon: PhoneIcon },
+  { name: 'Contact sales', href: '#contactSales', icon: PhoneIcon },
 ]
 
 export default function Example() {
