@@ -16,7 +16,7 @@ const solutions = [
   { name: 'Automations', description: 'Build strategic funnels that will convert', href: '#', icon: ArrowPathIcon },
 ]
 const callsToAction = [
-  { name: 'Watch demo', href: '#', icon: PlayCircleIcon },
+  { name: 'Watch demo', href: '#video', icon: PlayCircleIcon },
   { name: 'Contact sales', href: '#contactSales', icon: PhoneIcon },
 ]
 

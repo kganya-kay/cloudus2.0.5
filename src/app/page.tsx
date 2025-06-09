@@ -23,6 +23,7 @@ import {
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import AllPublicProjects from "./_components/allPublicProjects";
 import Special from "./_components/specials";
+import Video from "./_components/video";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: true },
@@ -242,6 +243,10 @@ export default async function Home() {
 
               <div>
                 <NewLead />
+              </div>
+              <br />
+              <div id="video" className="flex justify-center">
+                <Video />
               </div>
               <br />
               <div className="border-1 flex justify-center justify-self-center rounded-full border-white bg-green-300">
