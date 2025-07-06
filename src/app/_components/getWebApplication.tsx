@@ -23,8 +23,8 @@ const callsToAction = [
 export default function Example() {
   return (
     <Popover className="relative">
-      <PopoverButton className="inline-flex items-center gap-x-1 text-sm/6 font-semibold text-gray-900">
-        <span>Solutions</span>
+      <PopoverButton className="inline-flex items-center gap-x-1 px-4 rounded-s text-sm/6 font-semibold text-gray-900">
+        <span className=''>Solutions</span>
         <ChevronDownIcon aria-hidden="true" className="size-5" />
       </PopoverButton>
 

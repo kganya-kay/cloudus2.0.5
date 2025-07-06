@@ -63,7 +63,7 @@ export default function NewProductFlow() {
 
   return (
     <>
-      <Button variant="contained" color="primary" onClick={handleOpen}>
+      <Button variant="outlined" onClick={handleOpen}>
         Launch New Product
       </Button>
 

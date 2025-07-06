@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 
 import { LatestPost } from "~/app/_components/post";
@@ -11,6 +10,7 @@ import { api, HydrateClient } from "~/trpc/server";
 import Button from "@mui/material/Button";
 import NewLead from "./_components/newLead";
 import GetWebApplication from "./_components/getWebApplication";
+import TechDest from "./_components/techDest"; // Adjust the path as needed
 
 import {
   Disclosure,
@@ -231,31 +231,26 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
-
-         
-              
               <br />
 
-              <div className='max-w-screen-lg justify-self-center' >
+              <div className="max-w-screen-lg justify-self-center">
                 <GetWebApplication />
               </div>
 
-                
-              
-              
-                   <br />
-              <div className='max-w-screen-lg justify-self-center' >
+              <br />
+              <div className="max-w-screen-lg justify-self-center">
                 <NewProductFlow />
+              </div>
+              <br />
+              <div className="max-w-screen-lg justify-self-center p-4 bg-gray-100 rounded-lg shadow-md text-gray-900">
+                <TechDest />
               </div>
 
               <br />
-               <Special />
+              <Special />
               <br />
-              
-             
-                 
+
               <div className="max-w-screen-lg justify-self-center">
- 
                 {<AllPublicProjects />}
               </div>
               <br />
