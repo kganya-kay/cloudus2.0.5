@@ -19,7 +19,7 @@ const SalesforceLeadForm = () => {
   };
 
   return (
-    <div id='contactSales' className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div id='contactSales' className="flex items-center justify-center min-h-screen bg-gray-100 p-3">
       <form
         action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00DWU00000LaXxh"
         method="POST"
@@ -34,7 +34,6 @@ const SalesforceLeadForm = () => {
         <input type="hidden" name="debugEmail" value="kganyakekana@gmail.com" />
         */}
 
-        <h2 className="text-2xl font-bold mb-6 text-center">Contact Sales</h2>
 
         <div className="space-y-4">
           <div>
@@ -131,9 +130,17 @@ const SalesforceLeadForm = () => {
               className="w-full border rounded px-3 py-2"
             >
               <option value="">--None--</option>
-              <option value="GC1000 series">GC1000 series</option>
-              <option value="GC5000 series">GC5000 series</option>
-              <option value="GC3000 series">GC3000 series</option>
+              <option value="1">Web Application Development</option>
+              <option value="2">Salesforce and CRM integration</option>
+              <option value="3">E-commerce Solutions</option>
+              <option value="4">Cloud Hosting and Infrastructure</option>
+              <option value="5">Mobile Application Development</option>
+              <option value="6">Data Analytics and Business Intelligence</option>
+              <option value="7">Cybersecurity Solutions</option>
+              <option value="8">AI and Machine Learning Solutions</option>
+              <option value="9">Software Development and Integration</option>
+              <option value="10">Digital Marketing</option>
+              <option value="11">Social Media Management</option>
             </select>
           </div>
 

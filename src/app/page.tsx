@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 import { LatestPost } from "~/app/_components/post";
@@ -24,6 +25,7 @@ import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import AllPublicProjects from "./_components/allPublicProjects";
 import Special from "./_components/specials";
 import Video from "./_components/video";
+import NewProductFlow from "./_components/newProductFlow";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: true },
@@ -229,11 +231,28 @@ export default async function Home() {
 
           <main className="flex min-h-screen flex-col justify-center bg-gray-200 text-white">
             <div className="flex-col justify-around">
+
+         
+              
               <br />
+
+              <div className='max-w-screen-lg justify-self-center' >
                 <GetWebApplication />
+              </div>
+
+                
+              
+              
+                   <br />
+              <div className='max-w-screen-lg justify-self-center' >
+                <NewProductFlow />
+              </div>
+
               <br />
                <Special />
               <br />
+              
+             
                  
               <div className="max-w-screen-lg justify-self-center">
  
