@@ -237,13 +237,14 @@ export default async function Home() {
                 <GetWebApplication />
               </div>
 
-              <br />
-              <div className="max-w-screen-lg justify-self-center">
-                <NewProductFlow />
-              </div>
+              
               <br />
               <div className="max-w-screen-lg justify-self-center p-4 bg-gray-100 rounded-lg shadow-md text-gray-900">
                 <TechDest />
+              </div>
+              <br />
+              <div className="max-w-screen-lg justify-self-center">
+                <NewProductFlow />
               </div>
 
               <br />
