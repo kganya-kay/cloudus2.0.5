@@ -63,9 +63,8 @@ export default function NewProductFlow() {
   });
 
   // Product & pricing details
-  const [selectedProduct, setSelectedProduct] = useState(products[0]);
   const [description, setDescription] = useState("");
-
+  const [selectedProduct, setSelectedProduct] = useState(products[0]);
   const [basePrice, setBasePrice] = useState(999);
   const [quantity, setQuantity] = useState(1);
 
@@ -375,12 +374,14 @@ export default function NewProductFlow() {
             <input type="text" name="description" value={formData.description} readOnly />
 
             {/* Product interest (map your selectedProduct to Salesforce picklist value) */}
-            <input
-              type="hidden"
-              name="00NWU00000PVzIh"
-              value={productInterestMap[selectedProduct as string] ?? ""} // cast to string, fallback to ""
-              readOnly
-            />
+            {selectedProduct && (
+              <input
+                type="hidden"
+                name="00NWU00000PVzIh" // Replace with your Salesforce product interest field API name
+                value={productInterestMap[selectedProduct] ?? ""}
+                readOnly
+              />
+            )}
           </form>
         )}
       </Dialog>
