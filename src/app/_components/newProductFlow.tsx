@@ -186,6 +186,21 @@ export default function NewProductFlow() {
       case 0:
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+            <h4 className="font-bold text-red-500 animate-pulse">Select Product</h4>
+            <select
+              name="selectedProduct"
+              id="selectedProduct"
+              className="border border-gray-400 bg-white rounded px-2 py-1"
+              value={selectedProduct}
+              onChange={(e) => setSelectedProduct(e.target.value)}
+            >
+              {products.map((product) => (
+                <option key={product} value={product}>
+                  {product}
+                </option>
+              ))}
+            </select>
             {!isLoggedIn && (
               <>
                 <h4 className="font-bold text-blue-600">Your Contact Details</h4>
@@ -243,20 +258,7 @@ export default function NewProductFlow() {
                 />
               </>
             )}
-            <h4 className="font-bold text-red-500 animate-pulse">Select Product</h4>
-            <select
-              name="selectedProduct"
-              id="selectedProduct"
-              className="border border-gray-400 bg-white rounded px-2 py-1"
-              value={selectedProduct}
-              onChange={(e) => setSelectedProduct(e.target.value)}
-            >
-              {products.map((product) => (
-                <option key={product} value={product}>
-                  {product}
-                </option>
-              ))}
-            </select>
+
           </div>
         );
 
