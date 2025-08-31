@@ -3,43 +3,29 @@
 import Button from "@mui/material/Button";
 import { UploadButton } from "@uploadthing/react";
 import Link from "next/link";
-
 import { useParams } from "next/navigation";
-import path from "path";
 import { useState } from "react";
-import Uploader from "~/app/_components/uploader";
 import { OurFileRouter } from "~/app/api/uploadthing/core";
-
 import { api } from "~/trpc/react";
 
 export default function LatestProject() {
-  const params = useParams();
-  let projectId = 0;
-  let selectedProjectUserId = "";
+  const { projectId } = useParams<{ projectId?: string }>();
+  const parsedId = projectId ? Number(projectId) : 1;
 
-  if (params.projectId) {
-    projectId = parseInt(params.projectId.toString());
-  } else {
-    projectId = 1;
-  }
-
-  const selectedProject = api.project.select.useQuery({ id: projectId });
-
-  if (selectedProject.data?.createdById) {
-    selectedProjectUserId = selectedProject.data?.createdById;
-  }
-
+  const selectedProject = api.project.select.useQuery({ id: parsedId });
   const selectedProjectUser = api.user.select.useQuery({
-    id: selectedProjectUserId,
+    id: selectedProject.data?.createdById ?? "",
   });
 
   const utils = api.useUtils();
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
   const [price, setPrice] = useState(0);
-  const [contactNumber, setContactNumber] = useState(0);
+  const [contactNumber, setContactNumber] = useState("");
   const [link, setLink] = useState("");
+
   const createProject = api.project.create.useMutation({
     onSuccess: async () => {
       await utils.project.invalidate();
@@ -48,221 +34,220 @@ export default function LatestProject() {
       setType("");
       setLink("");
       setPrice(0);
-      alert("Project Created Successfully: View Projects");
+      setContactNumber("");
+      alert("✅ Project Created Successfully!");
     },
     onError: async () => {
-      alert("Error: Please Make sure you are signed In to Create Project");
+      alert("❌ Error: Please sign in to create a project");
     },
   });
 
   return (
-    <div className="w-full gap-4 justify-self-center bg-gray-100 p-3">
-      {selectedProject ? (
+    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-white shadow-md rounded-xl">
+      {/* Exit Button */}
+      <div className="flex justify-end mb-4">
+        <Button
+          href="./"
+          type="button"
+          variant="outlined"
+          className="rounded-full px-6 py-2 font-semibold transition hover:bg-gray-700 hover:text-white"
+        >
+          Exit Project Mode
+        </Button>
+      </div>
+
+      {selectedProject.data ? (
         <>
-          <div className="flex justify-center">
-            <Button
-              href="./"
-              type="submit"
-              variant="outlined"
-              className="rounded-full px-10 py-3 font-semibold transition hover:bg-gray-700 hover:text-white"
-            >
-              Exit Project Mode
-            </Button>
-          </div>
-          <div className="flex justify-between border-b border-y-white py-2">
-            <div>
-              <img
-                alt=""
-                src={selectedProject.data?.image}
-                className="size-12 flex-none rounded-full bg-slate-400"
-              />
-            </div>
-            <div>
-              <p className="truncate text-sm text-gray-900">
-                Project Name:
-                <span className="text-red-300">
-                  {selectedProject.data?.name}
-                </span>
+          {/* Project Header */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 border-b pb-4">
+            <img
+              alt="Project"
+              src={selectedProject.data.image ?? ""}
+              className="w-16 h-16 rounded-full bg-slate-200 object-cover"
+            />
+            <div className="text-center sm:text-left">
+              <p className="text-sm text-gray-900 font-semibold">
+                {selectedProject.data.name}
               </p>
-              <p className="truncate text-sm text-gray-700">
-                Created By:
-                <span className="text-red-300">
+              <p className="text-xs text-gray-600">
+                Created by{" "}
+                <span className="font-medium text-blue-500">
                   {selectedProjectUser.data?.name}
                 </span>
               </p>
+              <p className="text-xs text-gray-500">
+                {selectedProjectUser.data?.email}
+              </p>
+            </div>
+          </div>
+
+          {/* Project Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-500">Project Type</p>
+              <p className="text-sm font-medium text-red-400">
+                {selectedProject.data.type}
+              </p>
+              {selectedProject.data?.link && (
+                <Link
+                  href={selectedProject.data.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs text-white bg-blue-500 px-3 py-1 rounded-full hover:bg-blue-600 transition"
+                >
+                  Visit Project
+                </Link>
+              )}
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-500">Created On</p>
+              <p className="text-sm font-medium text-blue-500">
+                {new Date(selectedProject.data.createdAt).toDateString()}
+              </p>
+              <p className="text-xs mt-1 text-gray-500">
+                Budget:{" "}
+                <span className="text-red-400 font-semibold">
+                  R {selectedProject.data.price}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {/* Status Bar */}
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+            <div className="flex-1 bg-orange-300 text-center text-sm py-2 rounded-lg">
+              Status: {selectedProject.data?.status}
+            </div>
+            <div className="flex-1 bg-green-300 text-center text-sm py-2 rounded-lg">
+              {selectedProject.data?.openSource ? "Open Source: Yes" : "Open Source: No"}
+            </div>
+            <div className="flex-1 bg-green-600 text-white text-center text-sm py-2 rounded-lg">
+              {selectedProject.data?.completed ? "Completed" : "Active"}
+            </div>
+          </div>
+
+          {/* Media */}
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-blue-500 mb-2">Project Media</p>
+            <div className="flex gap-2 overflow-x-auto rounded-lg bg-gray-50 p-2">
+              {selectedProject.data.links?.length ? (
+                selectedProject.data.links.map((media, index) => (
+                  <img
+                    key={index}
+                    src={media}
+                    className="w-20 h-20 object-cover rounded-md border"
+                    alt="Project media"
+                  />
+                ))
+              ) : (
+                <p className="text-xs text-gray-500">No media uploaded</p>
+              )}
+            </div>
+            <div className="mt-2">
+              <UploadButton<OurFileRouter, "imageUploader">
+                endpoint="imageUploader"
+                onClientUploadComplete={() => alert("✅ Upload Completed")}
+                onUploadError={(error: Error) =>
+                  alert(`❌ ERROR! ${error.message}`)
+                }
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-blue-500 mb-2">
+              Project Description
+            </p>
+            <div className="p-3 bg-gray-50 rounded-md">
+              <p className="text-xs text-gray-700">
+                {selectedProject.data.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Contributors */}
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-blue-500 mb-2">
+              Contributors
+            </p>
+            <div className="bg-gray-50 p-2 rounded-lg">
+              <p className="text-xs text-center text-red-500">
+                {selectedProject.data.api ?? "No contributors yet"}
+              </p>
+            </div>
+          </div>
+
+          {/* Cost Breakdown */}
+          <div className="flex flex-col sm:flex-row gap-2 mt-6">
+            <div className="flex-1 bg-orange-300 text-center text-sm py-2 rounded-lg">
+              Cost: {selectedProject.data?.cost ?? 0}
+            </div>
+            <div className="flex-1 bg-green-300 text-center text-sm py-2 rounded-lg">
+              Available:{" "}
+              {selectedProject.data.price - (selectedProject.data.cost ?? 0)}
+            </div>
+            <div className="flex-1 bg-red-300 text-center text-sm py-2 rounded-lg">
+              Bids
             </div>
           </div>
         </>
       ) : (
-        <p>No Selected Project</p>
+        <p className="text-center text-sm text-gray-500">Loading project...</p>
       )}
 
-      <div className="flex justify-between pt-2">
-        <div>
-          <p className="text-xs text-blue-500">
-            {selectedProjectUser.data?.email}
-          </p>
-          <p className="pb-2 text-xs">
-            Project Type:{" "}
-            <span className="text-red-300">{selectedProject.data?.type}</span>
-          </p>
-          {selectedProject.data?.link && (
-            <Link
-              className="rounded-lg bg-slate-400 px-3 text-xs text-white"
-              href=""
-            >
-              Project Link: {selectedProject.data?.link}
-            </Link>
-          )}
-        </div>
-        <div>
-          <p className="text-xs">
-            Created On:{" "}
-            <span className="text-blue-400">
-              {selectedProject.data?.createdAt.toDateString()}
-            </span>
-          </p>
-          <p className="rounded-e-lg bg-red-400 px-3 text-xs text-white">
-            Project Budget: <span>R {selectedProject.data?.price}</span>
-          </p>
-        </div>
-      </div>
-      <br />
-      <div className="flex justify-between">
-        <div className="w-full bg-orange-300 text-center text-sm">
-          Status: {selectedProject.data?.status}
-        </div>
-        <div className="w-full bg-green-300 text-center text-sm">
-          {selectedProject.data?.openSource
-            ? "OpenSource: Yes"
-            : "OpenSource: No"}
-        </div>
-        <div className="w-full bg-green-600 text-center text-sm">
-          {selectedProject.data?.completed ? "Completed" : "Active"}
-        </div>
-      </div>
-
-      <br />
-      <div className="flex-col border-t border-y-gray-200">
-        <div>
-          <p className="pt-2 text-sm text-blue-400">Project Media</p>
-        </div>
-
-        <div className="flex max-w-full overflow-scroll rounded-lg bg-gray-50">
-          {selectedProject.data?.links ? (
-            selectedProject.data?.links.map((link) => (
-              <div key={link.toString()} className="flex">
-                <img
-                  src={link}
-                  className="flex size-16 divide-slate-400 p-2"
-                  alt=""
-                />
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-xs">Project Has No Media</p>
-          )}
-        </div>
-      </div>
-      <div>
-        <UploadButton<OurFileRouter, "imageUploader">
-                endpoint="imageUploader"
-                onClientUploadComplete={(res) => {
-                  // Do something with the response
-                  console.log("Files: ", res);
-                  alert("Upload Completed");
-                }}
-                onUploadError={(error: Error) => {
-                  // Do something with the error.
-                  alert(`ERROR! ${error.message}`);
-                }}
-              />
-      </div>
-      <br />
-      <div>
-        <p className="text-sm text-blue-400">Project Description</p>
-        <div className="rounded-md bg-gray-50">
-          <p className="text-center text-xs">
-            {selectedProject.data?.description}
-          </p>
-        </div>
-      </div>
-      <br />
-
-      <div>
-        <p className="text-sm text-blue-400">
-          Contributors To: {selectedProject.data?.name}
+      {/* Create New Project */}
+      <div className="mt-8 bg-blue-50 rounded-lg p-4">
+        <p className="text-center font-semibold text-gray-700">
+          Want a Similar Project for Your Business?
         </p>
-        <div className="bg-gray-50">
-          <p className="rounded-lg bg-red-400 text-center text-xs">
-            {selectedProject.data?.api}
-          </p>
-        </div>
-      </div>
-      <br />
-      <div className="flex justify-between">
-        <div className="w-full bg-orange-300 text-center text-sm">
-          Cost: {selectedProject.data?.cost}
-        </div>
-        <div className="w-full bg-green-300 text-center text-sm">
-          Available:{" "}
-          {selectedProject.data &&
-            selectedProject.data?.price - selectedProject.data?.cost}
-        </div>
-        <div className="w-full bg-red-300 text-center text-sm">Bids</div>
-      </div>
-      <br />
-      <div className="rounded-t-lg bg-blue-100 p-2">
-        <p className="text-center">Want A Similar Project For Your Business?</p>
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          createProject.mutate({
-            name,
-            description,
-            type,
-            link,
-            price,
-            contactNumber,
-          });
-        }}
-        className="flex flex-col gap-2 bg-blue-100 px-2"
-      >
-        <input
-          type="text"
-          placeholder="Project Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-full px-4 py-2 text-black"
-          required
-        />
-        <br />
-        <p>Contact Number</p>
-        <input
-          type="tel"
-          placeholder="Your Whatsapp Number"
-          value={contactNumber}
-          onChange={(e) => setContactNumber(parseInt(e.target.value))}
-          className="w-full rounded-full px-4 py-2 text-black"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Project Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-full px-4 py-2 text-black"
-        />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            createProject.mutate({
+              name,
+              description,
+              type,
+              link,
+              price,
+              contactNumber: Number(contactNumber),
+            });
+          }}
+          className="flex flex-col gap-3 mt-4"
+        >
+          <input
+            type="text"
+            placeholder="Project Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-full border px-4 py-2 text-sm text-black focus:ring-2 focus:ring-blue-400"
+            required
+          />
 
-        <label htmlFor="">
-          Type
+          <input
+            type="tel"
+            placeholder="Your WhatsApp Number"
+            value={contactNumber}
+            onChange={(e) => setContactNumber(e.target.value)}
+            className="w-full rounded-full border px-4 py-2 text-sm text-black focus:ring-2 focus:ring-blue-400"
+            required
+          />
+
+          <textarea
+            placeholder="Project Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full rounded-lg border px-4 py-2 text-sm text-black focus:ring-2 focus:ring-blue-400"
+            rows={3}
+          />
+
           <select
             name="OrderType"
             id="pt"
             onChange={(e) => setType(e.target.value)}
-            className="w-full rounded-full px-4 py-2 text-gray-500"
+            className="w-full rounded-full border px-4 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-blue-400"
           >
+            <option value="">Select Type</option>
             <option value="Print">Print</option>
             <option value="Development">Development</option>
             <option value="Design">Design</option>
@@ -271,27 +256,25 @@ export default function LatestProject() {
             <option value="Academic">Academic</option>
             <option value="Custom">Custom</option>
           </select>
-        </label>
-        <h1>{type}</h1>
-        <button
-          type="submit"
-          className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700 hover:text-white"
-          disabled={createProject.isPending}
-        >
-          {createProject.isPending ? "Initializing Project..." : "Submit"}
-        </button>
-        <br />
 
-        <Button
-          href="./"
-          type="submit"
-          variant="outlined"
-          className="rounded-full px-10 py-3 font-semibold transition hover:bg-gray-700 hover:text-white"
-        >
-          View Your Projects
-        </Button>
-        <br />
-      </form>
+          <button
+            type="submit"
+            disabled={createProject.isPending}
+            className="rounded-full bg-blue-500 text-white px-6 py-2 text-sm font-semibold hover:bg-blue-600 transition"
+          >
+            {createProject.isPending ? "Initializing Project..." : "Submit"}
+          </button>
+
+          <Button
+            href="./"
+            type="button"
+            variant="outlined"
+            className="rounded-full px-6 py-2 font-semibold transition hover:bg-gray-700 hover:text-white"
+          >
+            View Your Projects
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
