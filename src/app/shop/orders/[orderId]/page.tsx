@@ -16,7 +16,7 @@ import Image from "next/image";
 export default function LatestProject() {
   const [open, setOpen] = useState(false);
   const params = useParams();
-  let itemId = params.orderId ? Number(params.orderId) : 5;
+  const itemId = params.orderId ? Number(params.orderId) : 5;
 
   const selectedItem = api.shopItem.select.useQuery({ id: itemId });
   const utils = api.useUtils();

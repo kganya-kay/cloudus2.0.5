@@ -46,7 +46,7 @@ const res = await conn.query<SalesforceEvent>(
 // --------------------
 function eachDayOfInterval(interval: { start: Date; end: Date }): Date[] {
   const dates: Date[] = [];
-  let current = new Date(interval.start);
+  const current = new Date(interval.start);
   while (current <= interval.end) {
     dates.push(new Date(current));
     current.setDate(current.getDate() + 1);
