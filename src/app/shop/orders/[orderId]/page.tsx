@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation";
 import { useState } from "react";
-
 import { api } from "~/trpc/react";
 import {
   Dialog,
@@ -17,147 +16,67 @@ import Image from "next/image";
 export default function LatestProject() {
   const [open, setOpen] = useState(false);
   const params = useParams();
-  let itemId = 0;
-  let price = 0;
-
-  if (params.orderId) {
-    itemId = parseInt(params.orderId.toString());
-  } else {
-    itemId = 5;
-  }
+  let itemId = params.orderId ? Number(params.orderId) : 5;
 
   const selectedItem = api.shopItem.select.useQuery({ id: itemId });
-  console.log(selectedItem);
   const utils = api.useUtils();
-
-  if (selectedItem.data?.price) {
-    price = selectedItem.data?.price;
-  }
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("");
-  const [contactNumber, setContactNumber] = useState(0);
+  const [type, setType] = useState("1");
+  const [contactNumber, setContactNumber] = useState("");
+
   const createOrder = api.order.create.useMutation({
     onSuccess: async () => {
       await utils.project.invalidate();
       setName("");
       setDescription("");
-      setType("");
+      setType("1");
+      setContactNumber("");
       setOpen(true);
     },
   });
 
   return (
-    <div className="w-full max-w-xl justify-center gap-4 justify-self-center p-2">
-      {selectedItem ? (
+    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 bg-white shadow-md rounded-xl">
+      {/* Selected Item Preview */}
+      {selectedItem.data ? (
         <>
-          <div className="rounded-t-lg bg-gray-500">
-            <h1 className="truncate text-center font-extrabold text-blue-500">
-              Confirm Order:
+          <div className="text-center mb-4">
+            <h1 className="text-xl font-bold text-gray-800">
+              Confirm Order
             </h1>
-            <p className="text-center font-semibold text-white">
-              {selectedItem.data?.name}
-            </p>
+            <p className="text-gray-500">{selectedItem.data.name}</p>
           </div>
 
-          <div className="flex-col justify-between justify-items-center border-y border-y-white py-1">
-            <div className="flex justify-center">
-              <img
-                alt=""
-                src={selectedItem.data?.image}
-                className="size-12 justify-self-center rounded-full bg-slate-400"
+          <div className="flex flex-col items-center gap-3">
+            <img
+              alt={selectedItem.data.name}
+              src={selectedItem.data.image}
+              className="w-16 h-16 rounded-full bg-gray-200 object-cover"
+            />
+            <p className="text-sm text-gray-600 text-center">
+              {selectedItem.data.description}
+            </p>
+            <div className="relative w-full h-52 rounded-lg overflow-hidden">
+              <Image
+                src={selectedItem.data.image}
+                alt="Cloudus Order Item"
+                fill
+                className="object-cover"
               />
             </div>
-            <div>
-              <p className="text-center text-sm">
-                {selectedItem.data?.description}
-              </p>
-            </div>
-            <div className="relative h-52 w-full">
-              {selectedItem.data && (
-                <Image
-                  src={selectedItem.data.image}
-                  alt="Cloudus Order Item"
-                  fill
-                  className="object-cover"
-                ></Image>
-              )}
-            </div>
           </div>
-          <br />
-          <p className="bg-green-500 p-2 font-semibold">
-            Total: R {selectedItem.data?.price}
+
+          <p className="mt-4 rounded-lg bg-green-100 text-green-700 text-center py-2 font-semibold">
+            Total: R {selectedItem.data.price}
           </p>
         </>
       ) : (
-        <p>You have no Orders yet.</p>
+        <p className="text-center text-gray-500">You have no Orders yet.</p>
       )}
-      <br />
-      <div id="order" className="">
-        <Dialog open={open} onClose={setOpen} className="relative z-10">
-          <DialogBackdrop
-            transition
-            className="fixed inset-0 bg-gray-400/75 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
-          />
 
-          <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-              <DialogPanel
-                transition
-                className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95"
-              >
-                <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:size-10">
-                      <CheckIcon
-                        aria-hidden="true"
-                        className="size-6 text-green-600"
-                      />
-                    </div>
-                    <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                      <DialogTitle
-                        as="h3"
-                        className="text-base font-semibold text-gray-900"
-                      >
-                        Order Created Successfully!!!
-                      </DialogTitle>
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-500">
-                          You will Receive a payment Link on the following
-                          information:
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Contact Number: 0{contactNumber}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                  <Link
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    className="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 sm:ml-3 sm:w-auto"
-                    href={"../"}
-                  >
-                    Home
-                  </Link>
-                  <button
-                    type="button"
-                    data-autofocus
-                    onClick={() => setOpen(false)}
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                  >
-                    Close
-                  </button>
-                </div>
-              </DialogPanel>
-            </div>
-          </div>
-        </Dialog>
-      </div>
-      <br />
+      {/* Order Form */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -165,44 +84,49 @@ export default function LatestProject() {
             name,
             description,
             type,
-            contactNumber,
+            contactNumber: Number(contactNumber),
             itemId,
-            price,
+            price: selectedItem.data?.price ?? 0,
           });
         }}
-        className="flex flex-col gap-2"
+        className="mt-6 flex flex-col gap-4"
       >
         <input
           type="text"
           placeholder="Customer Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-full px-4 py-2 text-black"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Additional info"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-full px-4 py-2 text-black"
-        />
-        <p>Contact Number</p>
-        <input
-          type="tel"
-          value={contactNumber}
-          onChange={(e) => setContactNumber(parseInt(e.target.value))}
-          className="w-full rounded-full px-4 py-2 text-black"
+          className="w-full rounded-full border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
           required
         />
 
-        <label htmlFor="">
-          Quantity
+        <textarea
+          placeholder="Additional info"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
+          rows={3}
+        />
+
+        <div>
+          <label className="text-xs text-gray-600">Contact Number</label>
+          <input
+            type="tel"
+            placeholder="WhatsApp Number"
+            value={contactNumber}
+            onChange={(e) => setContactNumber(e.target.value)}
+            className="w-full rounded-full border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-600">Quantity</label>
           <select
             name="OrderType"
-            id="pt"
+            value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full rounded-full px-4 py-2 text-gray-500"
+            className="w-full mt-1 rounded-full border px-4 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-blue-400"
           >
             <option value="1">1</option>
             <option value="5">5</option>
@@ -212,26 +136,67 @@ export default function LatestProject() {
             <option value="1000">1000</option>
             <option value="custom">Custom</option>
           </select>
-        </label>
-        <h1>{type}</h1>
+        </div>
+
         <button
           type="submit"
-          className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700"
+          className="rounded-full bg-blue-500 text-white px-8 py-2 text-sm font-semibold hover:bg-blue-600 transition"
           disabled={createOrder.isPending}
         >
           {createOrder.isPending ? "Submitting Order..." : "Submit"}
         </button>
       </form>
-      <br />
-      <div>
+
+      {/* Back Home */}
+      <div className="mt-4 flex justify-center">
         <Link
-          href={"../"}
-          className="rounded-full bg-gray-400 px-10 py-3 font-semibold transition hover:bg-gray-700"
-         
+          href="../"
+          className="rounded-full bg-gray-400 text-white px-8 py-2 text-sm font-semibold hover:bg-gray-500 transition"
         >
-          {createOrder.isPending ? "Submitting Order..." : "Home"}
+          Home
         </Link>
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={open} onClose={setOpen} className="relative z-10">
+        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white shadow-xl transition-all">
+            <div className="p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <CheckIcon className="h-6 w-6 text-green-600" />
+              </div>
+              <DialogTitle
+                as="h3"
+                className="mt-4 text-lg font-semibold text-gray-900"
+              >
+                Order Created Successfully!
+              </DialogTitle>
+              <p className="mt-2 text-sm text-gray-600">
+                You will receive a payment link on:
+              </p>
+              <p className="text-sm font-medium text-gray-800">
+                Contact: {contactNumber}
+              </p>
+              <div className="mt-6 flex justify-center gap-3">
+                <Link
+                  href="../"
+                  className="rounded-full bg-green-500 text-white px-6 py-2 text-sm font-semibold hover:bg-green-600 transition"
+                >
+                  Home
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full border border-gray-300 bg-white px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </DialogPanel>
+        </div>
+      </Dialog>
     </div>
   );
 }

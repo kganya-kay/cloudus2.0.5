@@ -1,11 +1,6 @@
 import Link from "next/link";
-
-import { LatestPost } from "~/app/_components/post";
-import { LatestProject } from "../_components/project";
-import AllProjects from "~/app/_components/allProjects";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-
 import {
   Disclosure,
   DisclosureButton,
@@ -15,17 +10,49 @@ import {
   MenuItem,
   MenuItems,
 } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, BellIcon } from "@heroicons/react/24/outline";
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  isSameMonth,
+  isSameDay,
+} from "date-fns";
 
+import jsforce from "jsforce";
 
-import jsforce from 'jsforce';
+// --------------------
+// Types
+// --------------------
+interface SalesforceEvent {
+  Id: string;
+  Subject: string;
+  StartDateTime: string;
+}
 
+// --------------------
+// Salesforce query (⚠️ refactor later into TRPC/server)
+// --------------------
 const conn = new jsforce.Connection();
-await conn.login('kganyaomnistudio@gmail.com', '542692kK.')
+await conn.login("kganyaomnistudio@gmail.com", "542692kK.");
+const res = await conn.query<SalesforceEvent>(
+  "SELECT Id, Subject, StartDateTime FROM Event"
+);
 
-const res = await conn.query('SELECT Id, Subject FROM Event')
-console.log(res)
-
+// --------------------
+// Safe fallback for eachDayOfInterval
+// --------------------
+function eachDayOfInterval(interval: { start: Date; end: Date }): Date[] {
+  const dates: Date[] = [];
+  let current = new Date(interval.start);
+  while (current <= interval.end) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+}
 
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
@@ -39,13 +66,19 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+// --------------------
+// Main Component
+// --------------------
 export default async function Home() {
-  const hello = await api.post.hello({ text: "from Cloudus" });
+  await api.post.hello({ text: "from Cloudus" });
   const session = await auth();
+
   const user = {
-    name: session?.user.name,
-    image: "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV",
-    email: session?.user.email,
+    name: session?.user.name ?? "Guest",
+    image:
+      session?.user.image ??
+      "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV",
+    email: session?.user.email ?? "",
   };
 
   const userNavigation = [
@@ -57,210 +90,170 @@ export default async function Home() {
     },
   ];
 
-  if (session?.user) {
-    void api.post.getLatest.prefetch();
-  }
-  if (session?.user.image !== undefined && session?.user.image !== null) {
-    user.image = session?.user.image;
-  }
+  // Calendar helpers
+  const today = new Date();
+  const monthStart = startOfMonth(today);
+  const monthEnd = endOfMonth(today);
+  const days: Date[] = eachDayOfInterval({
+    start: startOfWeek(monthStart),
+    end: endOfWeek(monthEnd),
+  });
+
+  const events: SalesforceEvent[] = res.records;
 
   return (
     <HydrateClient>
-      <>
-        <div className="min-h-full">
-          <Disclosure as="nav" className="sticky top-0 bg-gray-300">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="flex h-16 items-center justify-between">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <img
-                      alt="Cloudus"
-                      src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
-                      className="size-12 rounded-full"
-                    />
+      <div className="min-h-full bg-gray-100">
+        {/* Navbar */}
+        <Disclosure as="nav" className="sticky top-0 z-50 bg-white shadow">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              {/* Logo + nav */}
+              <div className="flex items-center">
+                <Link href="./">
+                  <img
+                    alt="Cloudus"
+                    src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+                    className="h-10 w-10 rounded-full"
+                  />
+                </Link>
+                <div className="hidden md:block ml-10">
+                  <div className="flex space-x-4">
+                    {navigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={classNames(
+                          item.current
+                            ? "bg-blue-500 text-white"
+                            : "text-gray-700 hover:bg-blue-100",
+                          "rounded-md px-3 py-2 text-sm font-medium transition"
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
                   </div>
-                  <div className="hidden md:block">
-                    <div className="ml-10 flex items-baseline space-x-4">
-                      {navigation.map((item) => (
-                        <Link
-                          key={item.name}
+                </div>
+              </div>
+
+              {/* Profile dropdown */}
+              <div className="hidden md:flex items-center gap-4">
+                <button className="rounded-full bg-gray-100 p-2 text-gray-600 hover:text-blue-500">
+                  <BellIcon className="h-6 w-6" />
+                </button>
+                <Menu as="div" className="relative">
+                  <MenuButton className="flex items-center rounded-full bg-gray-100">
+                    <img src={user.image} alt="" className="h-8 w-8 rounded-full" />
+                  </MenuButton>
+                  <MenuItems className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md">
+                    {userNavigation.map((item) => (
+                      <MenuItem key={item.name}>
+                        <a
                           href={item.href}
-                          aria-current={item.current ? "page" : undefined}
-                          className={classNames(
-                            item.current
-                              ? "bg-gray-900 text-white"
-                              : "text-gray-500 hover:bg-gray-700 hover:text-white",
-                            "rounded-md px-3 py-2 text-sm font-medium",
-                          )}
+                          className="block px-4 py-2 text-sm hover:bg-blue-50"
                         >
                           {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="hidden md:block">
-                  <div className="ml-4 flex items-center md:ml-6">
-                    <button
-                      type="button"
-                      className="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                    >
-                      <span className="absolute -inset-1.5" />
-                      <span className="sr-only">View notifications</span>
-                      <BellIcon aria-hidden="true" className="size-6" />
-                    </button>
+                        </a>
+                      </MenuItem>
+                    ))}
+                  </MenuItems>
+                </Menu>
+              </div>
 
-                    {/* Profile dropdown */}
-                    <Menu as="div" className="relative ml-3">
-                      <div>
-                        <MenuButton className="relative flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                          <span className="absolute -inset-1.5" />
-                          <span className="sr-only">Open user menu</span>
-                          <img
-                            alt=""
-                            src={user.image}
-                            className="size-8 rounded-full"
-                          />
-                        </MenuButton>
-                      </div>
-                      <MenuItems
-                        transition
-                        className="absolute right-0 z-10 mt-24 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
-                      >
-                        {userNavigation.map((item) => (
-                          <MenuItem key={item.name}>
-                            <a
-                              href={item.href}
-                              className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-                            >
-                              {item.name}
-                            </a>
-                          </MenuItem>
-                        ))}
-                      </MenuItems>
-                    </Menu>
-                  </div>
-                </div>
-                <div className="-mr-2 flex md:hidden">
-                  {/* Mobile menu button */}
-                  <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                    <span className="absolute -inset-0.5" />
-                    <span className="sr-only">Open main menu</span>
-                    <Bars3Icon
-                      aria-hidden="true"
-                      className="block size-6 group-data-[open]:hidden"
-                    />
-                    <XMarkIcon
-                      aria-hidden="true"
-                      className="hidden size-6 group-data-[open]:block"
-                    />
-                  </DisclosureButton>
-                </div>
+              {/* Mobile menu */}
+              <div className="flex md:hidden">
+                <DisclosureButton className="rounded-md bg-gray-100 p-2 text-gray-600 hover:bg-blue-100 hover:text-blue-600">
+                  <Bars3Icon className="h-6 w-6" />
+                </DisclosureButton>
               </div>
             </div>
+          </div>
+        </Disclosure>
 
-            <DisclosurePanel className="md:hidden">
-              <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-                {navigation.map((item) => (
-                  <DisclosureButton
-                    key={item.name}
-                    as="a"
-                    href={item.href}
-                    aria-current={item.current ? "page" : undefined}
-                    className={classNames(
-                      item.current
-                        ? "bg-gray-900 text-white"
-                        : "text-gray-600 hover:bg-gray-700 hover:text-white",
-                      "block rounded-md px-3 py-2 text-base font-medium",
-                    )}
-                  >
-                    {item.name}
-                  </DisclosureButton>
+        {/* Header */}
+        <header className="bg-white shadow">
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <h1 className="text-3xl font-bold text-gray-800">Calendar & Events</h1>
+            <p className="text-gray-500">
+              Track meetings, standups, and Salesforce deadlines
+            </p>
+          </div>
+        </header>
+
+        {/* Main */}
+        <main className="min-h-screen bg-gray-100">
+          <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Calendar grid */}
+            <div className="bg-white rounded-xl shadow-md p-4 lg:col-span-2">
+              <h2 className="text-lg font-semibold text-gray-700 mb-4">
+                {format(today, "MMMM yyyy")}
+              </h2>
+              <div className="grid grid-cols-7 gap-2 text-center text-sm font-medium text-gray-600">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                  <div key={d}>{d}</div>
                 ))}
               </div>
-              <div className="border-t border-gray-700 pb-3 pt-4">
-                <div className="flex items-center px-5">
-                  <div className="shrink-0">
-                    <img
-                      alt=""
-                      src={user.image}
-                      className="size-10 rounded-full"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-base/5 font-medium text-white">
-                      {user.name}
-                    </div>
-                    <div className="text-sm font-medium text-gray-400">
-                      {user.email}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="relative ml-auto shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                  >
-                    <span className="absolute -inset-1.5" />
-                    <span className="sr-only">View notifications</span>
-                    <BellIcon aria-hidden="true" className="size-6" />
-                  </button>
-                </div>
-                <div className="mt-3 space-y-1 px-2">
-                  {userNavigation.map((item) => (
-                    <DisclosureButton
-                      key={item.name}
-                      as="a"
-                      href={item.href}
-                      className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
+              <div className="grid grid-cols-7 gap-2 mt-2">
+                {days.map((day: Date) => {
+                  const dayEvents = events.filter((e) =>
+                    isSameDay(new Date(e.StartDateTime), day)
+                  );
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={classNames(
+                        "h-20 rounded-md border flex flex-col items-center justify-start p-1 text-xs",
+                        isSameMonth(day, today)
+                          ? "bg-gray-50 text-gray-800"
+                          : "bg-gray-100 text-gray-400"
+                      )}
                     >
-                      {item.name}
-                    </DisclosureButton>
-                  ))}
-                </div>
-              </div>
-            </DisclosurePanel>
-            <header className="sticky top-16 bg-white shadow">
-              <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                <h1 className="text-3xl font-bold tracking-tight text-gray-700">
-                  Calendar & Events
-                </h1>
-              </div>
-            </header>
-          </Disclosure>
-
-          <main className="flex min-h-screen flex-col items-center justify-center bg-gray-200 text-white">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-              
-              <div className="overflow-hidden bg-white shadow sm:rounded-lg">
-                <div className="px-4 py-5 sm:px-6">
-                  <h2 className="text-lg font-medium leading-6 text-gray-900">
-                    Upcoming Events
-                  </h2>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    A list of all your upcoming events.
-                  </p>
-                </div>
-                <div className="border-t border-gray-200">
-                  <dl>
-                    {res.records.map((record) => (
-                      <div
-                        key={record.Id}
-                        className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
-                      >
-                        <dt className="text-sm font-medium text-gray-500">
-                          {record.Subject}
-                        </dt>
-                        <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                          {record.Id}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
+                      <span className="font-semibold">{format(day, "d")}</span>
+                      {dayEvents.map((ev) => (
+                        <span
+                          key={ev.Id}
+                          className="mt-1 w-full truncate rounded bg-blue-100 text-blue-700 px-1"
+                        >
+                          {ev.Subject}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </main>
-        </div>
-      </>
+
+            {/* Timeline */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <h2 className="text-lg font-semibold text-gray-700 mb-4">
+                Upcoming Timeline
+              </h2>
+              <ul role="list" className="space-y-4">
+                {events
+                  .sort(
+                    (a, b) =>
+                      new Date(a.StartDateTime).getTime() -
+                      new Date(b.StartDateTime).getTime()
+                  )
+                  .map((record) => (
+                    <li key={record.Id} className="flex items-start">
+                      <div className="flex-shrink-0 h-2 w-2 mt-2 rounded-full bg-blue-500" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-800">
+                          {record.Subject}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {format(new Date(record.StartDateTime), "EEE, MMM d • h:mm a")}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          </div>
+        </main>
+      </div>
     </HydrateClient>
   );
 }
