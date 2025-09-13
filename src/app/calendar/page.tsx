@@ -60,6 +60,7 @@ const navigation = [
   { name: "Projects", href: "/projects", current: false },
   { name: "Team", href: "/team", current: false },
   { name: "Calendar", href: "/calendar", current: true },
+  { name: "Careers", href: "/careers", current: false },
 ];
 
 function classNames(...classes: string[]) {

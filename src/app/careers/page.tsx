@@ -1,15 +1,6 @@
 import Link from "next/link";
-import { LatestPost } from "~/app/_components/post";
-import { LatestProject } from "./_components/project";
-import AllProjects from "./_components/allProjects";
-import OpenProjectsCard from "./_components/openProjectsCard";
-import ShopCard from "./_components/shopCard";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-import Button from "@mui/material/Button";
-import NewLead from "./_components/newLead";
-import GetWebApplication from "./_components/getWebApplication";
-import TechDest from "./_components/techDest";
 import {
   Disclosure,
   DisclosureButton,
@@ -19,19 +10,17 @@ import {
   MenuItem,
   MenuItems,
 } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import AllPublicProjects from "./_components/allPublicProjects";
-import Special from "./_components/specials";
-import Video from "./_components/video";
-import NewProductFlow from "./_components/newProductFlow";
+import { Bars3Icon, BellIcon } from "@heroicons/react/24/outline";
+import { Button } from "@mui/material";
+import AllProjects from "~/app/_components/allProjects";
 
 const navigation = [
-  { name: "Dashboard", href: "./", current: true },
+  { name: "Dashboard", href: "./", current: false },
   { name: "Shop", href: "/shop", current: false },
   { name: "Projects", href: "/projects", current: false },
   { name: "Team", href: "/team", current: false },
   { name: "Calendar", href: "/calendar", current: false },
-  { name: "Careers", href: "/careers", current: false },
+  { name: "Careers", href: "/careers", current: true },
 ];
 
 function classNames(...classes: string[]) {
@@ -39,20 +28,20 @@ function classNames(...classes: string[]) {
 }
 
 export default async function Home() {
-  const hello = await api.post.hello({ text: "from Cloudus" });
+  await api.post.hello({ text: "from Cloudus" });
   const session = await auth();
+
   const user = {
-    name: session?.user.name,
+    name: session?.user.name ?? "Guest",
     image:
       session?.user.image ??
       "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV",
-    email: session?.user.email,
+    email: session?.user.email ?? "",
   };
 
   const userNavigation = [
     { name: "Your Profile", href: "#" },
     { name: "Settings", href: "#" },
-    { name: "Admin", href: "/admin" },
     {
       name: session ? "Sign out" : "Sign In",
       href: session ? "/api/auth/signout" : "/api/auth/signin",
@@ -70,7 +59,7 @@ export default async function Home() {
         <Disclosure as="nav" className="sticky top-0 z-50 bg-white shadow">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
-              {/* Logo & navigation */}
+              {/* Logo & Nav */}
               <div className="flex items-center">
                 <Link href="./">
                   <img
@@ -107,7 +96,7 @@ export default async function Home() {
                   className="relative rounded-full bg-gray-100 p-2 text-gray-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <span className="sr-only">View notifications</span>
-                  <BellIcon aria-hidden="true" className="h-6 w-6" />
+                  <BellIcon className="h-6 w-6" />
                 </button>
 
                 {/* Profile dropdown */}
@@ -133,13 +122,13 @@ export default async function Home() {
               {/* Mobile menu button */}
               <div className="flex md:hidden">
                 <DisclosureButton className="rounded-md bg-gray-100 p-2 text-gray-600 hover:bg-blue-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                  <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+                  <Bars3Icon className="h-6 w-6" />
                 </DisclosureButton>
               </div>
             </div>
           </div>
 
-          {/* Mobile navigation */}
+          {/* Mobile Nav */}
           <DisclosurePanel className="md:hidden bg-white shadow">
             <div className="space-y-1 px-2 pb-3 pt-2">
               {navigation.map((item) => (
@@ -184,57 +173,37 @@ export default async function Home() {
 
         {/* Page header */}
         <header className="bg-white shadow">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-            <p className="text-gray-500">Welcome {user.name}</p>
+          <div className="mx-auto flex max-w-7xl justify-between items-center px-4 py-6 sm:px-6 lg:px-8">
+            <h1 className="text-3xl font-bold text-gray-800">Projects</h1>
+            <Button
+              variant="contained"
+              href={session ? "./projects/create" : "./api/auth/signin"}
+              className="rounded-full bg-blue-500 text-white hover:bg-blue-600 transition"
+            >
+              {session ? "Add Project" : "Sign In"}
+            </Button>
           </div>
         </header>
 
         {/* Main content */}
-        <main className="min-h-screen bg-gray-100 text-gray-900">
-          <div className="flex flex-col gap-6 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="bg-white rounded-xl shadow-md p-4">
-              <GetWebApplication />
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-4">
-              <TechDest />
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-4">
-              <NewProductFlow />
-            </div>
-
-            <Special />
-
-            <div className="bg-white rounded-xl shadow-md p-4">
-              <AllPublicProjects />
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-4">
-              <NewLead />
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-4 flex justify-center">
-              <Video />
-            </div>
-
-            {/* Floating button */}
-            <div className="flex justify-center">
-              {session ? (
-                <Button
-                  href="./projects/create"
-                  className="rounded-full bg-blue-500 text-white px-6 py-2 hover:bg-blue-600 transition"
-                >
-                  + New Project
-                </Button>
+        <main className="min-h-screen bg-gray-100">
+          <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-xl shadow-md p-6">
+              {session?.user ? (
+                <AllProjects />
               ) : (
-                <Button
-                  href="/api/auth/signin"
-                  className="rounded-full bg-gray-500 text-white px-6 py-2 hover:bg-gray-600 transition"
-                >
-                  Login
-                </Button>
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold text-gray-700">
+                    Sign in to view projects
+                  </h2>
+                  <Button
+                    href="/api/auth/signin"
+                    variant="contained"
+                    className="mt-4 rounded-full bg-blue-500 text-white hover:bg-blue-600"
+                  >
+                    Sign In
+                  </Button>
+                </div>
               )}
             </div>
           </div>

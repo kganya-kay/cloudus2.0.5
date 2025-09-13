@@ -20,6 +20,7 @@ const navigation = [
   { name: "Projects", href: "/projects", current: true },
   { name: "Team", href: "/team", current: false },
   { name: "Calendar", href: "/calendar", current: false },
+  { name: "Careers", href: "/careers", current: false },
 ];
 
 function classNames(...classes: string[]) {
