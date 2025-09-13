@@ -1,4 +1,4 @@
-
+// lib/jobs.ts
 export type Job = {
   id: string;
   slug: string;
@@ -12,40 +12,40 @@ export type Job = {
 
 export const jobs: Job[] = [
   {
-    id: "sf-dev-1",
-    slug: "sf-dev-1",
-    title: "Salesforce Developer (Junior)",
-    type: "Full-time",
-    location: "Johannesburg • Hybrid",
-    tags: ["Salesforce", "Apex", "LWC"],
-    summary:
-      "Build LWC/Apex features, automate deployments (Copado), and help implement client portals.",
-    description:
-      "You’ll collaborate with consultants and front-end engineers to deliver secure, scalable features in Salesforce (Apex/LWC). Responsibilities include writing tests, CI/CD (Copado), and onboarding to new client orgs."
-  },
-  {
-    id: "fullstack-2",
-    slug: "fullstack-2",
-    title: "Full-Stack Engineer (Next.js)",
-    type: "Contract / Remote",
-    location: "Remote",
-    tags: ["Next.js", "TypeScript", "Prisma"],
-    summary:
-      "Ship modern web apps on the T3 stack, integrate payments and external APIs.",
-    description:
-      "Own features across the stack with Next.js, tRPC, Prisma, and Tailwind. Work closely with design, implement integrations, and maintain quality with tests and code reviews."
-  },
-  {
-    id: "crm-consult-1",
-    slug: "crm-consult-1",
-    title: "CRM Consultant (Salesforce)",
-    type: "Part-time",
+    id: "ops-caretaker-1",
+    slug: "local-business-caretaker",
+    title: "Local Business Caretaker",
+    type: "Full-time • On-site",
     location: "Johannesburg • On-site",
-    tags: ["Sales Cloud", "App Builder", "Workflows"],
+    tags: ["Operations", "Laundry", "Customer Service", "POS"],
     summary:
-      "Run discoveries, design scalable orgs, and guide clients through best practices.",
+      "Own day-to-day operations: open/close, record sales, run the laundry service, and serve clients end-to-end.",
     description:
-      "Lead client workshops, design data models and automation, and ensure governance/best practices. Prepare solution docs and support delivery teams through go-live."
+      "Responsibilities: open and close the shop, operate POS and record daily sales, manage cash-up and reconciliation, run the laundry workflow (intake, tagging, washing/drying/pressing, pickups/collections), handle walk-ins/phone/WhatsApp queries, perform stock checks and basic re-ordering, keep the premises tidy, and prepare simple weekly performance reports. Requirements: reliable transport, strong people skills, basic computer literacy (spreadsheets, WhatsApp), comfort working some weekends/public holidays."
+  },
+  {
+    id: "sf-dev-mid-1",
+    slug: "salesforce-developer-intermediate",
+    title: "Salesforce Developer (Intermediate)",
+    type: "Full-time • Hybrid",
+    location: "Johannesburg • Hybrid",
+    tags: ["Salesforce", "Apex", "LWC", "SOQL", "PD1"],
+    summary:
+      "Build high-quality features in Apex/LWC, contribute tests, and support releases with CI/CD.",
+    description:
+      "Responsibilities: implement features in Apex, LWC, and Flows; write unit tests with meaningful coverage; optimize SOQL and governor limits; collaborate with consultants/UX; participate in code reviews; assist with CI/CD (e.g., Copado/Git). Requirements: 2–4 years Salesforce dev experience, strong Apex/LWC fundamentals, solid SOQL/Async knowledge, Git familiarity, Platform Developer I preferred (or equivalent experience). Nice to have: App Builder, integration exposure (REST/Platform Events)."
+  },
+  {
+    id: "sf-dev-sen-1",
+    slug: "salesforce-developer-senior",
+    title: "Senior Salesforce Developer",
+    type: "Full-time • Hybrid/Remote",
+    location: "Johannesburg • Hybrid/Remote",
+    tags: ["Salesforce", "Apex", "LWC", "Architecture", "Integrations", "PDII"],
+    summary:
+      "Lead complex delivery across Sales/Service Cloud, design integrations and patterns, and mentor the team.",
+    description:
+      "Responsibilities: own technical design and implementation for complex epics; architect scalable data models and integration patterns (Apex, LWC, Platform Events, External Services); enforce code quality and testing practices; guide reviews and mentor developers; collaborate with architects and product leads; contribute to release planning and risk management. Requirements: 5+ years Salesforce engineering, deep Apex/LWC expertise, strong integration experience, proven leadership/mentorship. Nice to have: Platform Developer II, App Builder, OmniStudio or CTA track exposure."
   }
 ];
 
