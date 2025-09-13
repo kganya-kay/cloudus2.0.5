@@ -73,7 +73,7 @@ export default function Special() {
                 className="rounded-md bg-green-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
                 aria-label="Chat with Cloudus Digital on WhatsApp"
               >
-                WhatsApp 064&nbsp;020&nbsp;4765
+                WhatsApp Us
               </a>
             </div>
           </div>
