@@ -54,7 +54,7 @@ export default function AllProjects() {
               </div>
               <div className="min-w-0">
                 <p className="rounded-se-xl bg-red-500 px-1 text-sm/6 font-semibold">
-                  Project Status: {project.status}
+                  {project.status}
                 </p>
 
                 <p className="rounded-xs bg-green-500 px-1 text-xs font-semibold my-2">
