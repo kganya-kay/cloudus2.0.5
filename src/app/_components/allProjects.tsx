@@ -29,9 +29,7 @@ export default function AllProjects() {
                 />
               </div>
               <div className="min-w-0">
-                <p className="rounded-se-xl bg-red-500 px-1 text-sm/6 font-semibold">
-                  Project Budget: R {project.price}
-                </p>
+                <p className="text-sm font-medium text-gray-900">{project.status}</p>
 
                 <p className="text-sm/6 font-semibold text-gray-900">
                   {project.type}
