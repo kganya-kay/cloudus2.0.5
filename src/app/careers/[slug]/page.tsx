@@ -1,26 +1,33 @@
 // app/careers/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { jobs, getJobBySlug } from "./../../lib/jobs";
+import { jobs, getJobBySlug } from "../../lib/jobs";
 import Link from "next/link";
 
 type Params = { slug: string };
 
-export function generateStaticParams() {
+// prebuild slugs (ok to keep)
+export function generateStaticParams(): { slug: string }[] {
   return jobs.map((j) => ({ slug: j.slug }));
 }
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
-  const job = getJobBySlug(params.slug);
-  if (!job) return { title: "Job not found – Cloudus Careers" };
-  return {
-    title: `${job.title} – Cloudus Careers`,
-    description: job.summary
-  };
+// metadata with async params
+export async function generateMetadata(
+  { params }: { params: Promise<Params> }
+): Promise<Metadata> {
+  const { slug } = await params;
+  const job = getJobBySlug(slug);
+  return job
+    ? { title: `${job.title} – Cloudus Careers`, description: job.summary }
+    : { title: "Job not found – Cloudus Careers" };
 }
 
-export default function JobPage({ params }: { params: Params }) {
-  const job = getJobBySlug(params.slug);
+// page with async params
+export default async function JobPage(
+  { params }: { params: Promise<Params> }
+) {
+  const { slug } = await params;
+  const job = getJobBySlug(slug);
   if (!job) return notFound();
 
   const mailSubject = encodeURIComponent(`Application: ${job.title}`);
@@ -57,10 +64,7 @@ export default function JobPage({ params }: { params: Params }) {
 
           <div className="mt-4 flex flex-wrap gap-2">
             {job.tags.map((t) => (
-              <span
-                key={t}
-                className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700"
-              >
+              <span key={t} className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">
                 {t}
               </span>
             ))}
@@ -85,7 +89,6 @@ export default function JobPage({ params }: { params: Params }) {
         </div>
       </div>
 
-      {/* SEO: JobPosting structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
