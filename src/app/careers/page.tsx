@@ -99,9 +99,7 @@ export default function CareersPage() {
                                 <MenuButton className="flex items-center rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
                                     <img alt="" src={user.image} className="h-8 w-8 rounded-full" />
                                 </MenuButton>
-                                import Link from "next/link";
-
-                                // ...
+                               
                                 <MenuItems className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
                                     {userNavigation.map((item) => (
                                         <MenuItem key={item.name}>
@@ -255,12 +253,9 @@ export default function CareersPage() {
                                     Follow us and check back soon — we post new opportunities regularly.
                                 </p>
                                 <div className="mt-4">
-                                    <a
-                                        href="/api/auth/signin"
-                                        className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                                    >
-                                        Sign in to post a job
-                                    </a>
+                                    <Link href="/api/auth/signin" className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                                        Sign in
+                                    </Link>
                                 </div>
                             </div>
                         )}

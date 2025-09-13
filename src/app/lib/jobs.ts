@@ -1,4 +1,4 @@
-// lib/jobs.ts
+
 export type Job = {
   id: string;
   slug: string;
