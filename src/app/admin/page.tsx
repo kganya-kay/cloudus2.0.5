@@ -14,6 +14,7 @@ import {
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import AllUsers from "../_components/allUsers";
+import AllOrders from "../_components/allOrders";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: true },
@@ -221,11 +222,13 @@ export default async function Home() {
             <div className="flex-col justify-around">
               <div className="py-3">
                 {user.email == "kganyakekana@gmail.com" ? (
+
                   <div className="flex justify-between">
-                    <div className="max-w-screen-lg justify-self-center">
-                      {session && <AllUsers />}
+                    <div className="full max-w-screen-lg justify-self-center">
+                      {session && <AllOrders />}
                     </div>
-                    <div className="max-w-screen-lg justify-self-center">
+                    <br />
+                    <div className="full max-w-screen-lg justify-self-center">
                       {session && <AllUsers />}
                     </div>
                   </div>
