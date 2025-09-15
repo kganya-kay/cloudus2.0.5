@@ -19,13 +19,16 @@ export default function AllProjects() {
           > 
             <div className="bg-slate-400 mb-3 rounded-sm">
               <p className=" text-center text-sm text-white font-bold">{order.name}</p>
+              <p className=" text-center text-xs text-white">{order.description}</p>
+                <p className=" text-center text-xs text-white font-bold">Price: ${order.price}</p>
+                <p className=" text-center text-xs text-white font-bold">for product ID: {order.createdForId}</p>
             </div>
             <div className="flex justify-between">
               <div className="min-w-0">
                 {order.image ? <img
                   alt=""
-                  src={order.image}
-                  className="size-12 flex-none rounded-full"
+                  src={order.links[0]}
+                  className="size-40 flex-none rounded-full"
                 />: " "}
                 
               </div>
@@ -42,9 +45,9 @@ export default function AllProjects() {
                 }}
                 variant="contained"
                 className="w-full bg-slate-400"
-                href={`user/${order.id}`}
+                href={`order/${order.id}`}
               >
-                View User
+                View Order
               </Button>
             </div>
 

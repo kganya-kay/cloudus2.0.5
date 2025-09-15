@@ -223,7 +223,7 @@ export default async function Home() {
               <div className="py-3">
                 {user.email == "kganyakekana@gmail.com" ? (
 
-                  <div className="flex justify-between">
+                  <div className="bg-gray-200 p-2 text-black">
                     <div className="full max-w-screen-lg justify-self-center">
                       {session && <AllOrders />}
                     </div>
