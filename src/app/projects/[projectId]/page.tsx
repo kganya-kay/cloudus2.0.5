@@ -10,6 +10,22 @@ import { api } from "~/trpc/react";
 import { IconButton } from "@mui/material";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
+
+// Helper: safely extract a usable URL from UploadThing's callback result
+function getUploadedUrl(files: unknown): string | undefined {
+  if (!Array.isArray(files) || files.length === 0) return undefined;
+  const f = files[0] as Record<string, unknown>;
+  const pick = (v: unknown) => (typeof v === "string" && v.trim().length > 0 ? v : undefined);
+  // Try common shapes:
+  return (
+    pick(f.url) ??
+    pick(f.ufsUrl) ??
+    pick((f.serverData as Record<string, unknown> | undefined)?.url) ??
+    (pick(f.key) ? `https://utfs.io/f/${String(f.key)}` : undefined)
+  );
+}
+
+
 /* ------------------------- Inline edit components ------------------------- */
 
 function InlineEditText({
@@ -466,34 +482,63 @@ export default function LatestProject() {
             </div>
           </div>
 
-          {/* Media */}
+          {/* --- Project Media (replace your existing block with this) --- */}
           <div className="mt-6">
-            <p className="text-sm font-semibold text-blue-500 mb-2">Project Media</p>
+            <p className="mb-2 text-sm font-semibold text-blue-500">Project Media</p>
+
             <div className="flex gap-2 overflow-x-auto rounded-lg bg-gray-50 p-2">
-              {p.links?.length ? (
+              {p?.links?.length ? (
                 p.links.map((media, index) => (
                   <img
                     key={index}
                     src={media}
-                    className="w-20 h-20 object-cover rounded-md border"
-                    alt="Project media"
+                    className="h-20 w-20 rounded-md border object-cover"
+                    alt={`Project media ${index + 1}`}
                   />
                 ))
               ) : (
                 <p className="text-xs text-gray-500">No media uploaded</p>
               )}
             </div>
-            <div className="mt-2">
-              <UploadButton<OurFileRouter, "imageUploader">
-                endpoint="imageUploader"
-                onClientUploadComplete={() => {
-                  // After you save the new image/links to the DB, invalidate:
-                  void utils.project.select.invalidate({ id: p.id });
-                }}
-                onUploadError={(error: Error) =>
-                  alert(`❌ ERROR! ${error.message}`)
-                }
-              />
+
+            {/* Upload actions */}
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {/* Replace Cover Image */}
+              <div className="rounded-lg border bg-white p-3">
+                <p className="mb-2 text-xs font-medium text-gray-700">Replace cover image</p>
+                <UploadButton<OurFileRouter, "imageUploader">
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(files) => {
+                    const url = getUploadedUrl(files);
+                    if (!url || !p) {
+                      alert("Upload completed, but no URL found.");
+                      return;
+                    }
+                    // ⬇️ Set the main cover image
+                    updateProject.mutate({ id: p.id, data: { image: url } });
+                  }}
+                  onUploadError={(error: Error) => alert(`❌ ERROR! ${error.message}`)}
+                />
+              </div>
+
+              {/* Add Gallery Image */}
+              <div className="rounded-lg border bg-white p-3">
+                <p className="mb-2 text-xs font-medium text-gray-700">Add to gallery</p>
+                <UploadButton<OurFileRouter, "imageUploader">
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(files) => {
+                    const url = getUploadedUrl(files);
+                    if (!url || !p) {
+                      alert("Upload completed, but no URL found.");
+                      return;
+                    }
+                    // ⬇️ Append to links[] gallery (keeps existing images)
+                    const newLinks = Array.isArray(p.links) ? [...p.links, url] : [url];
+                    updateProject.mutate({ id: p.id, data: { links: newLinks } });
+                  }}
+                  onUploadError={(error: Error) => alert(`❌ ERROR! ${error.message}`)}
+                />
+              </div>
             </div>
           </div>
 
