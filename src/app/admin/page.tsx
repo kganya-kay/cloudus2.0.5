@@ -225,6 +225,7 @@ export default async function Home() {
 
                   <div className="bg-gray-200 p-2 text-black">
                     <div className="full max-w-screen-lg justify-self-center">
+                      <p>Orders</p>
                       {session && <AllOrders />}
                     </div>
                     <br />
