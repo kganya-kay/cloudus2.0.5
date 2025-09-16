@@ -5,11 +5,38 @@ import { useMemo } from "react";
 import { Button, Chip } from "@mui/material";
 import { api } from "~/trpc/react";
 
-/**
- * Format price for South Africa (ZAR).
- */
-function formatZAR(amount: number | null | undefined) {
-  if (amount == null) return "R —";
+type RawShopItem = {
+  type: string;
+  link: string;
+  name: string;
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+  createdById: string;
+  price: number;
+  description: string;
+  image: string;
+  count: number;
+  links: string[];
+  api: string;
+  orderId: number;
+};
+
+type RenderItem = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  links: string[];
+  count: number;
+  badges: string[];
+  _hero: string;
+  _thumbs: string[];
+};
+
+/** Format price for South Africa (ZAR). */
+function formatZAR(amount: number) {
   try {
     return new Intl.NumberFormat("en-ZA", {
       style: "currency",
@@ -21,14 +48,14 @@ function formatZAR(amount: number | null | undefined) {
   }
 }
 
-/**
- * Pick the first usable image (primary, then extras). Falls back to a neutral placeholder.
- */
-function firstValidImage(primary?: string | null, extras?: string[]) {
-  const candidates = [primary, ...(extras ?? [])].filter(Boolean) as string[];
+/** First usable image (primary, then extras) with a safe placeholder. */
+function firstValidImage(primary: string | null | undefined, extras: string[] | undefined) {
+  const candidates: string[] = [];
+  if (primary) candidates.push(primary);
+  if (extras && extras.length) candidates.push(...extras.filter(Boolean));
   return (
     candidates[0] ??
-    // simple light placeholder — replace with your brand image if you want
+    // Neutral SVG placeholder (replace with your brand image if you prefer)
     "data:image/svg+xml;utf8," +
       encodeURIComponent(
         `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='600'>
@@ -40,38 +67,31 @@ function firstValidImage(primary?: string | null, extras?: string[]) {
   );
 }
 
-/**
- * Optional: convert backend "type" / "api" into a clean badge.
- * Examples:
- *  - type: "Service" -> "Service"
- *  - type: "Product" -> "Product"
- *  - api present (community/partner listing) -> "Community Supplier"
- */
-function computeBadges(p: any): string[] {
+/** Convert backend fields into storefront badges. */
+function computeBadges(p: RawShopItem): string[] {
   const badges: string[] = [];
-  if (p?.type) badges.push(String(p.type));
-  if (p?.api) badges.push("Community Supplier");
+  if (p.type) badges.push(p.type); // e.g. "Product", "Service", "Bundle"
+  if (p.api) badges.push("Community Supplier"); // mark marketplace listings
   return badges;
 }
 
 export default function AllShopItems() {
-  // ✅ Let TRPC infer the exact return type (no generic here)
-  const [allShopItems] = api.shopItem.getAll.useSuspenseQuery();
+  // ✅ Use your exact item type so there’s no drift or `any` usage
+  const [allShopItems] = api.shopItem.getAll.useSuspenseQuery<RawShopItem[]>();
 
-  // Build a lightweight view model strictly for rendering the UI
-  const items = useMemo(
+  const items = useMemo<RenderItem[]>(
     () =>
-      (allShopItems ?? []).map((p: any) => {
+      allShopItems.map((p) => {
         const hero = firstValidImage(p.image, p.links);
         const thumbs = (p.links ?? []).slice(0, 3).filter(Boolean);
         return {
-          id: p.id as string | number,
-          name: p.name as string,
-          description: (p.description as string) ?? "",
-          price: p.price as number,
-          image: p.image as string | null,
-          links: p.links as string[] | undefined,
-          count: (p.count as number) ?? null, // stock qty if you track it
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          image: p.image,
+          links: p.links,
+          count: p.count,
           badges: computeBadges(p),
           _hero: hero,
           _thumbs: thumbs,
@@ -85,30 +105,24 @@ export default function AllShopItems() {
       {/* Header */}
       <header className="mb-6 flex flex-col items-start justify-between gap-3 sm:mb-8 sm:flex-row sm:items-end">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-            Cloudus Shop
-          </h2>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">Cloudus Shop</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Hardware, software, and professional services — plus community-supplier
-            offerings — all powered by Cloudus.
+            Hardware, software, and professional services — plus{" "}
+            <span className="font-medium">community-supplier</span> offerings — all powered by
+            Cloudus.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Chip
-            label={`${items.length} ${items.length === 1 ? "item" : "items"}`}
-            color="primary"
-            variant="outlined"
-            className="!border-blue-500 !text-blue-600"
-          />
-        </div>
+        <Chip
+          label={`${items.length} ${items.length === 1 ? "item" : "items"}`}
+          color="primary"
+          variant="outlined"
+          className="!border-blue-500 !text-blue-600"
+        />
       </header>
 
       {/* Grid */}
-      <ul
-        role="list"
-        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <li
             key={item.id}
@@ -127,11 +141,11 @@ export default function AllShopItems() {
                 {formatZAR(item.price)}
               </div>
 
-              {/* Badges (type, community supplier, etc.) */}
+              {/* Badges */}
               <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1">
                 {item.badges.map((b) => (
                   <span
-                    key={b}
+                    key={`${item.id}-${b}`}
                     className="rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white"
                   >
                     {b}
@@ -143,11 +157,8 @@ export default function AllShopItems() {
             {/* Content */}
             <div className="flex flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-4">
-                <h3 className="line-clamp-2 text-base font-semibold text-gray-900">
-                  {item.name}
-                </h3>
-                {/* Optional stock chip */}
-                {item.count != null && (
+                <h3 className="line-clamp-2 text-base font-semibold text-gray-900">{item.name}</h3>
+                {Number.isFinite(item.count) && (
                   <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
                     {item.count} in stock
                   </span>
@@ -159,9 +170,9 @@ export default function AllShopItems() {
               </p>
 
               {/* Thumbnails */}
-              {!!item._thumbs.length && (
+              {item._thumbs.length > 0 && (
                 <div className="mt-1 flex gap-2">
-                  {item._thumbs.map((src: string | undefined, i: number) => (
+                  {item._thumbs.map((src, i) => (
                     <img
                       key={`${item.id}-thumb-${i}`}
                       src={src}
@@ -175,19 +186,13 @@ export default function AllShopItems() {
               {/* CTAs */}
               <div className="mt-1 grid grid-cols-2 gap-2">
                 <Button
-                  component={Link as any}
                   href={`/shop/orders/${item.id}`}
                   variant="contained"
                   className="!rounded-xl !bg-blue-600 !py-2 !text-white hover:!bg-blue-700"
                 >
                   Order now
                 </Button>
-                <Button
-                  component={Link as any}
-                  href={`/shop/item/${item.id}`}
-                  variant="outlined"
-                  className="!rounded-xl"
-                >
+                <Button href={`/shop/item/${item.id}`} variant="outlined" className="!rounded-xl">
                   Details
                 </Button>
               </div>
@@ -199,16 +204,12 @@ export default function AllShopItems() {
         ))}
       </ul>
 
-      {/* Marketplace footer banner */}
+      {/* Marketplace banner */}
       <div className="mx-auto mt-10 max-w-3xl rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-5 text-center ring-1 ring-blue-100">
         <p className="text-sm text-gray-700">
-          Are you a supplier? Join the{" "}
-          <span className="font-semibold">Cloudus Marketplace</span> to list your
-          products or services and reach more customers.{" "}
-          <Link
-            href="/suppliers/apply"
-            className="text-blue-700 underline hover:text-blue-800"
-          >
+          Are you a supplier? Join the <span className="font-semibold">Cloudus Marketplace</span> to
+          list your products or services and reach more customers.{" "}
+          <Link href="/suppliers/apply" className="text-blue-700 underline hover:text-blue-800">
             Apply now
           </Link>
           .
