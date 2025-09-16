@@ -52,7 +52,7 @@ function formatZAR(amount: number) {
 function firstValidImage(primary: string | null | undefined, extras: string[] | undefined) {
   const candidates: string[] = [];
   if (primary) candidates.push(primary);
-  if (extras && extras.length) candidates.push(...extras.filter(Boolean));
+  if (extras) candidates.push(...extras.filter(Boolean));
   return (
     candidates[0] ??
     // Neutral SVG placeholder (replace with your brand image if you prefer)
