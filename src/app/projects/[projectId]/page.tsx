@@ -3,12 +3,13 @@
 import Button from "@mui/material/Button";
 import { UploadButton } from "@uploadthing/react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { OurFileRouter } from "~/app/api/uploadthing/core";
 import { api } from "~/trpc/react";
 
 export default function LatestProject() {
+  const router = useRouter();
   const { projectId } = useParams<{ projectId?: string }>();
   const parsedId = projectId ? Number(projectId) : 1;
 
@@ -18,6 +19,29 @@ export default function LatestProject() {
   });
 
   const utils = api.useUtils();
+
+  // --- NEW: delete mutation
+  const deleteProject = api.project.delete.useMutation({
+    onSuccess: async () => {
+      await utils.project.invalidate();
+      alert("🗑️ Project deleted.");
+      router.push("/projects"); // or "./" if you prefer
+    },
+    onError: () => {
+      alert("❌ Error: You may need to sign in or lack permission to delete this project.");
+    },
+  });
+
+  const handleDelete = () => {
+    const projName = selectedProject.data?.name ?? "this project";
+    const projId = selectedProject.data?.id;
+    if (!projId) return;
+
+    const ok = confirm(`Are you sure you want to delete "${projName}"? This cannot be undone.`);
+    if (!ok) return;
+
+    deleteProject.mutate({ id: projId });
+  };
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -44,8 +68,8 @@ export default function LatestProject() {
 
   return (
     <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-white shadow-md rounded-xl">
-      {/* Exit Button */}
-      <div className="flex justify-end mb-4">
+      {/* Top actions */}
+      <div className="mb-4 flex items-center justify-between gap-2">
         <Button
           href="./"
           type="button"
@@ -53,6 +77,17 @@ export default function LatestProject() {
           className="rounded-full px-6 py-2 font-semibold transition hover:bg-gray-700 hover:text-white"
         >
           Exit Project Mode
+        </Button>
+
+        <Button
+          type="button"
+          variant="contained"
+          color="error"
+          onClick={handleDelete}
+          disabled={deleteProject.isPending || !selectedProject.data}
+          className="rounded-full px-6 py-2 font-semibold"
+        >
+          {deleteProject.isPending ? "Deleting…" : "Delete Project"}
         </Button>
       </div>
 

@@ -16,6 +16,8 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
+
+
   create: protectedProcedure
     .input(z.object({ name: z.string().min(1) , description: z.string().min(5), type: z.string(), price: z.number(), link: z.string(), contactNumber: z.number()}))
     .mutation(async ({ ctx, input }) => {
@@ -68,7 +70,13 @@ export const projectRouter = createTRPCRouter({
     return projects ?? null;
   }),
 
-  
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.project.delete({
+        where: { id: input.id },
+      });
+    }), 
 
   getSecretMessage: protectedProcedure.query(() => {
     return "you can now see this secret message!";
