@@ -59,7 +59,7 @@ function InlineEditText({
     </div>
   ) : (
     <div className={className}>
-      <p className="text-sm text-gray-800">{value || placeholder || "—"}</p>
+      <p className="text-sm text-gray-800">{value ?? placeholder ?? "—"}</p>
       <IconButton
         aria-label="Edit"
         onClick={() => setEditing(true)}
@@ -376,10 +376,10 @@ export default function LatestProject() {
               <p className="text-xs text-gray-600">
                 Created by{" "}
                 <span className="font-medium text-blue-500">
-                  {selectedProjectUser.data?.name || "—"}
+                  {selectedProjectUser.data?.name ?? "—"}
                 </span>
               </p>
-              <p className="text-xs text-gray-500">{selectedProjectUser.data?.email || "—"}</p>
+              <p className="text-xs text-gray-500">{selectedProjectUser.data?.email ?? "—"}</p>
             </div>
           </div>
 
