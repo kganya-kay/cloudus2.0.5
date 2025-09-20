@@ -36,12 +36,12 @@ const navigation = [
 ];
 
 const tabs = [
-  { name: "Home", key: "home" },
+  { name: "All", key: "All" },
   { name: "Your Projects", key: "projects" },
   { name: "Open", key: "open" },
   { name: "Shop", key: "shop" },
-  { name: "Leads", key: "leads" },
-  { name: "Videos", key: "videos" },
+  { name: "Laundry", key: "laundry" },
+  { name: "Food", key: "food" },
 ];
 
 function classNames(...classes: string[]) {
@@ -56,8 +56,8 @@ export default function DashboardShell({
   session: boolean;
 }) {
   const userNavigation = [
-    { name: "Your Profile", href: "#" },
-    { name: "Settings", href: "#" },
+    { name: "Your Profile", href: `/profile/${user.email}` },
+    { name: "Settings", href: "/admin" },
     { name: "Admin", href: "/admin" },
     {
       name: session ? "Sign out" : "Sign In",
@@ -209,7 +209,7 @@ export default function DashboardShell({
               {/* Best Suppliers */}
               <section className="rounded-2xl border bg-white p-3 shadow-sm">
                 <h3 className="mb-2 px-1 text-sm font-semibold text-gray-700">
-                  Best Suppliers
+                  Cloudus Powered Services
                 </h3>
                 <ul className="space-y-2">
                   {[
@@ -218,6 +218,7 @@ export default function DashboardShell({
                     { name: "Gabe Mobile Auto", tag: "Auto" },
                     { name: "Jeneo Resources", tag: "Mining" },
                     { name: "Cloudus Vendors", tag: "Tech" },
+                    { name: "Cloudus Laundry", tag: "Laundry" },
                   ].map((s) => (
                     <li
                       key={s.name}
