@@ -57,9 +57,9 @@ export default function AllShopItems() {
   const [allShopItems] = api.shopItem.getAll.useSuspenseQuery();
   const utils = api.useUtils();
   const toggleLike = api.shopItem.toggleLike.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       // simplest: just refetch
-      utils.shopItem.getAll.invalidate();
+      await utils.shopItem.getAll.invalidate();
     },
   });
 
@@ -154,7 +154,7 @@ export default function AllShopItems() {
                     <IconButton
                       size="small"
                       onClick={() =>
-                        navigator.clipboard.writeText(
+                        void navigator.clipboard.writeText(
                           `${window.location.origin}/shop/item/${item.id}`,
                         )
                       }
