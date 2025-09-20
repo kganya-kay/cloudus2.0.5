@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { Prisma } from "@prisma/client";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-// add this import at the top of your router file
-import { Prisma } from "@prisma/client";
 
-// ---------- Zod Schemas ----------
+/* ----------------------- Zod Schemas ----------------------- */
+
 const createShopItemInput = z.object({
   name: z.string().min(1),
   description: z.string().min(5),
@@ -25,12 +25,14 @@ const updateShopItemInput = z.object({
   name: z.string().min(1).optional(),
   description: z.string().min(5).optional(),
   type: z.string().min(1).optional(),
-  priceCents: z.number().int().nonnegative().optional(),
+  priceCents: z.number().int().nonnegative().optional(), // maps to 'price'
   image: z.string().url().optional(),
   link: z.string().optional(),
   api: z.string().optional(),
   links: z.array(z.string()).optional(),
 });
+
+type UpdateInput = z.infer<typeof updateShopItemInput>;
 
 const idParam = z.object({ id: z.number().int().positive() });
 
@@ -42,11 +44,9 @@ const listInput = z.object({
 
 const createOrderInput = z.object({
   itemId: z.number().int().positive(),
-  // Order core
-  name: z.string().min(1).optional(), // defaults to item name
+  name: z.string().min(1).optional(),
   description: z.string().min(1).optional(),
   priceCentsOverride: z.number().int().nonnegative().optional(),
-  // Customer & address (optional for MVP)
   customerName: z.string().optional(),
   customerPhone: z.string().optional(),
   customerEmail: z.string().email().optional(),
@@ -56,7 +56,6 @@ const createOrderInput = z.object({
   deliveryCents: z.number().int().nonnegative().default(0),
   currency: z.string().default("ZAR"),
   estimatedKg: z.number().positive().optional(),
-  // Optional supplier / caretaker assignment
   supplierId: z.string().optional(),
   caretakerId: z.string().optional(),
 });
@@ -66,51 +65,68 @@ const contributorInput = z.object({
   userId: z.string().min(1),
 });
 
+/* ----------------------- Helpers ----------------------- */
+
+const isDefined = <T,>(v: T | undefined): v is T => v !== undefined;
+
+function buildUpdateData(input: UpdateInput): Prisma.ShopItemUpdateInput {
+  const { priceCents, name, description, type, image, link, api, links } = input;
+  const data: Prisma.ShopItemUpdateInput = {};
+  if (isDefined(name)) data.name = name;
+  if (isDefined(description)) data.description = description;
+  if (isDefined(type)) data.type = type;
+  if (isDefined(image)) data.image = image;
+  if (isDefined(link)) data.link = link;
+  if (isDefined(api)) data.api = api;
+  if (isDefined(links)) data.links = links;
+  if (isDefined(priceCents)) data.price = priceCents;
+  return data;
+}
+
+/* ----------------------- Router ----------------------- */
+
 export const shopItemRouter = createTRPCRouter({
-  // Simple hello
   hello: publicProcedure
     .input(z.object({ text: z.string() }))
     .query(({ input }) => ({ greeting: `Hello ${input.text}` })),
 
-  // CREATE ShopItem
+  /* CREATE */
   create: protectedProcedure
     .input(createShopItemInput)
     .mutation(async ({ ctx, input }) => {
-      const data = {
-        name: input.name,
-        description: input.description,
-        type: input.type,
-        price: input.priceCents, // store cents
-        image:
-          input.image ??
-          "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
-        link: input.link ?? "Link to item not set",
-        api: input.api ?? "api empty",
-        links: input.links ?? [],
-        createdBy: { connect: { id: ctx.session.user.id } },
-        // optionally add creator as contributor:
-        contributors: { connect: [{ id: ctx.session.user.id }] },
-      };
-
-      return ctx.db.shopItem.create({ data });
+      return ctx.db.shopItem.create({
+        data: {
+          name: input.name,
+          description: input.description,
+          type: input.type,
+          price: input.priceCents, // cents
+          image:
+            input.image ??
+            "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
+          link: input.link ?? "",
+          api: input.api ?? "",
+          links: input.links ?? [],
+          createdBy: { connect: { id: ctx.session.user.id } },
+          contributors: { connect: [{ id: ctx.session.user.id }] },
+        },
+      });
     }),
 
-  // UPDATE (edit) ShopItem
+  /* UPDATE */
   update: protectedProcedure
     .input(updateShopItemInput)
     .mutation(async ({ ctx, input }) => {
-      // Map priceCents -> price if provided
-      const { id, priceCents, ...rest } = input as any;
-      const data: any = { ...rest };
-      if (typeof priceCents === "number") data.price = priceCents;
-
+      const data = buildUpdateData(input);
       try {
         return await ctx.db.shopItem.update({
-          where: { id },
+          where: { id: input.id },
           data,
         });
-      } catch (err: any) {
-        if (err.code === "P2025") {
+      } catch (err: unknown) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2025"
+        ) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Shop item not found",
@@ -120,33 +136,38 @@ export const shopItemRouter = createTRPCRouter({
       }
     }),
 
-  // DELETE ShopItem (guard if existing orders)
-  delete: protectedProcedure.input(idParam).mutation(async ({ ctx, input }) => {
-    const countOrders = await ctx.db.order.count({
-      where: { createdForId: input.id },
-    });
-    if (countOrders > 0) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message:
-          "Cannot delete item with existing orders. Archive it or reassign orders first.",
+  /* DELETE (hard-delete; guard when orders exist) */
+  delete: protectedProcedure
+    .input(idParam)
+    .mutation(async ({ ctx, input }) => {
+      const countOrders = await ctx.db.order.count({
+        where: { createdForId: input.id },
       });
-    }
-    try {
-      await ctx.db.shopItem.delete({ where: { id: input.id } });
-      return { ok: true };
-    } catch (err: any) {
-      if (err.code === "P2025") {
+      if (countOrders > 0) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Shop item not found",
+          code: "BAD_REQUEST",
+          message:
+            "Cannot delete item with existing orders. Archive it or reassign orders first.",
         });
       }
-      throw err;
-    }
-  }),
+      try {
+        await ctx.db.shopItem.delete({ where: { id: input.id } });
+        return { ok: true as const };
+      } catch (err: unknown) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2025"
+        ) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Shop item not found",
+          });
+        }
+        throw err;
+      }
+    }),
 
-  // CREATE Order for a ShopItem (links via createdForId)
+  /* CREATE ORDER for an item */
   createOrder: protectedProcedure
     .input(createOrderInput)
     .mutation(async ({ ctx, input }) => {
@@ -155,69 +176,48 @@ export const shopItemRouter = createTRPCRouter({
         select: { id: true, name: true, price: true, description: true },
       });
       if (!item) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Shop item not found",
-        });
+        throw new TRPCError({ code: "NOT_FOUND", message: "Shop item not found" });
       }
 
-      const price = input.priceCentsOverride ?? item.price;
+      const priceToUse = isDefined(input.priceCentsOverride)
+        ? input.priceCentsOverride
+        : item.price;
 
-      const order = await ctx.db.order.create({
+      return ctx.db.order.create({
         data: {
           name: input.name ?? `Order: ${item.name}`,
           description: input.description ?? item.description ?? "Order created",
-          price,
+          price: priceToUse,
           link: "",
           api: "",
           links: [],
           createdBy: { connect: { id: ctx.session.user.id } },
 
-          // link to the item
           createdFor: { connect: { id: item.id } },
 
-          // customer snapshot (optional)
           customerName: input.customerName,
           customerPhone: input.customerPhone,
           customerEmail: input.customerEmail,
 
-          // address snapshot (optional)
           addressLine1: input.addressLine1,
           suburb: input.suburb,
           city: input.city,
 
-          // money
           deliveryCents: input.deliveryCents ?? 0,
           currency: input.currency ?? "ZAR",
 
-          // fulfilment
           estimatedKg: input.estimatedKg,
-          ...(input.supplierId
-            ? { supplier: { connect: { id: input.supplierId } } }
-            : {}),
-          ...(input.caretakerId
-            ? { caretaker: { connect: { id: input.caretakerId } } }
-            : {}),
+          ...(input.supplierId && {
+            supplier: { connect: { id: input.supplierId } },
+          }),
+          ...(input.caretakerId && {
+            caretaker: { connect: { id: input.caretakerId } },
+          }),
         },
       });
-
-      return order;
     }),
 
-  // READ: latest item
-  getLatest: publicProcedure.query(async ({ ctx }) => {
-    const item = await ctx.db.shopItem.findFirst({
-      orderBy: { createdAt: "desc" },
-      include: {
-        createdBy: true,
-        contributors: true,
-      },
-    });
-    return item ?? null;
-    // return null if none
-  }),
-
-  // READ: list with optional search + cursor pagination
+  /* LIST with search + cursor pagination */
   list: publicProcedure.input(listInput).query(async ({ ctx, input }) => {
     const where: Prisma.ShopItemWhereInput =
       input.query && input.query.length > 0
@@ -245,34 +245,74 @@ export const shopItemRouter = createTRPCRouter({
           }
         : {};
 
-    const items = await ctx.db.shopItem.findMany({
+    const rows = await ctx.db.shopItem.findMany({
       where,
       take: input.take + 1, // one extra to compute nextCursor
       ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
       orderBy: { createdAt: "desc" },
       include: {
-        createdBy: true,
-        contributors: true,
-        _count: { select: { orders: true } },
+        _count: { select: { orders: true, likes: true } },
       },
     });
 
     let nextCursor: number | undefined = undefined;
-    if (items.length > input.take) {
-      const next = items.pop()!;
+    if (rows.length > input.take) {
+      const next = rows.pop()!;
       nextCursor = next.id;
     }
+
+    const items = rows.map((row) => {
+      const { _count, ...rest } = row;
+      return {
+        ...rest,
+        ordersCount: _count.orders,
+        likesCount: _count.likes,
+      };
+    });
 
     return { items, nextCursor };
   }),
 
-  // READ: by id
+  /* GET ALL (with userLiked) */
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.db.shopItem.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: { select: { orders: true, likes: true } },
+      },
+    });
+
+    let likedSet = new Set<number>();
+    const userId = ctx.session?.user?.id;
+    if (userId) {
+      const liked = await ctx.db.like.findMany({
+        where: {
+          createdById: userId,
+          shopItemId: { in: rows.map((i) => i.id) },
+        },
+        select: { shopItemId: true },
+      });
+      likedSet = new Set(liked.map((l) => l.shopItemId!).filter((v): v is number => v != null));
+    }
+
+    const items = rows.map((row) => {
+      const { _count, ...rest } = row;
+      return {
+        ...rest,
+        ordersCount: _count.orders,
+        likesCount: _count.likes,
+        userLiked: likedSet.has(row.id),
+      };
+    });
+
+    return items;
+  }),
+
+  /* BY ID */
   getById: publicProcedure.input(idParam).query(async ({ ctx, input }) => {
     const item = await ctx.db.shopItem.findUnique({
       where: { id: input.id },
       include: {
-        createdBy: true,
-        contributors: true,
         orders: {
           orderBy: { createdAt: "desc" },
           select: { id: true, createdAt: true, status: true, price: true },
@@ -280,19 +320,16 @@ export const shopItemRouter = createTRPCRouter({
       },
     });
     if (!item) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Shop item not found",
-      });
+      throw new TRPCError({ code: "NOT_FOUND", message: "Shop item not found" });
     }
     return item;
   }),
 
-  // READ: orders for an item (lightweight)
+  /* Orders for an item (light) */
   ordersForItem: publicProcedure
     .input(z.object({ itemId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
-      const orders = await ctx.db.order.findMany({
+      return ctx.db.order.findMany({
         where: { createdForId: input.itemId },
         orderBy: { createdAt: "desc" },
         select: {
@@ -307,10 +344,9 @@ export const shopItemRouter = createTRPCRouter({
           city: true,
         },
       });
-      return orders;
     }),
 
-  // M-N: add a contributor to a ShopItem
+  /* M-N: add/remove contributor */
   addContributor: protectedProcedure
     .input(contributorInput)
     .mutation(async ({ ctx, input }) => {
@@ -322,7 +358,6 @@ export const shopItemRouter = createTRPCRouter({
       });
     }),
 
-  // M-N: remove a contributor from a ShopItem
   removeContributor: protectedProcedure
     .input(contributorInput)
     .mutation(async ({ ctx, input }) => {
@@ -334,44 +369,11 @@ export const shopItemRouter = createTRPCRouter({
       });
     }),
 
-  getAll: publicProcedure.query(async ({ ctx }) => {
-    const raw = await ctx.db.shopItem.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        createdBy: true,
-        contributors: true,
-        _count: { select: { orders: true, likes: true } }, // <-- needs ShopItem.likes back-rel
-      },
-    });
-
-    let likedSet = new Set<number>();
-    if (ctx.session?.user?.id) {
-      const liked = await ctx.db.like.findMany({
-        where: {
-          createdById: ctx.session.user.id,
-          shopItemId: { in: raw.map((i) => i.id) },
-        },
-        select: { shopItemId: true },
-      });
-      likedSet = new Set(liked.map((l) => l.shopItemId!));
-    }
-
-    // attach the meta, strip _count
-    return raw.map((i) => ({
-      ...i,
-      ordersCount: i._count.orders,
-      likesCount: i._count.likes,
-      userLiked: likedSet.has(i.id),
-      _count: undefined, // keep output clean
-    }));
-  }),
-
-  // Toggle like for current user
+  /* Likes */
   toggleLike: protectedProcedure
     .input(z.object({ itemId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-
       const existing = await ctx.db.like.findFirst({
         where: { createdById: userId, shopItemId: input.itemId },
         select: { id: true },
@@ -379,22 +381,15 @@ export const shopItemRouter = createTRPCRouter({
 
       if (existing) {
         await ctx.db.like.delete({ where: { id: existing.id } });
-        return { liked: false };
+        return { liked: false as const };
       }
 
       await ctx.db.like.create({
         data: {
           createdById: userId,
-          shopItem: { connect: { id: input.itemId } }, // uses ShopItemLikes relation
+          shopItem: { connect: { id: input.itemId } }, // relation name must match schema
         },
       });
-      return { liked: true };
+      return { liked: true as const };
     }),
-    
-    
-
-  // DEMO secret
-  getSecretMessage: protectedProcedure.query(() => {
-    return "you can now see this secret message!";
-  }),
 });
