@@ -334,6 +334,63 @@ export const shopItemRouter = createTRPCRouter({
       });
     }),
 
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    const raw = await ctx.db.shopItem.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        createdBy: true,
+        contributors: true,
+        _count: { select: { orders: true, likes: true } }, // <-- needs ShopItem.likes back-rel
+      },
+    });
+
+    let likedSet = new Set<number>();
+    if (ctx.session?.user?.id) {
+      const liked = await ctx.db.like.findMany({
+        where: {
+          createdById: ctx.session.user.id,
+          shopItemId: { in: raw.map((i) => i.id) },
+        },
+        select: { shopItemId: true },
+      });
+      likedSet = new Set(liked.map((l) => l.shopItemId!));
+    }
+
+    // attach the meta, strip _count
+    return raw.map((i) => ({
+      ...i,
+      ordersCount: i._count.orders,
+      likesCount: i._count.likes,
+      userLiked: likedSet.has(i.id),
+      _count: undefined, // keep output clean
+    }));
+  }),
+
+  // Toggle like for current user
+  toggleLike: protectedProcedure
+    .input(z.object({ itemId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const existing = await ctx.db.like.findFirst({
+        where: { createdById: userId, shopItemId: input.itemId },
+        select: { id: true },
+      });
+
+      if (existing) {
+        await ctx.db.like.delete({ where: { id: existing.id } });
+        return { liked: false };
+      }
+
+      await ctx.db.like.create({
+        data: {
+          createdById: userId,
+          shopItem: { connect: { id: input.itemId } }, // uses ShopItemLikes relation
+        },
+      });
+      return { liked: true };
+    }),
+
   // DEMO secret
   getSecretMessage: protectedProcedure.query(() => {
     return "you can now see this secret message!";
