@@ -127,6 +127,18 @@ model SupplierAddress {
   @@index([addressId])
 }
 
+model Post {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation("PostCreatedBy", fields: [createdById], references: [id])
+
+  @@index([name])
+}
+
 // =====================
 // Core Domain Models
 // =====================
@@ -441,6 +453,8 @@ model User {
 
   // Addresses
   addresses UserAddress[]
+  // back-rel for posts authored by this user
+  posts     Post[]        @relation("PostCreatedBy")
 }
 
 model VerificationToken {
