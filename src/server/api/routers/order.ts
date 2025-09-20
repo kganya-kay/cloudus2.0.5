@@ -1,8 +1,17 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { Prisma, FulfilmentStatus, Role } from "@prisma/client";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
-import { adminProcedure, caretakerProcedure, supplierProcedure, supplierOwnsOrder } from "../rbac";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
+import {
+  adminProcedure,
+  caretakerProcedure,
+  supplierProcedure,
+  supplierOwnsOrder,
+} from "../rbac";
 
 // ----- inputs -----
 const idParam = z.object({ orderId: z.number().int().positive() });
@@ -43,13 +52,16 @@ const messageInput = z.object({
 
 const exportCsvInput = z.object({
   from: z.string().datetime().optional(), // ISO
-  to: z.string().datetime().optional(),   // ISO
+  to: z.string().datetime().optional(), // ISO
 });
 
 // ----- helpers -----
 const ALLOWED_FROM: Record<FulfilmentStatus, FulfilmentStatus[]> = {
   NEW: [FulfilmentStatus.SOURCING_SUPPLIER, FulfilmentStatus.CANCELED],
-  SOURCING_SUPPLIER: [FulfilmentStatus.SUPPLIER_CONFIRMED, FulfilmentStatus.CANCELED],
+  SOURCING_SUPPLIER: [
+    FulfilmentStatus.SUPPLIER_CONFIRMED,
+    FulfilmentStatus.CANCELED,
+  ],
   SUPPLIER_CONFIRMED: [FulfilmentStatus.IN_PROGRESS, FulfilmentStatus.CANCELED],
   IN_PROGRESS: [FulfilmentStatus.READY_FOR_DELIVERY, FulfilmentStatus.CANCELED],
   READY_FOR_DELIVERY: [FulfilmentStatus.OUT_FOR_DELIVERY],
@@ -71,8 +83,14 @@ export const orderRouter = createTRPCRouter({
       return ctx.db.order.findFirstOrThrow({
         where: { code: input.code },
         select: {
-          id: true, code: true, status: true, createdAt: true,
-          customerName: true, suburb: true, city: true, supplierId: true,
+          id: true,
+          code: true,
+          status: true,
+          createdAt: true,
+          customerName: true,
+          suburb: true,
+          city: true,
+          supplierId: true,
         },
       });
     }),
@@ -88,7 +106,10 @@ export const orderRouter = createTRPCRouter({
       if (!ord) throw new TRPCError({ code: "NOT_FOUND" });
 
       if (!canTransition(ord.status, input.status)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `Invalid transition ${ord.status} -> ${input.status}` });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Invalid transition ${ord.status} -> ${input.status}`,
+        });
       }
 
       const updated = await ctx.db.order.update({
@@ -120,7 +141,10 @@ export const orderRouter = createTRPCRouter({
       ];
 
       if (!allowedSupplierStatuses.includes(input.status)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Status not permitted for supplier" });
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Status not permitted for supplier",
+        });
       }
 
       const ord = await ctx.db.order.findUnique({
@@ -129,7 +153,10 @@ export const orderRouter = createTRPCRouter({
       });
       if (!ord) throw new TRPCError({ code: "NOT_FOUND" });
       if (!canTransition(ord.status, input.status)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `Invalid transition ${ord.status} -> ${input.status}` });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Invalid transition ${ord.status} -> ${input.status}`,
+        });
       }
 
       const updated = await ctx.db.order.update({
@@ -166,7 +193,10 @@ export const orderRouter = createTRPCRouter({
           orderId: input.orderId,
           actorId: ctx.session.user.id,
           action: "REQUEST_QUOTE",
-          payload: { supplierId: input.supplierId, amountCents: input.amountCents },
+          payload: {
+            supplierId: input.supplierId,
+            amountCents: input.amountCents,
+          },
         },
       });
       return q;
@@ -195,7 +225,11 @@ export const orderRouter = createTRPCRouter({
           orderId: quote.orderId,
           actorId: ctx.session.user.id,
           action: "ACCEPT_QUOTE",
-          payload: { quoteId: input.quoteId, supplierId: quote.supplierId, amountCents: quote.amountCents },
+          payload: {
+            quoteId: input.quoteId,
+            supplierId: quote.supplierId,
+            amountCents: quote.amountCents,
+          },
         },
       });
 
@@ -208,7 +242,10 @@ export const orderRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const isCaretaker = ctx.session.user.role === Role.CARETAKER;
       if (isCaretaker && input.amountCents > 20000) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Caretaker refund limit is R200" });
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Caretaker refund limit is R200",
+        });
       }
 
       // Record audit — integrate gateway later
@@ -267,7 +304,9 @@ export const orderRouter = createTRPCRouter({
     .input(exportCsvInput.optional())
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      const from = input?.from ? new Date(input.from) : new Date(new Date().toDateString()); // midnight today
+      const from = input?.from
+        ? new Date(input.from)
+        : new Date(new Date().toDateString()); // midnight today
       const to = input?.to ? new Date(input.to) : new Date(); // now
 
       const rows = await ctx.db.order.findMany({
@@ -277,25 +316,67 @@ export const orderRouter = createTRPCRouter({
         },
         orderBy: { createdAt: "asc" },
         select: {
-          id: true, code: true, status: true, price: true, deliveryCents: true, currency: true,
-          customerName: true, customerPhone: true, suburb: true, city: true, createdAt: true,
+          id: true,
+          code: true,
+          status: true,
+          price: true,
+          deliveryCents: true,
+          currency: true,
+          customerName: true,
+          customerPhone: true,
+          suburb: true,
+          city: true,
+          createdAt: true,
         },
       });
 
       // Minimal CSV (no external deps)
       const header = [
-        "id","code","status","priceCents","deliveryCents","currency",
-        "customerName","customerPhone","suburb","city","createdAt",
+        "id",
+        "code",
+        "status",
+        "priceCents",
+        "deliveryCents",
+        "currency",
+        "customerName",
+        "customerPhone",
+        "suburb",
+        "city",
+        "createdAt",
       ];
+      const toSafeString = (v: unknown): string => {
+        if (v == null) return "";
+        if (v instanceof Date) return v.toISOString();
+        const t = typeof v;
+        if (t === "string" || t === "number" || t === "boolean")
+          return String(v);
+        try {
+          return JSON.stringify(v);
+        } catch {
+          return String(v);
+        }
+      };
+
       const escape = (v: unknown) =>
-        `"${String(v ?? "").replaceAll('"','""')}"`;
+        `"${String(toSafeString(v) ?? "").replaceAll('"', '""')}"`;
       const csv = [
         header.join(","),
-        ...rows.map(r =>
+        ...rows.map((r) =>
           [
-            r.id, r.code, r.status, r.price, r.deliveryCents, r.currency,
-            r.customerName, r.customerPhone, r.suburb, r.city, r.createdAt.toISOString(),
-          ].map(escape).join(",")
+            r.id,
+            r.code,
+            r.status,
+            r.price,
+            r.deliveryCents,
+            r.currency,
+            r.customerName,
+            r.customerPhone,
+            r.suburb,
+            r.city,
+            r.createdAt.toISOString(),
+          ]
+            .map(escape)
+            .join(","),
         ),
       ].join("\n");
 

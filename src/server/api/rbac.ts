@@ -1,6 +1,8 @@
+// rbac.ts
 import { TRPCError } from "@trpc/server";
 import { Role } from "@prisma/client";
 import { protectedProcedure } from "./trpc";
+import { z } from "zod";
 
 export const hasRole = (allowed: Role[]) =>
   protectedProcedure.use(async ({ ctx, next }) => {
@@ -15,16 +17,18 @@ export const caretakerProcedure = hasRole([Role.ADMIN, Role.CARETAKER]);
 export const adminProcedure = hasRole([Role.ADMIN]);
 export const supplierProcedure = hasRole([Role.SUPPLIER, Role.ADMIN]);
 
-// Narrow supplier to its own orders if needed
-export const supplierOwnsOrder = supplierProcedure.use(async ({ ctx, input, next, path }) => {
-  const userSupplierId = ctx.session!.user.supplierId;
+// Narrow supplier to its own orders (expects { orderId })
+const orderIdSchema = z.object({ orderId: z.number().int().positive() });
+
+export const supplierOwnsOrder = supplierProcedure.use(async ({ ctx, input, next }) => {
+  const userSupplierId = ctx.session?.user.supplierId;
   if (!userSupplierId) throw new TRPCError({ code: "FORBIDDEN" });
 
-  // expects input to have orderId
-  const orderId = typeof input === "object" && input !== null && "orderId" in input
-    ? (input as { orderId?: number }).orderId
-    : undefined;
-  if (!orderId) throw new TRPCError({ code: "BAD_REQUEST", message: "orderId required" });
+  const parsed = orderIdSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "orderId required" });
+  }
+  const { orderId } = parsed.data;
 
   const order = await ctx.db.order.findUnique({
     where: { id: orderId },
