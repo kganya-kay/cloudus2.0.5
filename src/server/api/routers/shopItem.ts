@@ -390,6 +390,8 @@ export const shopItemRouter = createTRPCRouter({
       });
       return { liked: true };
     }),
+    
+    
 
   // DEMO secret
   getSecretMessage: protectedProcedure.query(() => {
