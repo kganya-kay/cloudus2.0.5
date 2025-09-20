@@ -13,9 +13,9 @@ export function generateStaticParams(): { slug: string }[] {
 
 // metadata with async params
 export async function generateMetadata(
-  { params }: { params: Promise<Params> }
+  { params }: { params: Params }
 ): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug } =  params;
   const job = getJobBySlug(slug);
   return job
     ? { title: `${job.title} – Cloudus Careers`, description: job.summary }
@@ -24,9 +24,9 @@ export async function generateMetadata(
 
 // page with async params
 export default async function JobPage(
-  { params }: { params: Promise<Params> }
+  { params }: { params: Params }
 ) {
-  const { slug } = await params;
+  const { slug } = params;
   const job = getJobBySlug(slug);
   if (!job) return notFound();
 
