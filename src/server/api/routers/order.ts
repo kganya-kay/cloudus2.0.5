@@ -13,6 +13,16 @@ import {
   supplierOwnsOrder,
 } from "../rbac";
 
+// Utility to get today's date range
+const todayRange = () => {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
+
 // ----- inputs -----
 const idParam = z.object({ orderId: z.number().int().positive() });
 
@@ -91,6 +101,35 @@ export const orderRouter = createTRPCRouter({
           suburb: true,
           city: true,
           supplierId: true,
+        },
+      });
+    }),
+
+  // Admin: get by ID (detailed)
+  getById: adminProcedure
+    .input(idParam)
+    .query(async ({ ctx, input }) => {
+      return ctx.db.order.findUniqueOrThrow({
+        where: { id: input.orderId },
+        select: {
+          id: true,
+          code: true,
+          status: true,
+          createdAt: true,
+          customerName: true,
+          suburb: true,
+          city: true,
+          supplierId: true,
+          auditLogs: true,
+          payouts: true,
+          price: true,
+          deliveryCents: true,
+          currency: true,
+          supplier: { select: { id: true, name: true, phone: true } },
+          customerPhone: true,
+          customerEmail: true,
+          addressLine1: true,
+         
         },
       });
     }),
@@ -260,19 +299,19 @@ export const orderRouter = createTRPCRouter({
 
       return { ok: true as const };
     }),
-  
-  getAll:publicProcedure.query(async ({ ctx }) => {
+
+  getAll: publicProcedure.query(async ({ ctx }) => {
     return ctx.db.order.findMany();
   }),
 
   getLatest: protectedProcedure.query(async ({ ctx }) => {
-      const order = await ctx.db.order.findFirst({
-        orderBy: { createdAt: "desc" },
-        where: { createdBy: { id: ctx.session.user.id } },
-      });
+    const order = await ctx.db.order.findFirst({
+      orderBy: { createdAt: "desc" },
+      where: { createdBy: { id: ctx.session.user.id } },
+    });
 
-      return order ?? null;
-    }),
+    return order ?? null;
+  }),
 
   // Caretaker/Admin: trigger supplier payout
   triggerPayout: protectedProcedure
@@ -311,7 +350,7 @@ export const orderRouter = createTRPCRouter({
       });
       return { ok: true as const };
     }),
-    /*
+  /*
   // Caretaker: export CSV of own day
   exportCsv: caretakerProcedure
     .input(exportCsvInput.optional())
@@ -395,4 +434,73 @@ export const orderRouter = createTRPCRouter({
 
       return { csv }; // client can download as text/csv
     }),*/
+
+  // Caretaker: list today's orders
+  listToday: caretakerProcedure.query(async ({ ctx }) => {
+    const { start, end } = todayRange();
+    const rows = await ctx.db.order.findMany({
+      where: { createdAt: { gte: start, lte: end } },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        code: true,
+        status: true,
+        price: true,
+        deliveryCents: true,
+        currency: true,
+        customerName: true,
+        customerPhone: true,
+        suburb: true,
+        city: true,
+        createdAt: true,
+      },
+    });
+    // group by status for the Kanban columns
+    const map = new Map<FulfilmentStatus, typeof rows>();
+    rows.forEach((r) => {
+      const arr = map.get(r.status) ?? [];
+      arr.push(r);
+      map.set(r.status, arr);
+    });
+    return Object.fromEntries(map);
+  }),
+
+  reportDaily: caretakerProcedure.query(async ({ ctx }) => {
+    const { start, end } = todayRange();
+    const orders = await ctx.db.order.findMany({
+      where: { createdAt: { gte: start, lte: end } },
+      select: {
+        price: true,
+        deliveryCents: true,
+        status: true,
+        payouts: { select: { amountCents: true, status: true } },
+        auditLogs: {
+          where: { action: "REFUND" },
+          select: { payload: true },
+        },
+      },
+    });
+    const revenue = orders.reduce(
+      (sum, o) => sum + (o.price ?? 0) + (o.deliveryCents ?? 0),
+      0,
+    );
+    const supplierPayouts = orders.reduce(
+      (sum, o) =>
+        sum +
+        o.payouts
+          .filter((p) => p.status !== "FAILED")
+          .reduce((s, p) => s + p.amountCents, 0),
+      0,
+    );
+    const refunds = orders.reduce((sum, o) => {
+      const cents = o.auditLogs.reduce((s, log) => {
+        const amount = (log.payload as any)?.amountCents ?? 0;
+        return s + (typeof amount === "number" ? amount : 0);
+      }, 0);
+      return sum + cents;
+    }, 0);
+
+    const margin = revenue - supplierPayouts - refunds;
+    return { revenue, supplierPayouts, refunds, margin };
+  }),
 });
