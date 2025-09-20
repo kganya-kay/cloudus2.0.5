@@ -12,7 +12,6 @@ import {
   supplierProcedure,
   supplierOwnsOrder,
 } from "../rbac";
-import { api } from "~/trpc/server";
 
 // ----- inputs -----
 const idParam = z.object({ orderId: z.number().int().positive() });
@@ -77,42 +76,6 @@ function canTransition(from: FulfilmentStatus, to: FulfilmentStatus) {
 }
 
 export const orderRouter = createTRPCRouter({
-  // Create new order (public)
-  create: publicProcedure
-    .input(z.object({
-      code: z.string().min(6),
-      customerName: z.string().min(2).max(100),
-      suburb: z.string().min(2).max(100),
-      city: z.string().min(2).max(100),
-      supplierId: z.string().min(1),
-      price: z.number().min(0),
-      description: z.string().min(3).max(500).optional(),
-      link: z.string().url().optional(),
-      api: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const order = await ctx.db.order.create({
-        data: {
-          code: input.code,
-          customerName: input.customerName,
-          suburb: input.suburb || "",
-          city: input.city || "",
-          supplierId: input.supplierId || "",
-          // Add required fields below (replace with actual values as needed)
-          name: input.customerName, // or another appropriate value
-          createdById: ctx.session?.user?.id ?? "", // ensure user is present
-          price: input.price, // set default or get from input
-          description: input.description ?? "", // set default or get from input
-          status: FulfilmentStatus.NEW, // initial status
-          currency: "ZAR", // set default or get from input
-          deliveryCents: 0, // set default or get from input
-          link: input.link ?? "", // provide a default or get from input if needed
-          api: input.api ?? "", // provide a default or get from input if needed
-        },
-      });
-      return order;
-    }),
-
   // Public lookup (e.g., status page)
   getByCode: publicProcedure
     .input(z.object({ code: z.string().min(6) }))
