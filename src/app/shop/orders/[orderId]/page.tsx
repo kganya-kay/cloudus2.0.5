@@ -18,7 +18,7 @@ export default function LatestProject() {
   const params = useParams();
   const itemId = params.orderId ? Number(params.orderId) : 5;
 
-  const selectedItem = api.shopItem.select.useQuery({ id: itemId });
+  const selectedItem = api.shopItem.getById.useQuery({ id: itemId });
   const utils = api.useUtils();
 
   const [name, setName] = useState("");
