@@ -71,6 +71,13 @@ enum AddressType {
   OTHER
 }
 
+enum Role {
+  ADMIN
+  CARETAKER
+  SUPPLIER
+  CUSTOMER
+}
+
 // =====================
 // Shared Address Book
 // =====================
@@ -437,6 +444,10 @@ model User {
   accounts Account[]
   sessions Session[]
 
+  role       Role      @default(CUSTOMER)
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
   // Back-rels for created entities (explicit names to avoid clashes with M-N)
   projectsCreated  Project[]  @relation("ProjectCreatedBy")
   shopItemsCreated ShopItem[] @relation("ShopItemCreatedBy")
@@ -485,6 +496,7 @@ model Supplier {
 
   addresses      SupplierAddress[]
   SupplierPayout SupplierPayout[]
+  User           User[]
 }
 
 model SupplierQuote {
