@@ -311,7 +311,7 @@ export const orderRouter = createTRPCRouter({
       });
       return { ok: true as const };
     }),
-
+    /*
   // Caretaker: export CSV of own day
   exportCsv: caretakerProcedure
     .input(exportCsvInput.optional())
@@ -394,5 +394,5 @@ export const orderRouter = createTRPCRouter({
       ].join("\n");
 
       return { csv }; // client can download as text/csv
-    }),
+    }),*/
 });
