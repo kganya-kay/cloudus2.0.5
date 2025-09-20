@@ -1,188 +1,518 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+// =====================
+// Prisma Configuration
+// =====================
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+// =====================
+// Enums
+// =====================
+enum FulfilmentStatus {
+  NEW
+  SOURCING_SUPPLIER
+  SUPPLIER_CONFIRMED
+  IN_PROGRESS
+  READY_FOR_DELIVERY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CLOSED
+  CANCELED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  TEMP
+}
+
+enum OnsiteType {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStatus {
+  RECEIVED
+  IN_REVIEW
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum AddressType {
+  BILLING
+  SHIPPING
+  OPERATIONS
+  REGISTERED
+  HOME
+  OTHER
+}
+
+// =====================
+// Shared Address Book
+// =====================
+model Address {
+  id         Int      @id @default(autoincrement())
+  line1      String
+  line2      String?
+  suburb     String?
+  city       String
+  province   String?
+  postalCode String?
+  country    String   @default("ZA")
+  lat        Float?
+  lng        Float?
+  phone      String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  userLinks     UserAddress[]
+  supplierLinks SupplierAddress[]
+  Order         Order[]
+}
+
+model UserAddress {
+  id        Int         @id @default(autoincrement())
+  userId    String
+  addressId Int
+  type      AddressType
+  isDefault Boolean     @default(false)
+  label     String?
+
+  user    User    @relation(fields: [userId], references: [id])
+  address Address @relation(fields: [addressId], references: [id])
+
+  @@unique([userId, addressId, type])
+  @@index([userId])
+  @@index([addressId])
+}
+
+model SupplierAddress {
+  id         Int         @id @default(autoincrement())
+  supplierId String
+  addressId  Int
+  type       AddressType
+  isDefault  Boolean     @default(false)
+  label      String?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  address  Address  @relation(fields: [addressId], references: [id])
+
+  @@unique([supplierId, addressId, type])
+  @@index([supplierId])
+  @@index([addressId])
+}
+
+// =====================
+// Core Domain Models
+// =====================
 model Project {
-    id   Int    @id @default(autoincrement())
-    name String
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  // createdBy (name this relation to avoid ambiguity with contributors)
+  createdById String
+  createdBy   User   @relation("ProjectCreatedBy", fields: [createdById], references: [id])
 
-    createdBy    User     @relation(fields: [createdById], references: [id])
-    createdById  String
-    type         String
-    price        Int      @default(000)
-    description  String
-    image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-    count        Int      @default(autoincrement())
-    link         String
-    links        String[]
-    contributors User[]   @relation("name")
-    api          String
-    openSource   Boolean  @default(true)
-    privacy      Boolean  @default(false)
-    completed    Boolean  @default(false)
-    status       String   @default("Initialized")
-    likes        Like[]   @relation("name")
-    upvotes      Upvote[] @relation("name")
-    contactNumber Int @default(00000000000)
-    comments    Comment [] @relation("name")
-    cost            Int @default(0)
-    rating      Int @default(5)
-    @@index([name])
-}
-model Comment {
-    id      Int       @id @default(autoincrement())
-    Project Project[] @relation("name")
-    shopItem ShopItem[] @relation("name")
-    createdById String
-}
+  type          String
+  price         Int      @default(0)
+  description   String
+  image         String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+  count         Int      @default(autoincrement())
+  link          String
+  links         String[]
+  // Contributors (M-N) explicitly named
+  contributors  User[]   @relation("ProjectContributors")
+  api           String
+  openSource    Boolean  @default(true)
+  privacy       Boolean  @default(false)
+  completed     Boolean  @default(false)
+  status        String   @default("Initialized")
+  contactNumber Int      @default(00000000000)
+  cost          Int      @default(0)
+  rating        Int      @default(5)
 
-model Upvote {
-    id      Int       @id @default(autoincrement())
-    Project Project[] @relation("name")
-    shopItem ShopItem[] @relation("name")
-    createdById String
-}
+  // Social
+  comments Comment[] @relation("ProjectComments")
+  likes    Like[]    @relation("ProjectLikes")
+  upvotes  Upvote[]  @relation("ProjectUpvotes")
 
-model Like {
-    id      Int       @id @default(autoincrement())
-    Project Project[] @relation("name")
-    shopItem ShopItem [] @relation("name")
-    createdById String
+  @@index([name])
 }
 
 model ShopItem {
-    id   Int    @id @default(autoincrement())
-    name String
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  // createdBy (explicitly named)
+  createdById String
+  createdBy   User   @relation("ShopItemCreatedBy", fields: [createdById], references: [id])
 
-    createdBy    User     @relation(fields: [createdById], references: [id])
-    createdById  String
-    type         String
-    price        Int
-    description  String
-    image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-    count        Int      @default(autoincrement())
-    link         String
-    contributors User[]   @relation("name")
-    api          String
-    links        String[]
+  type         String
+  price        Int
+  description  String
+  image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+  count        Int      @default(autoincrement())
+  link         String
+  // Contributors (M-N) explicitly named
+  contributors User[]   @relation("ShopItemContributors")
+  api          String
+  links        String[]
 
-    orders  Order[]
-    orderId Int     @default(autoincrement())
+  // One named relation to Order to avoid ambiguity
+  orders Order[] @relation("ShopItemOrders")
 
-    @@index([name])
-    Order Order[] @relation("name")
-    Comment Comment[] @relation("name")
-    Upvote Upvote[] @relation("name")
-    Like Like[] @relation("name")
+  // Social
+  comments Comment[] @relation("ShopItemComments")
+  likes    Like[]    @relation("ShopItemLikes")
+  upvotes  Upvote[]  @relation("ShopItemUpvotes")
+
+  @@index([name])
 }
 
 model Order {
-    id   Int    @id @default(autoincrement())
-    name String
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  // Creator
+  createdById String
+  createdBy   User   @relation("OrderCreatedBy", fields: [createdById], references: [id])
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+  price       Int // cents
+  description String
+  image       String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+  count       Int      @default(autoincrement())
+  link        String
+  api         String
+  links       String[]
 
-    price        Int
-    description  String
-    image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-    count        Int      @default(autoincrement())
-    link         String
-    api          String
-    links        String[]
-    createdFor   ShopItem @relation(fields: [createdForId], references: [id])
-    createdForId Int
-    shopItems ShopItem [] @relation("name")
-    @@index([name])
+  // Order item (catalog product) — optional for service orders
+  createdForId Int?
+  createdFor   ShopItem? @relation("ShopItemOrders", fields: [createdForId], references: [id])
+
+  // Public tracking code
+  code String @unique @default(cuid())
+
+  // Customer (denormalized for speed)
+  customerId    String? // optional: if you later add a Customer model
+  customerName  String?
+  customerPhone String?
+  customerEmail String?
+
+  // Address
+  addressId    Int?
+  address      Address? @relation(fields: [addressId], references: [id])
+  addressLine1 String?
+  suburb       String?
+  city         String?
+
+  // Money
+  deliveryCents Int    @default(0)
+  currency      String @default("ZAR")
+
+  // Fulfilment
+  status     FulfilmentStatus @default(NEW)
+  supplierId String?
+  supplier   Supplier?        @relation("SupplierOrders", fields: [supplierId], references: [id])
+
+  // Payment
+  paymentId String?
+  payments  Payment[]
+
+  // Caretaker (ops owner)
+  caretakerId String?
+  caretaker   User?   @relation("OrderCaretaker", fields: [caretakerId], references: [id])
+
+  // Ops
+  estimatedKg   Float?
+  payouts       SupplierPayout[]
+  auditLogs     AuditLog[]
+  SupplierQuote SupplierQuote[]
+
+  @@index([name])
+  @@index([status])
+  @@index([caretakerId])
+  @@index([supplierId])
+  @@index([createdForId])
+  @@index([addressId])
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     Int
+  amountCents Int
+  currency    String        @default("ZAR")
+  status      PaymentStatus @default(PENDING)
+  provider    String // e.g., "PayFast", "Peach", "Ozow", "Stripe"
+  providerRef String? // gateway charge id / reference
+  receiptUrl  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+  order Order @relation(fields: [orderId], references: [id])
 
-    @@index([name])
+  @@index([orderId])
+  @@index([status])
 }
 
-// Necessary for Next auth
+// =====================
+// Social Entities
+// =====================
+model Comment {
+  id          Int      @id @default(autoincrement())
+  createdById String
+  createdAt   DateTime @default(now())
+
+  // Optional FK to Project
+  projectId Int?
+  project   Project? @relation("ProjectComments", fields: [projectId], references: [id])
+
+  // Optional FK to ShopItem
+  shopItemId Int?
+  shopItem   ShopItem? @relation("ShopItemComments", fields: [shopItemId], references: [id])
+}
+
+model Upvote {
+  id          Int      @id @default(autoincrement())
+  createdById String
+  createdAt   DateTime @default(now())
+
+  projectId Int?
+  project   Project? @relation("ProjectUpvotes", fields: [projectId], references: [id])
+
+  shopItemId Int?
+  shopItem   ShopItem? @relation("ShopItemUpvotes", fields: [shopItemId], references: [id])
+}
+
+model Like {
+  id          Int      @id @default(autoincrement())
+  createdById String
+  createdAt   DateTime @default(now())
+
+  projectId Int?
+  project   Project? @relation("ProjectLikes", fields: [projectId], references: [id])
+
+  shopItemId Int?
+  shopItem   ShopItem? @relation("ShopItemLikes", fields: [shopItemId], references: [id])
+}
+
+// =====================
+// Careers (Jobs)
+// =====================
+model Job {
+  id              Int            @id @default(autoincrement())
+  slug            String         @unique
+  title           String
+  summary         String
+  description     String
+  employmentType  EmploymentType
+  onsiteType      OnsiteType
+  locationCity    String?
+  locationRegion  String?
+  locationCountry String?        @default("ZA")
+  remoteAllowed   Boolean        @default(false)
+  tags            String[] // Postgres array
+  currency        String         @default("ZAR")
+  salaryMinCents  Int? // optional range
+  salaryMaxCents  Int?
+  status          JobStatus      @default(DRAFT)
+  applyEmail      String? // e.g., careers@cloudus...
+  applyWhatsapp   String? // e.g., 27640204765
+  postedAt        DateTime       @default(now())
+  expiresAt       DateTime?
+
+  createdById String
+  createdBy   User   @relation("JobCreatedBy", fields: [createdById], references: [id])
+
+  applications JobApplication[]
+
+  @@index([status])
+  @@index([postedAt])
+}
+
+model JobApplication {
+  id          String            @id @default(cuid())
+  jobId       Int
+  userId      String? // applicant if signed-in
+  name        String
+  email       String
+  phone       String?
+  resumeUrl   String?
+  coverLetter String?
+  answers     Json? // structured form answers
+  source      String? // where they found the job
+  linkedinUrl String?
+  websiteUrl  String?
+  status      ApplicationStatus @default(RECEIVED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  job  Job   @relation(fields: [jobId], references: [id])
+  user User? @relation("JobApplicationUser", fields: [userId], references: [id])
+
+  @@index([jobId])
+  @@index([userId])
+  @@index([status])
+}
+
+// =====================
+// NextAuth Models
+// =====================
 model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? // @db.Text for mysql/sqlserver
+  access_token             String? // @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? // @db.Text
+  session_state            String?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token_expires_in Int?
 
-    @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
 
-    accounts Account[]
-    sessions Session[]
-    posts    Post[]
+  accounts Account[]
+  sessions Session[]
 
-    projects Project[]
+  // Back-rels for created entities (explicit names to avoid clashes with M-N)
+  projectsCreated  Project[]  @relation("ProjectCreatedBy")
+  shopItemsCreated ShopItem[] @relation("ShopItemCreatedBy")
+  ordersCreated    Order[]    @relation("OrderCreatedBy")
+  caretakerOrders  Order[]    @relation("OrderCaretaker")
 
-    Project Project[] @relation("name")
+  // M-N contributor relations
+  projectContributions  Project[]  @relation("ProjectContributors")
+  shopItemContributions ShopItem[] @relation("ShopItemContributors")
 
-    ShopItem ShopItem[] @relation("name")
+  // Careers
+  jobPosts        Job[]            @relation("JobCreatedBy")
+  jobApplications JobApplication[] @relation("JobApplicationUser")
 
-    ShopItems ShopItem[]
-
-    Orders Order[]
+  // Addresses
+  addresses UserAddress[]
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
+}
+
+// =====================
+// Fulfilment Layer
+// =====================
+model Supplier {
+  id         String          @id @default(cuid())
+  name       String
+  phone      String
+  email      String?
+  suburb     String?
+  city       String?
+  pricePerKg Int? // cents, for laundry
+  isActive   Boolean         @default(true)
+  rating     Float? // 1..5
+  notes      String?
+  quotes     SupplierQuote[]
+  orders     Order[]         @relation("SupplierOrders")
+  createdAt  DateTime        @default(now())
+
+  addresses      SupplierAddress[]
+  SupplierPayout SupplierPayout[]
+}
+
+model SupplierQuote {
+  id          String   @id @default(cuid())
+  orderId     Int
+  supplierId  String
+  amountCents Int
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  Order    Order    @relation(fields: [orderId], references: [id])
+  Supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@index([orderId])
+  @@index([supplierId])
+}
+
+model SupplierPayout {
+  id          String    @id @default(cuid())
+  orderId     Int
+  supplierId  String
+  amountCents Int
+  releasedAt  DateTime?
+  status      String    @default("PENDING") // PENDING|RELEASED|FAILED
+
+  Order    Order    @relation(fields: [orderId], references: [id])
+  Supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@index([orderId])
+  @@index([supplierId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orderId   Int
+  actorId   String? // caretaker or system (User.id)
+  action    String // e.g., STATUS_CHANGE, ASSIGN_SUPPLIER, REFUND
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  Order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([actorId])
 }
