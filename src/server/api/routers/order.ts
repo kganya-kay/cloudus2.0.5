@@ -260,6 +260,10 @@ export const orderRouter = createTRPCRouter({
 
       return { ok: true as const };
     }),
+  
+  getAll:publicProcedure.query(async ({ ctx }) => {
+    return ctx.db.order.findMany();
+  }),
 
   // Caretaker/Admin: trigger supplier payout
   triggerPayout: protectedProcedure
