@@ -4,7 +4,7 @@ import { auth } from "~/server/auth";
 import Client from "./view-client";
 
 
-export default async function OrderPage({ params }: { params: { id: string } }) {
+export default async function OrderPage({ params }: { params: { id: number } }) {
 const session = await auth();
 const role = session?.user.role;
 if (!role || (role !== "ADMIN" && role !== "CARETAKER")) redirect("/");

@@ -106,33 +106,30 @@ export const orderRouter = createTRPCRouter({
     }),
 
   // Admin: get by ID (detailed)
-  getById: adminProcedure
-    .input(idParam)
-    .query(async ({ ctx, input }) => {
-      return ctx.db.order.findUniqueOrThrow({
-        where: { id: input.orderId },
-        select: {
-          id: true,
-          code: true,
-          status: true,
-          createdAt: true,
-          customerName: true,
-          suburb: true,
-          city: true,
-          supplierId: true,
-          auditLogs: true,
-          payouts: true,
-          price: true,
-          deliveryCents: true,
-          currency: true,
-          supplier: { select: { id: true, name: true, phone: true } },
-          customerPhone: true,
-          customerEmail: true,
-          addressLine1: true,
-         
-        },
-      });
-    }),
+  getById: adminProcedure.input(idParam).query(async ({ ctx, input }) => {
+    return ctx.db.order.findUniqueOrThrow({
+      where: { id: input.orderId },
+      select: {
+        id: true,
+        code: true,
+        status: true,
+        createdAt: true,
+        customerName: true,
+        suburb: true,
+        city: true,
+        supplierId: true,
+        auditLogs: true,
+        payouts: true,
+        price: true,
+        deliveryCents: true,
+        currency: true,
+        supplier: { select: { id: true, name: true, phone: true } },
+        customerPhone: true,
+        customerEmail: true,
+        addressLine1: true,
+      },
+    });
+  }),
 
   // Admin/Caretaker: change status
   changeStatus: caretakerProcedure
@@ -466,41 +463,70 @@ export const orderRouter = createTRPCRouter({
   }),
 
   reportDaily: caretakerProcedure.query(async ({ ctx }) => {
-    const { start, end } = todayRange();
+    // day range
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+
+    // Select a typed shape so we don't fall into `any`
     const orders = await ctx.db.order.findMany({
       where: { createdAt: { gte: start, lte: end } },
       select: {
-        price: true,
-        deliveryCents: true,
+        price: true, // number (cents)
+        deliveryCents: true, // number (cents)
         status: true,
-        payouts: { select: { amountCents: true, status: true } },
+        payouts: {
+          // typed array
+          select: { amountCents: true, status: true },
+        },
         auditLogs: {
+          // refunds recorded as payload JSON
           where: { action: "REFUND" },
-          select: { payload: true },
+          select: { payload: true }, // Prisma.JsonValue
         },
       },
     });
-    const revenue = orders.reduce(
-      (sum, o) => sum + (o.price ?? 0) + (o.deliveryCents ?? 0),
-      0,
-    );
-    const supplierPayouts = orders.reduce(
-      (sum, o) =>
-        sum +
-        o.payouts
-          .filter((p) => p.status !== "FAILED")
-          .reduce((s, p) => s + p.amountCents, 0),
-      0,
-    );
+
+    // Revenue = price + delivery (ignore null/undefined safely)
+    const revenue = orders.reduce((sum, o) => {
+      const base = typeof o.price === "number" ? o.price : 0;
+      const del = typeof o.deliveryCents === "number" ? o.deliveryCents : 0;
+      return sum + base + del;
+    }, 0);
+
+    // Supplier payouts = sum of non-failed payouts.amountCents
+    const supplierPayouts = orders.reduce((sum, o) => {
+      const paid = o.payouts
+        .filter((p) => p.status !== "FAILED")
+        .reduce(
+          (s, p) => s + (typeof p.amountCents === "number" ? p.amountCents : 0),
+          0,
+        );
+      return sum + paid;
+    }, 0);
+
+    // Refunds = sum of payload.amountCents from refund logs
     const refunds = orders.reduce((sum, o) => {
-      const cents = o.auditLogs.reduce((s, log) => {
-        const amount = (log.payload as any)?.amountCents ?? 0;
-        return s + (typeof amount === "number" ? amount : 0);
+      const centsFromLogs = o.auditLogs.reduce((s, log) => {
+        const payload = log.payload; // already Prisma.JsonValue (or JsonValue | null)
+        let val = 0;
+        if (
+          payload &&
+          typeof payload === "object" &&
+          "amountCents" in payload
+        ) {
+          const v = (payload as Record<string, unknown>).amountCents;
+          if (typeof v === "number") val = v;
+        }
+        return s + val;
       }, 0);
-      return sum + cents;
+      return sum + centsFromLogs;
     }, 0);
 
     const margin = revenue - supplierPayouts - refunds;
+
     return { revenue, supplierPayouts, refunds, margin };
   }),
 });
