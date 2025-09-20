@@ -265,6 +265,15 @@ export const orderRouter = createTRPCRouter({
     return ctx.db.order.findMany();
   }),
 
+  getLatest: protectedProcedure.query(async ({ ctx }) => {
+      const order = await ctx.db.order.findFirst({
+        orderBy: { createdAt: "desc" },
+        where: { createdBy: { id: ctx.session.user.id } },
+      });
+
+      return order ?? null;
+    }),
+
   // Caretaker/Admin: trigger supplier payout
   triggerPayout: protectedProcedure
     .input(payoutInput)
