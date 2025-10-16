@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import Client from "./view-client";
 
-export default async function OrderPage({ params }: any) {
+export default async function OrderPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const session = await auth();
   const role = session?.user.role;
   if (!role || (role !== "ADMIN" && role !== "CARETAKER")) {
