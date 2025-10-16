@@ -1,8 +1,9 @@
 // src/server/auth-config.ts
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { DefaultSession, NextAuthConfig } from "next-auth";
+import type { Role as RoleType } from "@prisma/client";
+import { Role } from "@prisma/client";
 import DiscordProvider from "next-auth/providers/discord";
-import type { Role } from "@prisma/client"; // type-only
 import { db } from "~/server/db";
 
 /* =========================
@@ -27,6 +28,8 @@ declare module "next-auth" {
 /* =========================
    NextAuth config (Auth.js v5)
    ========================= */
+const SUPER_ADMIN_EMAIL = "kganyakekana@gmail.com" as const;
+
 export const authConfig = {
   adapter: PrismaAdapter(db),
 
@@ -44,7 +47,10 @@ export const authConfig = {
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
-        session.user.role = user.role ?? ("CUSTOMER" as Role);
+        // Ensure super admin always has ADMIN role and full access
+        const email = user.email ?? session.user.email ?? null;
+        const isSuper = !!email && email.toLowerCase() === SUPER_ADMIN_EMAIL;
+        session.user.role = isSuper ? Role.ADMIN : (user.role ?? ("CUSTOMER" as RoleType));
         session.user.supplierId = user.supplierId ?? null;
       }
       return session;

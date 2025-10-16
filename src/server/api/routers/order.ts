@@ -105,8 +105,8 @@ export const orderRouter = createTRPCRouter({
       });
     }),
 
-  // Admin: get by ID (detailed)
-  getById: adminProcedure.input(idParam).query(async ({ ctx, input }) => {
+  // Admin/Caretaker: get by ID (detailed)
+  getById: caretakerProcedure.input(idParam).query(async ({ ctx, input }) => {
     return ctx.db.order.findUniqueOrThrow({
       where: { id: input.orderId },
       select: {
