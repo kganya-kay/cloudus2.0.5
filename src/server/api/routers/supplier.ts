@@ -1,6 +1,6 @@
 // src/server/api/routers/supplier.ts
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { createTRPCRouter } from "~/server/api/trpc";
 import { caretakerProcedure } from "../rbac";
 
