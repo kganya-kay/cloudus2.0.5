@@ -86,6 +86,30 @@ function canTransition(from: FulfilmentStatus, to: FulfilmentStatus) {
 }
 
 export const orderRouter = createTRPCRouter({
+  // Summary metrics for admin dashboard
+  dashboardSummary: caretakerProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const startToday = new Date(now);
+    startToday.setHours(0, 0, 0, 0);
+    const endToday = new Date(now);
+    endToday.setHours(23, 59, 59, 999);
+
+    const startYesterday = new Date(startToday);
+    startYesterday.setDate(startYesterday.getDate() - 1);
+    const endYesterday = new Date(startToday);
+    endYesterday.setMilliseconds(-1);
+
+    const [dailyOrders, yesterdayOrders, openOrders, closedOrders, totalUsers] =
+      await Promise.all([
+        ctx.db.order.count({ where: { createdAt: { gte: startToday, lte: endToday } } }),
+        ctx.db.order.count({ where: { createdAt: { gte: startYesterday, lte: endYesterday } } }),
+        ctx.db.order.count({ where: { status: { notIn: [FulfilmentStatus.CLOSED, FulfilmentStatus.CANCELED] } } }),
+        ctx.db.order.count({ where: { status: FulfilmentStatus.CLOSED } }),
+        ctx.db.user.count(),
+      ]);
+
+    return { dailyOrders, yesterdayOrders, openOrders, closedOrders, totalUsers };
+  }),
   // Public lookup (e.g., status page)
   getByCode: publicProcedure
     .input(z.object({ code: z.string().min(6) }))

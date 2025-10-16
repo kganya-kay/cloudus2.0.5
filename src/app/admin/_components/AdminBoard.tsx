@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FulfilmentStatus } from "@prisma/client";
 import { api } from "~/trpc/react";
 import { StatusBadge } from "./StatusBadge";
+import Link from "next/link";
 
 // Columns (typed)
 const COLS: readonly FulfilmentStatus[] = [
@@ -83,20 +84,25 @@ export default function AdminBoard() {
                   key={o.id}
                   draggable
                   onDragStart={() => setDragId(o.id)}
-                  className="cursor-grab rounded-lg border px-3 py-2 hover:shadow"
+                  className="cursor-grab rounded-lg border px-2 py-1.5 hover:shadow-sm overflow-hidden"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-xs font-semibold text-gray-800">
                       {o.code}
                     </span>
                     <StatusBadge status={o.status} />
                   </div>
-                  <p className="truncate text-xs text-gray-600">
+                  <p className="truncate text-xs text-gray-600 leading-tight">
                     {o.customerName ?? "—"}
                   </p>
-                  <p className="text-[11px] text-gray-400">
-                    {[o.suburb ?? "", o.city ?? ""].filter(Boolean).join(" ")}
-                  </p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="truncate text-[11px] text-gray-400">
+                      {[o.suburb ?? "", o.city ?? ""].filter(Boolean).join(" ")}
+                    </p>
+                    <Link href={`/admin/orders/${o.id}`} className="text-[11px] text-blue-600 hover:underline">
+                      View
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
