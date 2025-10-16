@@ -86,6 +86,70 @@ function canTransition(from: FulfilmentStatus, to: FulfilmentStatus) {
 }
 
 export const orderRouter = createTRPCRouter({
+  // Create a manual order (admin/caretaker)
+  createManual: caretakerProcedure
+    .input(
+      z.object({
+        customerName: z.string().min(1),
+        customerPhone: z.string().min(5),
+        customerEmail: z.string().email().optional(),
+        addressLine1: z.string().optional(),
+        suburb: z.string().optional(),
+        city: z.string().optional(),
+        note: z.string().optional(),
+        priceCents: z.number().int().nonnegative(),
+        deliveryCents: z.number().int().nonnegative().default(0),
+        paymentMethod: z.string().min(1), // e.g. CASH | CARD | EFT | OTHER
+        paymentRef: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const order = await ctx.db.order.create({
+        data: {
+          name: "Manual Order",
+          description: input.note ?? "Manual order",
+          link: "manual",
+          api: "manual",
+          createdBy: { connect: { id: ctx.session.user.id } },
+          price: input.priceCents,
+          deliveryCents: input.deliveryCents,
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          customerEmail: input.customerEmail ?? null,
+          addressLine1: input.addressLine1 ?? null,
+          suburb: input.suburb ?? null,
+          city: input.city ?? null,
+          caretaker: { connect: { id: ctx.session.user.id } },
+          status: FulfilmentStatus.NEW,
+        },
+        select: { id: true },
+      });
+
+      const total = input.priceCents + (input.deliveryCents ?? 0);
+      await ctx.db.payment.create({
+        data: {
+          orderId: order.id,
+          amountCents: total,
+          status: "PAID",
+          provider: input.paymentMethod,
+          providerRef: input.paymentRef ?? undefined,
+        },
+      });
+
+      await ctx.db.auditLog.create({
+        data: {
+          orderId: order.id,
+          actorId: ctx.session.user.id,
+          action: "MANUAL_CREATE",
+          payload: {
+            paymentMethod: input.paymentMethod,
+            amountCents: total,
+          },
+        },
+      });
+
+      return { id: order.id };
+    }),
   // Summary metrics for admin dashboard
   dashboardSummary: caretakerProcedure.query(async ({ ctx }) => {
     const now = new Date();

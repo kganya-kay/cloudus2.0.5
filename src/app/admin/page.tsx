@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import AdminBoard from "./_components/AdminBoard";
 import AdminSummary from "./_components/AdminSummary";
+import AdminManualOrder from "./_components/AdminManualOrder";
 
 
 export default async function AdminHome() {
@@ -17,6 +18,7 @@ redirect("/");
         <h1 className="text-2xl font-bold text-gray-900">Today</h1>
       </div>
       <AdminSummary />
+      <AdminManualOrder />
       <AdminBoard />
     </main>
   );
