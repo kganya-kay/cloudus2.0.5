@@ -22,6 +22,18 @@ export const supplierRouter = createTRPCRouter({
           rating: true,
           notes: true,
           createdAt: true,
+          // Include supplied shop items (basic fields)
+          shopItems: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              price: true,
+              image: true,
+              createdAt: true,
+            },
+          },
         },
       });
     }),
