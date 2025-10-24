@@ -86,6 +86,65 @@ function canTransition(from: FulfilmentStatus, to: FulfilmentStatus) {
 }
 
 export const orderRouter = createTRPCRouter({
+  // Caretaker: list all orders with filters + pagination
+  list: caretakerProcedure
+    .input(
+      z
+        .object({
+          q: z.string().optional(),
+          status: z.nativeEnum(FulfilmentStatus).optional(),
+          page: z.number().int().positive().default(1),
+          pageSize: z.number().int().positive().max(100).default(20),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const q = input?.q?.trim();
+      const where: Prisma.OrderWhereInput = {
+        ...(input?.status ? { status: input.status } : {}),
+        ...(q && q.length > 0
+          ? {
+              OR: [
+                { code: { contains: q, mode: "insensitive" } },
+                { customerName: { contains: q, mode: "insensitive" } },
+                { customerPhone: { contains: q, mode: "insensitive" } },
+                { suburb: { contains: q, mode: "insensitive" } },
+                { city: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      };
+
+      const page = input?.page ?? 1;
+      const pageSize = input?.pageSize ?? 20;
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+
+      const [items, total] = await Promise.all([
+        ctx.db.order.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            code: true,
+            status: true,
+            price: true,
+            deliveryCents: true,
+            currency: true,
+            customerName: true,
+            customerPhone: true,
+            suburb: true,
+            city: true,
+            createdAt: true,
+          },
+          skip,
+          take,
+        }),
+        ctx.db.order.count({ where }),
+      ]);
+
+      return { items, total, page, pageSize };
+    }),
   // Create a manual order (admin/caretaker)
   createManual: caretakerProcedure
     .input(

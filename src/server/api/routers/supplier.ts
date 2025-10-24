@@ -31,6 +31,8 @@ export const supplierRouter = createTRPCRouter({
         .object({
           q: z.string().optional(),
           onlyActive: z.boolean().optional(),
+          page: z.number().int().positive().default(1),
+          pageSize: z.number().int().positive().max(100).default(20),
         })
         .optional(),
     )
@@ -42,6 +44,8 @@ export const supplierRouter = createTRPCRouter({
               { name: { contains: q, mode: "insensitive" } },
               { city: { contains: q, mode: "insensitive" } },
               { suburb: { contains: q, mode: "insensitive" } },
+              { phone: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
             ]
           : [];
 
@@ -50,10 +54,22 @@ export const supplierRouter = createTRPCRouter({
         ...(OR.length > 0 ? { OR } : {}),
       };
 
-      return ctx.db.supplier.findMany({
-        where,
-        orderBy: [{ isActive: "desc" }, { name: "asc" }],
-      });
+      const page = input?.page ?? 1;
+      const pageSize = input?.pageSize ?? 20;
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+
+      const [items, total] = await Promise.all([
+        ctx.db.supplier.findMany({
+          where,
+          orderBy: [{ isActive: "desc" }, { name: "asc" }],
+          skip,
+          take,
+        }),
+        ctx.db.supplier.count({ where }),
+      ]);
+
+      return { items, total, page, pageSize };
     }),
 
   toggleActive: caretakerProcedure
