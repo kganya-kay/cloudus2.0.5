@@ -1,4 +1,5 @@
 // src/app/admin/suppliers/page.tsx
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import TableClient from "./table-client";
@@ -12,7 +13,10 @@ export default async function SuppliersPage() {
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-4 text-2xl font-bold text-gray-900">Suppliers</h1>
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/admin" className="rounded-full border px-3 py-1 text-sm hover:bg-gray-50">← Back to Admin</Link>
+        <h1 className="text-2xl font-bold text-gray-900">Suppliers</h1>
+      </div>
       <TableClient />
     </main>
   );
