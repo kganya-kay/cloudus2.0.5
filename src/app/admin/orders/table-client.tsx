@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { FulfilmentStatus } from "@prisma/client";
 import { api } from "~/trpc/react";
 import { StatusBadge } from "../_components/StatusBadge";
 
@@ -21,13 +22,15 @@ const STATUSES = [
 
 export default function TableClient() {
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<(typeof STATUSES)[number]>("ALL");
+  type Status = (typeof STATUSES)[number];
+  const [status, setStatus] = useState<Status>("ALL");
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
+  const isFulfilmentStatus = (s: Status): s is FulfilmentStatus => s !== "ALL";
   const { data, isLoading } = api.order.list.useQuery({
     q: q.trim() || undefined,
-    status: status !== "ALL" ? (status as any) : undefined,
+    status: isFulfilmentStatus(status) ? status : undefined,
     page,
     pageSize,
   });
@@ -58,7 +61,7 @@ export default function TableClient() {
           <select
             value={status}
             onChange={(e) => {
-              setStatus(e.target.value as any);
+              setStatus(e.target.value as Status);
               setPage(1);
             }}
             className="rounded-full border px-3 py-2 text-sm"
@@ -137,4 +140,3 @@ export default function TableClient() {
     </div>
   );
 }
-
