@@ -27,7 +27,8 @@ export default function TableClient() {
 
   if (isLoading) return <p className="text-sm text-gray-500">Loading…</p>;
 
-  const rows = data?.items ?? [];
+  type SupplierRow = NonNullable<typeof data>["items"][number];
+  const rows: SupplierRow[] = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -94,7 +95,7 @@ export default function TableClient() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((s: any) => (
+            {rows.map((s) => (
               <tr key={s.id} className="border-t hover:bg-gray-50">
                 <td className="px-3 py-2">
                   <Link className="text-blue-600 hover:underline" href={`/admin/suppliers/${s.id}`}>

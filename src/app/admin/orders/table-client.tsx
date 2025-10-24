@@ -34,7 +34,8 @@ export default function TableClient() {
 
   if (isLoading) return <p className="text-sm text-gray-500">Loading…</p>;
 
-  const rows = data?.items ?? [];
+  type OrderRow = NonNullable<typeof data>["items"][number];
+  const rows: OrderRow[] = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -106,7 +107,7 @@ export default function TableClient() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((o: any) => (
+            {rows.map((o) => (
               <tr key={o.id} className="border-t hover:bg-gray-50">
                 <td className="px-3 py-2">
                   <Link className="text-blue-600 hover:underline" href={`/admin/orders/${o.id}`}>
@@ -119,7 +120,7 @@ export default function TableClient() {
                 <td className="px-3 py-2"><StatusBadge status={o.status} /></td>
                 <td className="px-3 py-2">R {Math.round(((o.price ?? 0) + (o.deliveryCents ?? 0)) / 100)}</td>
                 <td className="px-3 py-2 text-sm text-gray-600">
-                  {o.createdAt ? new Date(o.createdAt).toLocaleString() : "—"}
+                  {o.createdAt ? new Date((o.createdAt as unknown as string)).toLocaleString() : "—"}
                 </td>
               </tr>
             ))}
