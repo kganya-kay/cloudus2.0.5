@@ -90,6 +90,12 @@ export default function Client({ id }: { id: number }) {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{item.name}</h1>
             <p className="mt-1 text-sm text-gray-600">{item.description}</p>
+            {item.supplier && (
+              <p className="mt-1 text-xs text-gray-500">
+                Supplied by <span className="font-medium">{item.supplier.name}</span>
+                {item.supplier.city ? ` • ${item.supplier.city}` : ""}
+              </p>
+            )}
           </div>
           <div className="text-right">
             <div className="rounded-full bg-blue-600/90 px-3 py-1 text-sm font-semibold text-white shadow">{priceText}</div>
@@ -158,4 +164,3 @@ export default function Client({ id }: { id: number }) {
     </div>
   );
 }
-

@@ -4,7 +4,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UploadButton } from "~/utils/uploadthing";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 function getUploadedUrl(files: unknown): string | undefined {
   if (!Array.isArray(files) || files.length === 0) return undefined;
@@ -29,6 +29,11 @@ export default function Client() {
   const [link, setLink] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
   const [links, setLinks] = useState<string[]>([]);
+  const [supplierQuery, setSupplierQuery] = useState("");
+  const [supplierId, setSupplierId] = useState<string>("");
+
+  const { data: suppliers } = api.supplier.list.useQuery({ q: supplierQuery || undefined, onlyActive: true, page: 1, pageSize: 50 });
+  type SupplierRow = NonNullable<typeof suppliers>["items"][number];
 
   const create = api.shopItem.create.useMutation({
     onSuccess: async () => {
@@ -51,6 +56,7 @@ export default function Client() {
           link,
           api: "",
           links,
+          supplierId,
         });
       }}
       className="rounded-xl border bg-white p-4"
@@ -71,6 +77,32 @@ export default function Client() {
         <div>
           <label className="text-xs text-gray-600">External Link (optional)</label>
           <input value={link} onChange={(e) => setLink(e.target.value)} className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-xs text-gray-600">Supplier</label>
+          <div className="mt-1 flex gap-2">
+            <input
+              placeholder="Search suppliers"
+              value={supplierQuery}
+              onChange={(e) => setSupplierQuery(e.target.value)}
+              className="w-full rounded-full border px-4 py-2 text-sm"
+            />
+            <select
+              required
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+              className="w-56 rounded-full border px-3 py-2 text-sm"
+            >
+              <option value="" disabled>
+                Select supplier
+              </option>
+              {suppliers?.items?.map((s: SupplierRow) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} {s.city ? `• ${s.city}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="sm:col-span-2">
           <label className="text-xs text-gray-600">Description</label>
@@ -120,4 +152,3 @@ export default function Client() {
     </form>
   );
 }
-

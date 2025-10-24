@@ -19,6 +19,7 @@ export default function Client() {
             <th className="px-3 py-2">Name</th>
             <th className="px-3 py-2">Type</th>
             <th className="px-3 py-2">Price</th>
+            <th className="px-3 py-2">Supplier</th>
             <th className="px-3 py-2">Orders</th>
             <th className="px-3 py-2">Created</th>
           </tr>
@@ -29,6 +30,7 @@ export default function Client() {
               <td className="px-3 py-2">{r.name}</td>
               <td className="px-3 py-2">{r.type}</td>
               <td className="px-3 py-2">R {Math.round(r.price / 100)}</td>
+              <td className="px-3 py-2">{(r as unknown as { supplier?: { name?: string } }).supplier?.name ?? "—"}</td>
               <td className="px-3 py-2">{(r as unknown as { ordersCount?: number }).ordersCount ?? "—"}</td>
               <td className="px-3 py-2 text-sm text-gray-600">{new Date(r.createdAt).toLocaleDateString()}</td>
             </tr>

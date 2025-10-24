@@ -18,6 +18,7 @@ const createShopItemInput = z.object({
   link: z.string().default(""),
   api: z.string().default(""),
   links: z.array(z.string()).default([]),
+  supplierId: z.string().min(1),
 });
 
 const updateShopItemInput = z.object({
@@ -30,6 +31,7 @@ const updateShopItemInput = z.object({
   link: z.string().optional(),
   api: z.string().optional(),
   links: z.array(z.string()).optional(),
+  supplierId: z.string().min(1).optional(),
 });
 
 type UpdateInput = z.infer<typeof updateShopItemInput>;
@@ -108,6 +110,7 @@ export const shopItemRouter = createTRPCRouter({
           links: input.links ?? [],
           createdBy: { connect: { id: ctx.session.user.id } },
           contributors: { connect: [{ id: ctx.session.user.id }] },
+          supplier: { connect: { id: input.supplierId } },
         },
       });
     }),
@@ -120,7 +123,12 @@ export const shopItemRouter = createTRPCRouter({
       try {
         return await ctx.db.shopItem.update({
           where: { id: input.id },
-          data,
+          data: {
+            ...data,
+            ...(isDefined(input.supplierId)
+              ? { supplier: { connect: { id: input.supplierId } } }
+              : {}),
+          },
         });
       } catch (err: unknown) {
         if (
@@ -279,6 +287,7 @@ export const shopItemRouter = createTRPCRouter({
       orderBy: { createdAt: "desc" },
       include: {
         _count: { select: { orders: true, likes: true } },
+        supplier: { select: { id: true, name: true } },
       },
     });
 
@@ -317,6 +326,7 @@ export const shopItemRouter = createTRPCRouter({
           orderBy: { createdAt: "desc" },
           select: { id: true, createdAt: true, status: true, price: true },
         },
+        supplier: { select: { id: true, name: true, phone: true, city: true, suburb: true } },
       },
     });
     if (!item) {

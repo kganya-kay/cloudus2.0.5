@@ -206,6 +206,10 @@ model ShopItem {
   api          String
   links        String[]
 
+  // Supplier link (nullable for backward compatibility; enforce at creation time)
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
   // One named relation to Order to avoid ambiguity
   orders Order[] @relation("ShopItemOrders")
 
@@ -497,6 +501,7 @@ model Supplier {
   addresses      SupplierAddress[]
   SupplierPayout SupplierPayout[]
   User           User[]
+  shopItems      ShopItem[]
 }
 
 model SupplierQuote {
