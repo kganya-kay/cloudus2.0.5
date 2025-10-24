@@ -5,6 +5,26 @@ import { createTRPCRouter } from "~/server/api/trpc";
 import { caretakerProcedure } from "../rbac";
 
 export const supplierRouter = createTRPCRouter({
+  getById: caretakerProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.supplier.findUniqueOrThrow({
+        where: { id: input.id },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
+          suburb: true,
+          city: true,
+          pricePerKg: true,
+          isActive: true,
+          rating: true,
+          notes: true,
+          createdAt: true,
+        },
+      });
+    }),
   list: caretakerProcedure
     .input(
       z

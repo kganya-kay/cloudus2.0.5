@@ -1,6 +1,7 @@
 // src/app/admin/suppliers/table-client.tsx
 "use client";
 
+import Link from "next/link";
 import { api } from "~/trpc/react";
 
 export default function TableClient() {
@@ -28,8 +29,12 @@ export default function TableClient() {
         </thead>
         <tbody>
           {data?.map((s) => (
-            <tr key={s.id} className="border-t">
-              <td className="px-3 py-2">{s.name}</td>
+            <tr key={s.id} className="border-t hover:bg-gray-50">
+              <td className="px-3 py-2">
+                <Link className="text-blue-600 hover:underline" href={`/admin/suppliers/${s.id}`}>
+                  {s.name}
+                </Link>
+              </td>
               <td className="px-3 py-2">{s.phone}</td>
               <td className="px-3 py-2">
                 {[s.suburb, s.city].filter(Boolean).join(", ")}
