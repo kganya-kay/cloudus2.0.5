@@ -27,7 +27,11 @@ export default function Client() {
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className="border-t">
-              <td className="px-3 py-2">{r.name}</td>
+              <td className="px-3 py-2">
+                <Link className="text-blue-600 hover:underline" href={`/admin/shopitems/${r.id}`}>
+                  {r.name}
+                </Link>
+              </td>
               <td className="px-3 py-2">{r.type}</td>
               <td className="px-3 py-2">R {Math.round(r.price / 100)}</td>
               <td className="px-3 py-2">{(r as unknown as { supplier?: { name?: string } }).supplier?.name ?? "—"}</td>
