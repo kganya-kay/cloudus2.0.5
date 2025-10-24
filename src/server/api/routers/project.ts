@@ -45,6 +45,8 @@ export const projectRouter = createTRPCRouter({
         price: z.number(),
         link: z.string(),
         contactNumber: z.number(),
+        image: z.string().url().optional(),
+        links: z.array(z.string().url()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -58,6 +60,10 @@ export const projectRouter = createTRPCRouter({
           link: input.link,
           api: "api empty",
           contactNumber: input.contactNumber,
+          image:
+            input.image ??
+            "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
+          links: input.links ?? [],
         },
       });
     }),

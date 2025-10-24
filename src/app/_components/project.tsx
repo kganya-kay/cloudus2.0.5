@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { UploadButton } from "~/utils/uploadthing";
 import { api } from "~/trpc/react";
 
 export function LatestProject() {
@@ -15,6 +16,21 @@ export function LatestProject() {
   const [price, setPrice] = useState(0);
   const [contactNumber, setContactNumber] = useState("");
   const [link, setLink] = useState("");
+  const [coverImage, setCoverImage] = useState<string | undefined>(undefined);
+  const [gallery, setGallery] = useState<string[]>([]);
+
+  // Helper: extract URL from UploadThing result
+  function getUploadedUrl(files: unknown): string | undefined {
+    if (!Array.isArray(files) || files.length === 0) return undefined;
+    const f = files[0] as Record<string, unknown>;
+    const pick = (v: unknown) => (typeof v === "string" && v.trim().length > 0 ? v : undefined);
+    return (
+      pick(f.url) ??
+      pick(f.ufsUrl) ??
+      pick((f.serverData as Record<string, unknown> | undefined)?.url) ??
+      (pick(f.key) ? `https://utfs.io/f/${String(f.key)}` : undefined)
+    );
+  }
 
   const createProject = api.project.create.useMutation({
     onSuccess: async () => {
@@ -77,10 +93,47 @@ export function LatestProject() {
               price,
               link,
               contactNumber: Number(contactNumber),
+              image: coverImage,
+              links: gallery,
             });
           }}
           className="flex flex-col gap-4"
         >
+          {/* Image uploaders */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border p-3">
+              <p className="text-xs font-medium text-gray-700 mb-2">Cover image</p>
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res) => {
+                  const url = getUploadedUrl(res);
+                  if (url) setCoverImage(url);
+                }}
+                onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
+              />
+              {coverImage && (
+                <img src={coverImage} alt="Cover" className="mt-2 h-24 w-24 rounded object-cover" />
+              )}
+            </div>
+            <div className="rounded-lg border p-3">
+              <p className="text-xs font-medium text-gray-700 mb-2">Gallery images</p>
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res) => {
+                  const url = getUploadedUrl(res);
+                  if (url) setGallery((g) => [...g, url]);
+                }}
+                onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
+              />
+              {gallery.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {gallery.map((g) => (
+                    <img key={g} src={g} alt="Gallery" className="h-16 w-16 rounded object-cover" />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <input
             type="text"
             placeholder="Project Name"
@@ -154,15 +207,7 @@ export function LatestProject() {
             />
           </div>
 
-          <div>
-            <label className="text-xs text-blue-400 font-light">
-              Optional File Upload
-            </label>
-            <input
-              type="file"
-              className="w-full text-xs text-gray-600 mt-1"
-            />
-          </div>
+          {/* Removed old plain file input; handled by UploadButton above */}
 
           <button
             type="submit"
