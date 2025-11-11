@@ -4,9 +4,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadButton } from "~/utils/uploadthing";
-import { api, type RouterOutputs } from "~/trpc/react";
-
-type Item = RouterOutputs["shopItem"]["getById"];
+import { api } from "~/trpc/react";
 
 function formatRands(cents?: number | null) {
   const r = Math.round((cents ?? 0) / 100);
@@ -35,6 +33,7 @@ export default function Client({ id }: { id: number }) {
   const [description, setDescription] = useState("");
   const [priceRands, setPriceRands] = useState("");
   const [link, setLink] = useState("");
+  const [apiField, setApiField] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
   const [links, setLinks] = useState<string[]>([]);
   const [supplierQuery, setSupplierQuery] = useState("");
@@ -50,6 +49,7 @@ export default function Client({ id }: { id: number }) {
     setDescription(item.description ?? "");
     setPriceRands(String(Math.round((item.price ?? 0) / 100)));
     setLink(item.link ?? "");
+    setApiField(item.api ?? "");
     setImage(item.image ?? undefined);
     setLinks(Array.isArray(item.links) ? item.links.filter(Boolean) : []);
     setSupplierId(item.supplier?.id ?? "");
@@ -83,6 +83,7 @@ export default function Client({ id }: { id: number }) {
           description,
           priceCents,
           link,
+          api: apiField,
           image,
           links,
           supplierId: supplierId || undefined,
@@ -107,6 +108,10 @@ export default function Client({ id }: { id: number }) {
         <div>
           <label className="text-xs text-gray-600">External Link</label>
           <input value={link} onChange={(e) => setLink(e.target.value)} className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">API</label>
+          <input value={apiField} onChange={(e) => setApiField(e.target.value)} className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
         </div>
 
         <div className="sm:col-span-2">
@@ -142,6 +147,7 @@ export default function Client({ id }: { id: number }) {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border p-3">
           <p className="mb-2 text-xs font-medium text-gray-700">Cover image</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <UploadButton
             endpoint="imageUploader"
             onClientUploadComplete={(res) => {
@@ -150,10 +156,14 @@ export default function Client({ id }: { id: number }) {
             }}
             onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
           />
-          {image && <img alt="Cover" src={image} className="mt-2 h-24 w-24 rounded object-cover" />}
+          {image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt="Cover" src={image} className="mt-2 h-24 w-24 rounded object-cover" />
+          )}
         </div>
         <div className="rounded-lg border p-3">
           <p className="mb-2 text-xs font-medium text-gray-700">Gallery images</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <UploadButton
             endpoint="imageUploader"
             onClientUploadComplete={(res) => {
@@ -165,6 +175,7 @@ export default function Client({ id }: { id: number }) {
           {links.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
               {links.map((g) => (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img key={g} alt="Gallery" src={g} className="h-16 w-16 rounded object-cover" />
               ))}
             </div>

@@ -4,7 +4,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UploadButton } from "~/utils/uploadthing";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 function getUploadedUrl(files: unknown): string | undefined {
   if (!Array.isArray(files) || files.length === 0) return undefined;
@@ -113,6 +113,7 @@ export default function Client() {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border p-3">
           <p className="mb-2 text-xs font-medium text-gray-700">Cover image</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <UploadButton
             endpoint="imageUploader"
             onClientUploadComplete={(res) => {
@@ -121,10 +122,14 @@ export default function Client() {
             }}
             onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
           />
-          {image && <img alt="Cover" src={image} className="mt-2 h-24 w-24 rounded object-cover" />}
+          {image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt="Cover" src={image} className="mt-2 h-24 w-24 rounded object-cover" />
+          )}
         </div>
         <div className="rounded-lg border p-3">
           <p className="mb-2 text-xs font-medium text-gray-700">Gallery images</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <UploadButton
             endpoint="imageUploader"
             onClientUploadComplete={(res) => {
@@ -136,6 +141,7 @@ export default function Client() {
           {links.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
               {links.map((g) => (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img key={g} alt="Gallery" src={g} className="h-16 w-16 rounded object-cover" />
               ))}
             </div>

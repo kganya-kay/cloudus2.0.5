@@ -26,6 +26,28 @@ const todayRange = () => {
 // ----- inputs -----
 const idParam = z.object({ orderId: z.number().int().positive() });
 
+const updateOrderInput = z.object({
+  orderId: z.number().int().positive(),
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  priceCents: z.number().int().nonnegative().optional(),
+  image: z.string().url().optional(),
+  link: z.string().optional(),
+  api: z.string().optional(),
+  links: z.array(z.string()).optional(),
+  deliveryCents: z.number().int().nonnegative().optional(),
+  currency: z.string().optional(),
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
+  customerEmail: z.string().email().nullable().optional(),
+  addressLine1: z.string().nullable().optional(),
+  suburb: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  estimatedKg: z.number().positive().nullable().optional(),
+  supplierId: z.string().nullable().optional(),
+  caretakerId: z.string().nullable().optional(),
+});
+
 const changeStatusInput = z.object({
   orderId: z.number().int().positive(),
   status: z.nativeEnum(FulfilmentStatus),
@@ -261,6 +283,12 @@ export const orderRouter = createTRPCRouter({
         code: true,
         status: true,
         createdAt: true,
+        name: true,
+        description: true,
+        image: true,
+        link: true,
+        api: true,
+        links: true,
         customerName: true,
         suburb: true,
         city: true,
@@ -274,6 +302,8 @@ export const orderRouter = createTRPCRouter({
         customerPhone: true,
         customerEmail: true,
         addressLine1: true,
+        estimatedKg: true,
+        caretakerId: true,
       },
     });
   }),
@@ -310,6 +340,30 @@ export const orderRouter = createTRPCRouter({
       });
 
       return updated;
+    }),
+
+  // Caretaker/Admin: update arbitrary fields (status via changeStatus route)
+  update: caretakerProcedure
+    .input(updateOrderInput)
+    .mutation(async ({ ctx, input }) => {
+      const { orderId, supplierId, caretakerId, ...rest } = input;
+      const data: Prisma.OrderUpdateInput = { ...rest };
+      if (supplierId !== undefined) {
+        data.supplier = supplierId
+          ? { connect: { id: supplierId } }
+          : { disconnect: true };
+      }
+      if (caretakerId !== undefined) {
+        data.caretaker = caretakerId
+          ? { connect: { id: caretakerId } }
+          : { disconnect: true };
+      }
+
+      try {
+        return await ctx.db.order.update({ where: { id: orderId }, data });
+      } catch (err) {
+        throw err;
+      }
     }),
 
   // Supplier: update readiness (limited status set)

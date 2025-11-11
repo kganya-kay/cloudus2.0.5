@@ -6,6 +6,31 @@ import { caretakerProcedure } from "../rbac";
 import { TRPCError } from "@trpc/server";
 
 export const supplierRouter = createTRPCRouter({
+  update: caretakerProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1).optional(),
+        phone: z.string().min(3).optional(),
+        email: z.string().email().nullable().optional(),
+        suburb: z.string().nullable().optional(),
+        city: z.string().nullable().optional(),
+        pricePerKgCents: z.number().int().nonnegative().nullable().optional(),
+        isActive: z.boolean().optional(),
+        rating: z.number().min(0).max(5).nullable().optional(),
+        notes: z.string().nullable().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, pricePerKgCents, ...rest } = input;
+      return ctx.db.supplier.update({
+        where: { id },
+        data: {
+          ...rest,
+          ...(pricePerKgCents !== undefined ? { pricePerKg: pricePerKgCents } : {}),
+        },
+      });
+    }),
   create: caretakerProcedure
     .input(
       z.object({
