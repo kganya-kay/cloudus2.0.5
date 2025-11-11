@@ -170,11 +170,12 @@ export default function DashboardShell({
       <div className="sticky top-16 z-40 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70">
         <div className="mx-auto max-w-[1600px] px-3 sm:px-6 lg:px-8">
           <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar">
-            {tabs.map((t, i) => (
+            {tabs.map((t) => (
               <button
                 key={t.key}
+                onClick={() => setActiveTab(t.key)}
                 className={classNames(
-                  i === 0
+                  activeTab === t.key
                     ? "bg-gray-900 text-white"
                     : "bg-gray-100 text-gray-800 hover:bg-gray-200",
                   "whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium"
@@ -294,9 +295,6 @@ export default function DashboardShell({
               </div>
             </div>
 
-            {/* Tabs */}
-            <TabsSection activeTab={activeTab} setActiveTab={setActiveTab} />
-
             {/* Content switch */}
             <ContentSwitch activeTab={activeTab} />
 
@@ -304,32 +302,6 @@ export default function DashboardShell({
           </main>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Local tab state and switch rendering
-function TabsSection({
-  activeTab,
-  setActiveTab,
-}: {
-  activeTab: string;
-  setActiveTab: (k: string) => void;
-}) {
-  return (
-    <div className="mt-4 flex flex-wrap gap-2">
-      {tabs.map((t) => (
-        <button
-          key={t.key}
-          onClick={() => setActiveTab(t.key)}
-          className={classNames(
-            "rounded-full border px-3 py-1 text-sm",
-            activeTab === t.key ? "bg-blue-600 text-white border-blue-600" : "hover:bg-gray-50",
-          )}
-        >
-          {t.name}
-        </button>
-      ))}
     </div>
   );
 }
