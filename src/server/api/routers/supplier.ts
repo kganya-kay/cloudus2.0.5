@@ -1,10 +1,40 @@
 // src/server/api/routers/supplier.ts
 import { z } from "zod";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { createTRPCRouter } from "~/server/api/trpc";
 import { caretakerProcedure } from "../rbac";
+import { TRPCError } from "@trpc/server";
 
 export const supplierRouter = createTRPCRouter({
+  create: caretakerProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        phone: z.string().min(3),
+        email: z.string().email().optional(),
+        suburb: z.string().optional(),
+        city: z.string().optional(),
+        pricePerKgCents: z.number().int().nonnegative().optional(),
+        rating: z.number().min(0).max(5).optional(),
+        notes: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.supplier.create({
+        data: {
+          name: input.name,
+          phone: input.phone,
+          email: input.email,
+          suburb: input.suburb,
+          city: input.city,
+          pricePerKg: input.pricePerKgCents,
+          rating: input.rating,
+          notes: input.notes,
+          isActive: input.isActive ?? true,
+        },
+      });
+    }),
   getById: caretakerProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
@@ -91,5 +121,48 @@ export const supplierRouter = createTRPCRouter({
         where: { id: input.id },
         data: { isActive: input.isActive },
       });
+    }),
+
+  delete: caretakerProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const supplierId = input.id;
+
+      const [shopItems, orders, quotes, payouts, users, addresses] = await Promise.all([
+        ctx.db.shopItem.count({ where: { supplierId } }),
+        ctx.db.order.count({ where: { supplierId } }),
+        ctx.db.supplierQuote.count({ where: { supplierId } }),
+        ctx.db.supplierPayout.count({ where: { supplierId } }),
+        ctx.db.user.count({ where: { supplierId } }),
+        ctx.db.supplierAddress.count({ where: { supplierId } }),
+      ]);
+
+      const blockers: string[] = [];
+      if (shopItems > 0) blockers.push("linked shop items");
+      if (orders > 0) blockers.push("linked orders");
+      if (quotes > 0) blockers.push("linked quotes");
+      if (payouts > 0) blockers.push("linked payouts");
+      if (users > 0) blockers.push("linked users");
+      if (addresses > 0) blockers.push("linked addresses");
+
+      if (blockers.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Cannot delete supplier with ${blockers.join(", ")}. Remove or reassign first.`,
+        });
+      }
+
+      try {
+        await ctx.db.supplier.delete({ where: { id: supplierId } });
+        return { ok: true as const };
+      } catch (err: unknown) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2025"
+        ) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Supplier not found" });
+        }
+        throw err;
+      }
     }),
 });

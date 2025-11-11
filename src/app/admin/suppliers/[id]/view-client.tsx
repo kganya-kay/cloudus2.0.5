@@ -2,10 +2,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
 export default function Client({ id }: { id: string }) {
+  const router = useRouter();
+  const utils = api.useUtils();
   const { data, isLoading } = api.supplier.getById.useQuery({ id });
+  const del = api.supplier.delete.useMutation({
+    onSuccess: async () => {
+      await utils.supplier.list.invalidate();
+      router.push("/admin/suppliers");
+    },
+  });
 
   if (isLoading || !data) return <p className="text-sm text-gray-500">Loading…</p>;
 
@@ -17,9 +26,23 @@ export default function Client({ id }: { id: string }) {
           <h1 className="text-xl font-bold text-gray-900">{s.name}</h1>
           <p className="text-sm text-gray-500">{[s.suburb, s.city].filter(Boolean).join(", ") || "—"}</p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.isActive ? "bg-green-100 text-green-800" : "bg-gray-200 text-gray-700"}`}>
-          {s.isActive ? "Active" : "Inactive"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.isActive ? "bg-green-100 text-green-800" : "bg-gray-200 text-gray-700"}`}>
+            {s.isActive ? "Active" : "Inactive"}
+          </span>
+          <button
+            onClick={() => {
+              if (del.isPending) return;
+              const ok = confirm("Delete this supplier? This cannot be undone.");
+              if (!ok) return;
+              del.mutate({ id });
+            }}
+            disabled={del.isPending}
+            className="rounded-full border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+          >
+            {del.isPending ? "Deleting…" : "Delete"}
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -95,4 +118,3 @@ export default function Client({ id }: { id: string }) {
     </div>
   );
 }
-

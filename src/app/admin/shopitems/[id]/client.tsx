@@ -62,6 +62,12 @@ export default function Client({ id }: { id: number }) {
       router.push("/admin/shopitems");
     },
   });
+  const del = api.shopItem.delete.useMutation({
+    onSuccess: async () => {
+      await utils.shopItem.getAll.invalidate();
+      router.push("/admin/shopitems");
+    },
+  });
 
   if (isLoading || !item) return <p className="text-sm text-gray-500">Loading…</p>;
 
@@ -166,13 +172,27 @@ export default function Client({ id }: { id: number }) {
         </div>
       </div>
 
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-4 flex justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (del.isPending) return;
+            const ok = confirm("Delete this item? This cannot be undone.");
+            if (!ok) return;
+            del.mutate({ id });
+          }}
+          disabled={del.isPending}
+          className="rounded-full border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+        >
+          {del.isPending ? "Deleting…" : "Delete"}
+        </button>
+        <div className="ml-auto flex items-center gap-2">
         <button type="button" onClick={() => router.push("/admin/shopitems")} className="rounded-full border px-4 py-2 text-sm">Cancel</button>
         <button type="submit" disabled={update.isPending} className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
           {update.isPending ? "Saving…" : "Save Changes"}
         </button>
       </div>
+      </div>
     </form>
   );
 }
-
