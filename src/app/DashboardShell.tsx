@@ -25,6 +25,10 @@ import AllPublicProjects from "./_components/allPublicProjects";
 import Special from "./_components/specials";
 import Video from "./_components/video";
 import NewLead from "./_components/newLead";
+import AllShopItems from "./_components/allShopItems";
+import OpenProjectsCard from "./_components/openProjectsCard";
+import LaundryDetails from "./_components/laundryDetails";
+import { useState } from "react";
 
 const navigation = [
   { name: "Dashboard", href: "/" },
@@ -55,6 +59,7 @@ export default function DashboardShell({
   user: { name: string; image: string; email: string };
   session: boolean;
 }) {
+  const [activeTab, setActiveTab] = useState<string>("All");
   const userNavigation = [
     { name: "Your Profile", href: `/profile/${user.email}` },
     { name: "Settings", href: "/admin" },
@@ -263,7 +268,7 @@ export default function DashboardShell({
             </div>
           </aside>
 
-          {/* Main content — single column feed */}
+          {/* Main content – tabbed sections */}
           <main className="min-h-screen">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -289,34 +294,11 @@ export default function DashboardShell({
               </div>
             </div>
 
-            {/* Single-column YouTube-like feed */}
-            <div className="mt-6 space-y-6">
-              <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                <GetWebApplication />
-              </div>
+            {/* Tabs */}
+            <TabsSection activeTab={activeTab} setActiveTab={setActiveTab} />
 
-              <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                <TechDest />
-              </div>
-
-              <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                <NewProductFlow />
-              </div>
-
-              <Special />
-
-              <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                <AllPublicProjects />
-              </div>
-
-              <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                <NewLead />
-              </div>
-
-              <div className="rounded-2xl border bg-white p-4 shadow-sm flex justify-center">
-                <Video />
-              </div>
-            </div>
+            {/* Content switch */}
+            <ContentSwitch activeTab={activeTab} />
 
             <div className="h-16" />
           </main>
@@ -325,3 +307,102 @@ export default function DashboardShell({
     </div>
   );
 }
+
+// Local tab state and switch rendering
+function TabsSection({
+  activeTab,
+  setActiveTab,
+}: {
+  activeTab: string;
+  setActiveTab: (k: string) => void;
+}) {
+  return (
+    <div className="mt-4 flex flex-wrap gap-2">
+      {tabs.map((t) => (
+        <button
+          key={t.key}
+          onClick={() => setActiveTab(t.key)}
+          className={classNames(
+            "rounded-full border px-3 py-1 text-sm",
+            activeTab === t.key ? "bg-blue-600 text-white border-blue-600" : "hover:bg-gray-50",
+          )}
+        >
+          {t.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ContentSwitch({ activeTab }: { activeTab: string }) {
+  switch (activeTab) {
+    case "laundry":
+      return (
+        <div className="mt-6">
+          <LaundryDetails />
+        </div>
+      );
+    case "food":
+      return (
+        <div className="mt-6 space-y-6">
+          <Special />
+        </div>
+      );
+    case "projects":
+      return (
+        <div className="mt-6 space-y-6">
+          <OpenProjectsCard />
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <AllPublicProjects />
+          </div>
+        </div>
+      );
+    case "shop":
+      return (
+        <div className="mt-6 space-y-6">
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <AllShopItems />
+          </div>
+        </div>
+      );
+    case "open":
+      return (
+        <div className="mt-6">
+          <OpenProjectsCard />
+        </div>
+      );
+    case "All":
+    default:
+      return (
+        <div className="mt-6 space-y-6">
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <GetWebApplication />
+          </div>
+
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <TechDest />
+          </div>
+
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <NewProductFlow />
+          </div>
+
+          <Special />
+
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <AllPublicProjects />
+          </div>
+
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <NewLead />
+          </div>
+
+          <div className="rounded-2xl border bg-white p-4 shadow-sm flex justify-center">
+            <Video />
+          </div>
+        </div>
+      );
+  }
+}
+
+// no extra hook; state is lifted to DashboardShell
