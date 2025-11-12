@@ -6,6 +6,66 @@ import { caretakerProcedure } from "../rbac";
 import { TRPCError } from "@trpc/server";
 
 export const supplierRouter = createTRPCRouter({
+  // Payout summaries: totals and weekly released sums
+  payoutSummary: caretakerProcedure
+    .input(z.object({ id: z.string().min(1), weeks: z.number().int().positive().max(52).default(12) }))
+    .query(async ({ ctx, input }) => {
+      const supplierId = input.id;
+      const [pendingAgg, releasedAgg, failedAgg] = await Promise.all([
+        ctx.db.supplierPayout.aggregate({
+          where: { supplierId, status: "PENDING" },
+          _sum: { amountCents: true },
+        }),
+        ctx.db.supplierPayout.aggregate({
+          where: { supplierId, status: "RELEASED" },
+          _sum: { amountCents: true },
+        }),
+        ctx.db.supplierPayout.aggregate({
+          where: { supplierId, status: "FAILED" },
+          _sum: { amountCents: true },
+        }),
+      ]);
+
+      // Weekly: last N weeks by releasedAt
+      const now = new Date();
+      const since = new Date(now);
+      since.setDate(since.getDate() - input.weeks * 7);
+      const rows = await ctx.db.supplierPayout.findMany({
+        where: { supplierId, status: "RELEASED", releasedAt: { gte: since } },
+        select: { amountCents: true, releasedAt: true },
+        orderBy: { releasedAt: "asc" },
+      });
+
+      // Group by ISO week starting Monday
+      const weekKey = (d: Date) => {
+        const dd = new Date(d);
+        const day = (dd.getDay() + 6) % 7; // 0=Mon
+        dd.setDate(dd.getDate() - day);
+        dd.setHours(0, 0, 0, 0);
+        return dd.toISOString().slice(0, 10); // YYYY-MM-DD (week start)
+      };
+      const byWeek = new Map<string, number>();
+      for (const r of rows) {
+        const k = weekKey(r.releasedAt ?? new Date());
+        byWeek.set(k, (byWeek.get(k) ?? 0) + (r.amountCents ?? 0));
+      }
+      // Build ordered array for the last N weeks
+      const weeks: { weekStart: string; amountCents: number }[] = [];
+      const seed = new Date(now);
+      for (let i = input.weeks - 1; i >= 0; i--) {
+        const d = new Date(seed);
+        d.setDate(d.getDate() - i * 7);
+        const k = weekKey(d);
+        weeks.push({ weekStart: k, amountCents: byWeek.get(k) ?? 0 });
+      }
+
+      return {
+        totalPendingCents: pendingAgg._sum.amountCents ?? 0,
+        totalReleasedCents: releasedAgg._sum.amountCents ?? 0,
+        totalFailedCents: failedAgg._sum.amountCents ?? 0,
+        weeks,
+      };
+    }),
   update: caretakerProcedure
     .input(
       z.object({

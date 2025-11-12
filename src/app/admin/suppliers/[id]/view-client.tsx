@@ -10,6 +10,7 @@ export default function Client({ id }: { id: string }) {
   const router = useRouter();
   const utils = api.useUtils();
   const { data, isLoading } = api.supplier.getById.useQuery({ id });
+  const { data: payoutSummary } = api.supplier.payoutSummary.useQuery({ id, weeks: 12 });
   const del = api.supplier.delete.useMutation({
     onSuccess: async () => {
       await utils.supplier.list.invalidate();
@@ -161,6 +162,36 @@ export default function Client({ id }: { id: string }) {
           <p className="text-sm text-gray-700 whitespace-pre-line">{s.notes}</p>
         </section>
       )}
+
+      <section className="mt-4 rounded-lg border p-3">
+        <h2 className="mb-2 text-sm font-semibold">Payouts Summary</h2>
+        {payoutSummary ? (
+          <>
+            <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
+              <span>Released: R {Math.round((payoutSummary.totalReleasedCents || 0) / 100)}</span>
+              <span>Pending: R {Math.round((payoutSummary.totalPendingCents || 0) / 100)}</span>
+              <span>Failed: R {Math.round((payoutSummary.totalFailedCents || 0) / 100)}</span>
+            </div>
+            <div>
+              <h3 className="mb-1 text-xs font-semibold text-gray-600">Weekly (last 12):</h3>
+              {payoutSummary.weeks.length ? (
+                <ul className="text-sm divide-y">
+                  {payoutSummary.weeks.map((w) => (
+                    <li key={w.weekStart} className="flex items-center justify-between py-1">
+                      <span>{w.weekStart}</span>
+                      <span>R {Math.round((w.amountCents || 0) / 100)}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-xs text-gray-500">No released payouts yet.</div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="text-xs text-gray-500">Loading payout summaries…</div>
+        )}
+      </section>
 
       <section className="mt-4 rounded-lg border p-3">
         <h2 className="mb-2 text-sm font-semibold">Shop Items Supplied</h2>

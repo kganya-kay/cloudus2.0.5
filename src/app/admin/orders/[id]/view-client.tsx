@@ -129,6 +129,14 @@ export default function Client({ id }: { id: number }) {
   const [payRef, setPayRef] = useState("");
   // payouts
   const [payoutRands, setPayoutRands] = useState("");
+  const totalCents = useMemo(() => {
+    return (order?.price ?? 0) + (order?.deliveryCents ?? 0);
+  }, [order?.price, order?.deliveryCents]);
+  const paidCents = useMemo(() => {
+    const payments = order?.payments ?? [];
+    return payments.reduce((s, p) => (p.status === "PAID" ? s + (p.amountCents ?? 0) : s), 0);
+  }, [order?.payments]);
+  const outstandingCents = Math.max(0, totalCents - paidCents);
 
   const { data: suppliers } = api.supplier.list.useQuery({ q: supplierQuery || undefined, onlyActive: true, page: 1, pageSize: 50 });
   type SupplierRow = NonNullable<typeof suppliers>["items"][number];
@@ -390,6 +398,18 @@ export default function Client({ id }: { id: number }) {
           </ol>
         </section>
       </div>
+
+      {/* Outstanding balance */}
+      <section className="mt-4 rounded-lg border p-3">
+        <h2 className="mb-2 text-sm font-semibold">Payment Summary</h2>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <span>Total: R {Math.round(totalCents / 100)}</span>
+          <span>Paid: R {Math.round(paidCents / 100)}</span>
+          <span className={`font-semibold ${outstandingCents > 0 ? "text-red-600" : "text-green-700"}`}>
+            Outstanding: R {Math.round(outstandingCents / 100)}
+          </span>
+        </div>
+      </section>
 
       {order.payouts.length > 0 && (
         <section className="mt-4 rounded-lg border p-3">
