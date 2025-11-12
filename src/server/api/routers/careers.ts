@@ -260,9 +260,86 @@ export const careersRouter = createTRPCRouter({
               }
             }
           }
+
+          // Driver branch
+          const isDriverType =
+            (typeVal && typeVal.toUpperCase() === "DRIVER") ||
+            (app.job?.slug && app.job.slug === "driver-partner");
+          if (isDriverType) {
+            const existingDriverId = getStr(answers, "driverId");
+            if (!existingDriverId) {
+              const city = getStr(answers, "city");
+              const suburb = getStr(answers, "suburb");
+              const vehicle = getStr(answers, "vehicle");
+              const notes = getStr(answers, "notes");
+
+              const driver = await (ctx.db as any).driver.create({
+                data: {
+                  name: app.name,
+                  phone: app.phone ?? "",
+                  email: app.email ?? undefined,
+                  city: city ?? undefined,
+                  suburb: suburb ?? undefined,
+                  vehicle: vehicle ?? undefined,
+                  notes: notes ? `From application ${input.id}: ${notes}` : `From application ${input.id}`,
+                  isActive: true,
+                },
+              });
+
+              // Persist driverId back into answers
+              const prevAns = (answers && typeof answers === "object" ? (answers as Record<string, Prisma.InputJsonValue>) : {});
+              const events: Prisma.InputJsonValue[] = Array.isArray((prevAns as Record<string, unknown>).events)
+                ? ((prevAns as Record<string, unknown>).events as Prisma.InputJsonValue[])
+                : [];
+              events.push({ event: "DRIVER_CREATED", at: new Date().toISOString(), driverId: driver.id } as unknown as Prisma.InputJsonValue);
+              const mergedAnswers: Record<string, Prisma.InputJsonValue> = {
+                ...prevAns,
+                driverId: driver.id,
+                events,
+              };
+              await ctx.db.jobApplication.update({
+                where: { id: input.id },
+                data: { answers: mergedAnswers },
+              });
+
+              // Link or create user with driver
+              try {
+                const email = app.email ?? undefined;
+                if (email) {
+                  const existingUser = await ctx.db.user.findUnique({ where: { email } });
+                  if (existingUser) {
+                    await ctx.db.user.update({
+                      where: { id: existingUser.id },
+                      data: ({ driver: { connect: { id: driver.id } }, role: "DRIVER" } as unknown) as any,
+                    });
+                  } else {
+                    await ctx.db.user.create({
+                      data: {
+                        name: app.name,
+                        email,
+                        // cast due to prisma types not regenerated yet
+                        ...( { role: "DRIVER", driver: { connect: { id: driver.id } } } as any ),
+                      },
+                    });
+                  }
+                } else {
+                  await ctx.db.user.create({
+                    data: {
+                      name: app.name,
+                      ...( { role: "DRIVER", driver: { connect: { id: driver.id } } } as any ),
+                    },
+                  });
+                }
+              } catch (e) {
+                console.log("Driver user link/create failed for application", input.id, e);
+              }
+            }
+          }
         }
       }
 
       return updated;
     }),
+  
+  // also support DRIVER creation/link when hired (reuse setApplicationStatus path)
 });

@@ -76,6 +76,7 @@ enum Role {
   CARETAKER
   SUPPLIER
   CUSTOMER
+  DRIVER
 }
 
 // =====================
@@ -451,6 +452,8 @@ model User {
   role       Role      @default(CUSTOMER)
   supplierId String?
   supplier   Supplier? @relation(fields: [supplierId], references: [id])
+  driverId   String?
+  driver     Driver?   @relation(fields: [driverId], references: [id])
 
   // Back-rels for created entities (explicit names to avoid clashes with M-N)
   projectsCreated  Project[]  @relation("ProjectCreatedBy")
@@ -502,6 +505,22 @@ model Supplier {
   SupplierPayout SupplierPayout[]
   User           User[]
   shopItems      ShopItem[]
+}
+
+model Driver {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  suburb    String?
+  city      String?
+  vehicle   String?
+  isActive  Boolean  @default(true)
+  rating    Float?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  User User[]
 }
 
 model SupplierQuote {
