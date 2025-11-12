@@ -13,8 +13,15 @@ export default function Client() {
   const isAppStatus = (v: string): v is AppStatus => (STATUSES as readonly string[]).includes(v);
   const [status, setStatus] = useState<AppStatus | "">("");
   const { data, isLoading } = api.careers.listApplications.useQuery({ q: q || undefined, status: status || undefined, page: 1, pageSize: 50 });
-  const setStatusMut = api.careers.setApplicationStatus.useMutation();
   const utils = api.useUtils();
+  const setStatusMut = api.careers.setApplicationStatus.useMutation({
+    onSuccess: async (_data, variables) => {
+      await utils.careers.listApplications.invalidate();
+      if (variables.status === "HIRED") {
+        try { alert("Application set to HIRED. Supplier was created/linked if applicable."); } catch {}
+      }
+    },
+  });
 
   type Row = NonNullable<typeof data>["items"][number];
   const rows: Row[] = data?.items ?? [];
@@ -74,7 +81,6 @@ export default function Client() {
                       {(["IN_REVIEW","INTERVIEW","OFFER","HIRED","REJECTED"] as const).map((s) => (
                         <button key={s} className="rounded border px-2 py-0.5 text-xs hover:bg-gray-50" onClick={async () => {
                           await setStatusMut.mutateAsync({ id: r.id, status: s });
-                          await utils.careers.listApplications.invalidate();
                         }}>{s}</button>
                       ))}
                       {r.resumeUrl ? (

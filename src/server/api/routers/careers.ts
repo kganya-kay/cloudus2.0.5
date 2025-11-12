@@ -1,6 +1,6 @@
 // src/server/api/routers/careers.ts
 import { z } from "zod";
-import { Prisma, EmploymentType, OnsiteType, JobStatus, ApplicationStatus } from "@prisma/client";
+import { Prisma, EmploymentType, OnsiteType, JobStatus, ApplicationStatus, Role } from "@prisma/client";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { caretakerProcedure, adminProcedure } from "../rbac";
 import { TRPCError } from "@trpc/server";
@@ -158,6 +158,111 @@ export const careersRouter = createTRPCRouter({
   setApplicationStatus: caretakerProcedure
     .input(z.object({ id: z.string().min(1), status: z.nativeEnum(ApplicationStatus) }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.jobApplication.update({ where: { id: input.id }, data: { status: input.status } });
+      const updated = await ctx.db.jobApplication.update({ where: { id: input.id }, data: { status: input.status } });
+
+      // If hired and it's a Supplier application, create Supplier (idempotent)
+      if (input.status === ApplicationStatus.HIRED) {
+        const app = await ctx.db.jobApplication.findUnique({
+          where: { id: input.id },
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+            answers: true,
+            job: { select: { slug: true } },
+          },
+        });
+        if (app) {
+          const answers = app.answers as unknown;
+          const getStr = (obj: unknown, key: string): string | undefined =>
+            obj && typeof obj === "object" && key in (obj as Record<string, unknown>)
+              ? (typeof (obj as Record<string, unknown>)[key] === "string"
+                ? ((obj as Record<string, unknown>)[key] as string)
+                : undefined)
+              : undefined;
+
+          const typeVal = getStr(answers, "type");
+          const isSupplierType =
+            (typeVal && typeVal.toUpperCase() === "SUPPLIER") ||
+            (app.job?.slug && app.job.slug === "supplier-partner");
+
+          if (isSupplierType) {
+            const existingSupplierId = getStr(answers, "supplierId");
+            if (!existingSupplierId) {
+              const company = getStr(answers, "company");
+              const city = getStr(answers, "city");
+              const suburb = getStr(answers, "suburb");
+              const notes = getStr(answers, "notes");
+
+              const supplier = await ctx.db.supplier.create({
+                data: {
+                  name: company || app.name,
+                  phone: app.phone ?? "",
+                  email: app.email ?? undefined,
+                  city: city ?? undefined,
+                  suburb: suburb ?? undefined,
+                  notes: notes ? `From application ${input.id}: ${notes}` : `From application ${input.id}`,
+                  isActive: true,
+                },
+              });
+
+              // Persist supplierId back into application answers for idempotency
+              const prevAns = (answers && typeof answers === "object" ? (answers as Record<string, Prisma.InputJsonValue>) : {});
+              const events: Prisma.InputJsonValue[] = Array.isArray((prevAns as Record<string, unknown>).events)
+                ? ((prevAns as Record<string, unknown>).events as Prisma.InputJsonValue[])
+                : [];
+              events.push({ event: "SUPPLIER_CREATED", at: new Date().toISOString(), supplierId: supplier.id } as unknown as Prisma.InputJsonValue);
+              const mergedAnswers: Record<string, Prisma.InputJsonValue> = {
+                ...prevAns,
+                supplierId: supplier.id,
+                events,
+              };
+              await ctx.db.jobApplication.update({
+                where: { id: input.id },
+                data: { answers: mergedAnswers },
+              });
+
+              // Link or create user with supplier
+              try {
+                const email = app.email ?? undefined;
+                if (email) {
+                  const existingUser = await ctx.db.user.findUnique({ where: { email } });
+                  if (existingUser) {
+                    await ctx.db.user.update({
+                      where: { id: existingUser.id },
+                      data: {
+                        supplier: { connect: { id: supplier.id } },
+                        ...(existingUser.role === Role.ADMIN ? {} : { role: Role.SUPPLIER }),
+                      },
+                    });
+                  } else {
+                    await ctx.db.user.create({
+                      data: {
+                        name: app.name,
+                        email,
+                        role: Role.SUPPLIER,
+                        supplier: { connect: { id: supplier.id } },
+                      },
+                    });
+                  }
+                } else {
+                  // No email supplied; create a lightweight user without email
+                  await ctx.db.user.create({
+                    data: {
+                      name: app.name,
+                      role: Role.SUPPLIER,
+                      supplier: { connect: { id: supplier.id } },
+                    },
+                  });
+                }
+              } catch (e) {
+                console.log("Supplier user link/create failed for application", input.id, e);
+              }
+            }
+          }
+        }
+      }
+
+      return updated;
     }),
 });
