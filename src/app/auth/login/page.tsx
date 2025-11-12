@@ -14,13 +14,16 @@ export default function LoginPage() {
   const submit = async () => {
     setBusy(true);
     setErr(null);
-    const res = await signIn("credentials", { email, password, redirect: false });
+    // Use a full redirect so cookies are set during navigation
+    const res = await signIn("credentials", {
+      email,
+      password,
+      callbackUrl: "/",
+      redirect: true,
+    });
+    // If redirect is handled by NextAuth, code below won't run.
     setBusy(false);
-    if (res?.error) {
-      setErr("Invalid email or password");
-      return;
-    }
-    window.location.href = "/";
+    if ((res as any)?.error) setErr("Invalid email or password");
   };
 
   return (
