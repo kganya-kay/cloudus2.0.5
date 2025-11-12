@@ -35,6 +35,9 @@ export const authConfig = {
 
   // Use DB sessions so `session({ session, user })` has `user`
   session: { strategy: "database" },
+  // Allow localhost and other hosts in development without requiring env
+  // Prefer setting AUTH_URL and AUTH_TRUST_HOST in production environments
+  trustHost: true,
 
   providers: [
     // You can also call with explicit env if you prefer:
