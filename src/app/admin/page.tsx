@@ -23,6 +23,7 @@ redirect("/");
         <Link href="/admin/orders" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Orders</Link>
         <Link href="/admin/shopitems" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Shop Items</Link>
         <Link href="/admin/reports" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Reports</Link>
+        <Link href="/admin/users" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Users</Link>
         <Link href="/admin/applications" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Applications</Link>
       </div>
       <div className="mb-4 flex items-center justify-between">
