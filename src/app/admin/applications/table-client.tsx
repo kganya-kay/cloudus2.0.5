@@ -11,7 +11,7 @@ export default function Client() {
   const setStatusMut = api.careers.setApplicationStatus.useMutation();
   const utils = api.useUtils();
 
-  const rows = data?.items ?? [];
+  const rows: any[] = data?.items ?? [];
   return (
     <section className="rounded-xl border bg-white p-4">
       <div className="mb-3 flex flex-wrap items-end gap-3">
@@ -78,4 +78,3 @@ export default function Client() {
     </section>
   );
 }
-
