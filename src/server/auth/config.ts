@@ -4,6 +4,9 @@ import type { DefaultSession, NextAuthConfig } from "next-auth";
 import type { Role as RoleType } from "@prisma/client";
 import { Role } from "@prisma/client";
 import DiscordProvider from "next-auth/providers/discord";
+import Credentials from "next-auth/providers/credentials";
+import { z } from "zod";
+import { verifyPassword } from "./password";
 import { db } from "~/server/db";
 
 /* =========================
@@ -40,9 +43,34 @@ export const authConfig = {
   trustHost: true,
 
   providers: [
-    // You can also call with explicit env if you prefer:
-    // DiscordProvider({ clientId: process.env.AUTH_DISCORD_ID!, clientSecret: process.env.AUTH_DISCORD_SECRET! })
+    // Discord OAuth (optional)
     DiscordProvider,
+    // Credentials (email + password) custom auth
+    Credentials({
+      name: "Email and Password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      authorize: async (raw) => {
+        try {
+          const creds = z
+            .object({ email: z.string().email(), password: z.string().min(6) })
+            .safeParse(raw);
+          if (!creds.success) return null;
+          const { email, password } = creds.data;
+          const user = await db.user.findUnique({ where: { email } });
+          if (!user) return null;
+          const u: any = user as any;
+          if (!u || !u.passwordHash) return null;
+          const ok = await verifyPassword(password, u.passwordHash as string);
+          if (!ok) return null;
+          return { id: user.id, name: user.name ?? null, email: user.email ?? null, role: user.role, supplierId: user.supplierId ?? null } as any;
+        } catch {
+          return null;
+        }
+      },
+    }),
   ],
 
   callbacks: {
