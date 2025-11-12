@@ -4,6 +4,7 @@ import type { DefaultSession, NextAuthConfig } from "next-auth";
 import type { Role as RoleType } from "@prisma/client";
 import { Role } from "@prisma/client";
 import DiscordProvider from "next-auth/providers/discord";
+import { env } from "~/env";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import { verifyPassword } from "./password";
@@ -43,8 +44,11 @@ export const authConfig = {
   trustHost: true,
 
   providers: [
-    // Discord OAuth (optional)
-    DiscordProvider,
+    // Discord OAuth
+    DiscordProvider({
+      clientId: env.AUTH_DISCORD_ID,
+      clientSecret: env.AUTH_DISCORD_SECRET,
+    }),
     // Credentials (email + password) custom auth
     Credentials({
       name: "Email and Password",

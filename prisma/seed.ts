@@ -26,7 +26,7 @@ async function main() {
   // 3) a shop item (e.g., Laundry 5kg bag)
   const item = await prisma.shopItem.create({
     data: {
-      name: "Laundry – 5kg Bag",
+      name: "Laundry 5kg Bag",
       type: "Service",
       price: 25000, // cents = R250.00
       description: "Wash, dry & fold (48h).",
@@ -103,3 +103,4 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
+
