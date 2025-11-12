@@ -36,6 +36,7 @@ const SUPER_ADMIN_EMAIL = "kganyakekana@gmail.com" as const;
 
 export const authConfig = {
   adapter: PrismaAdapter(db),
+  secret: env.AUTH_SECRET,
 
   // Use DB sessions so `session({ session, user })` has `user`
   session: { strategy: "database" },

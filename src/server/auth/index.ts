@@ -1,10 +1,7 @@
 import NextAuth from "next-auth";
-import { cache } from "react";
-
 import { authConfig } from "./config";
 
-const { auth: uncachedAuth, handlers, signIn, signOut } = NextAuth(authConfig);
-
-const auth = cache(uncachedAuth);
+// Export uncached auth to avoid stale session reads after redirects
+const { auth, handlers, signIn, signOut } = NextAuth(authConfig);
 
 export { auth, handlers, signIn, signOut };
