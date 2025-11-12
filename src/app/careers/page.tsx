@@ -39,8 +39,9 @@ export default function CareersPage() {
         { name: "Careers", href: "/careers", current: true },
     ];
 
+    const profileHref = user.email ? `/profile/${encodeURIComponent(user.email)}` : "/?toast=login_required";
     const userNavigation = [
-        { name: "Your Profile", href: "/profile" },
+        { name: "Your Profile", href: profileHref },
         { name: "Settings", href: "/settings" },
         {
             name: session?.user ? "Sign out" : "Sign in",
