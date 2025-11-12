@@ -7,6 +7,10 @@ import { api } from "~/trpc/react";
 export default function Client() {
   const [q, setQ] = useState("");
   type AppStatus = "RECEIVED"|"IN_REVIEW"|"INTERVIEW"|"OFFER"|"HIRED"|"REJECTED"|"WITHDRAWN";
+  const STATUSES: readonly AppStatus[] = [
+    "RECEIVED","IN_REVIEW","INTERVIEW","OFFER","HIRED","REJECTED","WITHDRAWN",
+  ] as const;
+  const isAppStatus = (v: string): v is AppStatus => (STATUSES as readonly string[]).includes(v);
   const [status, setStatus] = useState<AppStatus | "">("");
   const { data, isLoading } = api.careers.listApplications.useQuery({ q: q || undefined, status: status || undefined, page: 1, pageSize: 50 });
   const setStatusMut = api.careers.setApplicationStatus.useMutation();
@@ -23,9 +27,16 @@ export default function Client() {
         </div>
         <div>
           <label className="text-xs text-gray-600">Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 w-48 rounded-full border px-3 py-2 text-sm">
+          <select
+            value={status}
+            onChange={(e) => {
+              const v = e.target.value;
+              setStatus(v === "" ? "" : isAppStatus(v) ? v : "");
+            }}
+            className="mt-1 w-48 rounded-full border px-3 py-2 text-sm"
+          >
             <option value="">All</option>
-            {(["RECEIVED","IN_REVIEW","INTERVIEW","OFFER","HIRED","REJECTED","WITHDRAWN"] as const).map((s: AppStatus) => (
+            {STATUSES.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
@@ -60,7 +71,7 @@ export default function Client() {
                   </td>
                   <td className="px-3 py-2 text-sm">
                     <div className="flex flex-wrap gap-2">
-                      {(["IN_REVIEW","INTERVIEW","OFFER","HIRED","REJECTED"] as const).map((s: AppStatus) => (
+                      {(["IN_REVIEW","INTERVIEW","OFFER","HIRED","REJECTED"] as const).map((s) => (
                         <button key={s} className="rounded border px-2 py-0.5 text-xs hover:bg-gray-50" onClick={async () => {
                           await setStatusMut.mutateAsync({ id: r.id, status: s });
                           await utils.careers.listApplications.invalidate();
