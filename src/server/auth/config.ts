@@ -78,6 +78,18 @@ export const authConfig = {
   ],
 
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Always resolve to configured AUTH_URL origin to avoid cross-domain cookies
+      try {
+        const target = new URL(env.AUTH_URL ?? baseUrl);
+        if (url.startsWith("/")) return `${target.origin}${url}`;
+        const u = new URL(url);
+        if (u.origin === target.origin) return url;
+        return target.origin;
+      } catch {
+        return baseUrl;
+      }
+    },
     // With database sessions, `user` is always available here
     async session({ session, user }) {
       if (session.user) {

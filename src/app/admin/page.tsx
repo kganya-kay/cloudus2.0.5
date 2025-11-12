@@ -1,5 +1,6 @@
 // src/app/admin/page.tsx
 import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
 import { auth } from "~/server/auth";
 import Link from "next/link";
 import AdminBoard from "./_components/AdminBoard";

@@ -1,5 +1,6 @@
 // ===== app/(dashboard)/page.tsx — SERVER COMPONENT =====
 import { auth } from "~/server/auth";
+export const dynamic = "force-dynamic";
 import { api, HydrateClient } from "~/trpc/server";
 import DashboardShell from "./DashboardShell";
 
