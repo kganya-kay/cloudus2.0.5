@@ -44,6 +44,7 @@ type OrderDetail = {
     isActive: boolean;
   } | null;
   payouts: { id: string; amountCents: number; status: string }[];
+  payments: { id: string; amountCents: number; status: string; provider: string; providerRef: string | null; receiptUrl: string | null; createdAt: string | Date }[];
   auditLogs: { id: string; action: string; payload: unknown; createdAt: string | Date }[];
 };
 
@@ -80,6 +81,28 @@ export default function Client({ id }: { id: number }) {
       await utils.order.getById.invalidate({ orderId: id });
     },
   });
+  const addPayment = api.order.addPayment.useMutation({
+    onSuccess: async () => {
+      await utils.order.getById.invalidate({ orderId: id });
+      setPayAmount(""); setPayProvider("CASH"); setPayRef("");
+    },
+  });
+  const setPaymentStatus = api.order.setPaymentStatus.useMutation({
+    onSuccess: async () => {
+      await utils.order.getById.invalidate({ orderId: id });
+    },
+  });
+  const triggerPayout = api.order.triggerPayout.useMutation({
+    onSuccess: async () => {
+      await utils.order.getById.invalidate({ orderId: id });
+      setPayoutRands("");
+    },
+  });
+  const setPayoutStatus = api.order.setPayoutStatus.useMutation({
+    onSuccess: async () => {
+      await utils.order.getById.invalidate({ orderId: id });
+    },
+  });
   const [priceRands, setPriceRands] = useState("");
   const [deliveryRands, setDeliveryRands] = useState("");
   const [currency, setCurrency] = useState("ZAR");
@@ -100,6 +123,12 @@ export default function Client({ id }: { id: number }) {
   const [supplierId, setSupplierId] = useState<string>("");
   const [caretakerQuery, setCaretakerQuery] = useState("");
   const [caretakerId, setCaretakerId] = useState<string>("");
+  // payments
+  const [payAmount, setPayAmount] = useState(""); // rands
+  const [payProvider, setPayProvider] = useState("CASH");
+  const [payRef, setPayRef] = useState("");
+  // payouts
+  const [payoutRands, setPayoutRands] = useState("");
 
   const { data: suppliers } = api.supplier.list.useQuery({ q: supplierQuery || undefined, onlyActive: true, page: 1, pageSize: 50 });
   type SupplierRow = NonNullable<typeof suppliers>["items"][number];
@@ -368,13 +397,111 @@ export default function Client({ id }: { id: number }) {
           <ul className="text-sm">
             {order.payouts.map((p) => (
               <li key={p.id} className="flex items-center justify-between border-b py-1 last:border-b-0">
-                <span>{p.status}</span>
+                <span className="flex items-center gap-2">
+                  <span className="rounded-full border px-2 py-0.5 text-xs">{p.status}</span>
+                  {p.status === "PENDING" && (
+                    <>
+                      <button
+                        className="rounded border px-2 py-0.5 text-xs hover:bg-gray-50"
+                        onClick={() => setPayoutStatus.mutate({ payoutId: p.id, status: "RELEASED" })}
+                      >Mark Released</button>
+                      <button
+                        className="rounded border px-2 py-0.5 text-xs hover:bg-gray-50"
+                        onClick={() => setPayoutStatus.mutate({ payoutId: p.id, status: "FAILED" })}
+                      >Mark Failed</button>
+                    </>
+                  )}
+                </span>
                 <span>R {Math.round(p.amountCents / 100)}</span>
               </li>
             ))}
           </ul>
         </section>
       )}
+
+      {/* Payout create */}
+      <section className="mt-4 rounded-lg border p-3">
+        <h2 className="mb-2 text-sm font-semibold">New Payout</h2>
+        <div className="grid grid-cols-3 gap-3 items-end">
+          <div>
+            <label className="text-xs text-gray-600">Amount (R)</label>
+            <input value={payoutRands} onChange={(e) => setPayoutRands(e.target.value.replace(/[^0-9.]/g, ""))} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
+          </div>
+          <div className="text-xs text-gray-500">Supplier must be assigned</div>
+          <div className="text-right">
+            <button
+              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              disabled={!order.supplierId || !payoutRands || triggerPayout.isPending}
+              onClick={() => {
+                const cents = Math.max(0, Math.round(Number(payoutRands || "0") * 100));
+                if (!cents || !order.supplierId) return;
+                triggerPayout.mutate({ orderId: order.id, supplierId: order.supplierId, amountCents: cents });
+              }}
+            >{triggerPayout.isPending ? "Creating..." : "Create Payout"}</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Payments */}
+      <section className="mt-4 rounded-lg border p-3">
+        <h2 className="mb-2 text-sm font-semibold">Payments</h2>
+        <div className="mb-3 grid grid-cols-3 gap-3 items-end">
+          <div>
+            <label className="text-xs text-gray-600">Amount (R)</label>
+            <input value={payAmount} onChange={(e) => setPayAmount(e.target.value.replace(/[^0-9.]/g, ""))} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-600">Method</label>
+            <select value={payProvider} onChange={(e) => setPayProvider(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm">
+              {(["CASH","CARD","EFT","OTHER"] as const).map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-600">Reference (optional)</label>
+            <input value={payRef} onChange={(e) => setPayRef(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <button
+            className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            disabled={!payAmount || addPayment.isPending}
+            onClick={() => {
+              const cents = Math.max(0, Math.round(Number(payAmount || "0") * 100));
+              if (!cents) return;
+              addPayment.mutate({ orderId: id, amountCents: cents, provider: payProvider, providerRef: payRef || undefined, status: "PAID" });
+            }}
+          >{addPayment.isPending ? "Adding..." : "Add Payment"}</button>
+        </div>
+
+        {order.payments?.length ? (
+          <ul className="mt-3 divide-y text-sm">
+            {order.payments.map((p) => (
+              <li key={p.id} className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full border px-2 py-0.5 text-xs">{p.status}</span>
+                  <span className="text-gray-600">{p.provider}{p.providerRef ? ` · ${p.providerRef}` : ""}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {p.status !== "PAID" && (
+                    <button className="rounded border px-2 py-0.5 text-xs hover:bg-gray-50" onClick={() => setPaymentStatus.mutate({ paymentId: p.id, status: "PAID" })}>Mark Paid</button>
+                  )}
+                  {p.status !== "FAILED" && (
+                    <button className="rounded border px-2 py-0.5 text-xs hover:bg-gray-50" onClick={() => setPaymentStatus.mutate({ paymentId: p.id, status: "FAILED" })}>Mark Failed</button>
+                  )}
+                  {p.status !== "REFUNDED" && (
+                    <button className="rounded border px-2 py-0.5 text-xs hover:bg-gray-50" onClick={() => setPaymentStatus.mutate({ paymentId: p.id, status: "REFUNDED" })}>Mark Refunded</button>
+                  )}
+                  <span>R {Math.round(p.amountCents / 100)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="mt-2 text-xs text-gray-500">No payments yet.</div>
+        )}
+      </section>
     </div>
   );
 }

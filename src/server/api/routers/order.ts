@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { Prisma, FulfilmentStatus, Role } from "@prisma/client";
+import { Prisma, FulfilmentStatus, Role, PaymentStatus } from "@prisma/client";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -74,6 +74,27 @@ const payoutInput = z.object({
   orderId: z.number().int().positive(),
   supplierId: z.string().min(1),
   amountCents: z.number().int().positive(),
+});
+
+const addPaymentInput = z.object({
+  orderId: z.number().int().positive(),
+  amountCents: z.number().int().positive(),
+  provider: z.string().min(1), // e.g. CASH | CARD | EFT | STRIPE | OZOW
+  providerRef: z.string().optional(),
+  receiptUrl: z.string().url().optional(),
+  status: z.nativeEnum(PaymentStatus).optional().default(PaymentStatus.PENDING),
+});
+
+const setPaymentStatusInput = z.object({
+  paymentId: z.string().min(1),
+  status: z.nativeEnum(PaymentStatus),
+  providerRef: z.string().optional(),
+  receiptUrl: z.string().url().optional(),
+});
+
+const setPayoutStatusInput = z.object({
+  payoutId: z.string().min(1),
+  status: z.enum(["RELEASED", "FAILED"]),
 });
 
 const messageInput = z.object({
@@ -295,6 +316,19 @@ export const orderRouter = createTRPCRouter({
         supplierId: true,
         auditLogs: true,
         payouts: true,
+        payments: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            amountCents: true,
+            currency: true,
+            status: true,
+            provider: true,
+            providerRef: true,
+            receiptUrl: true,
+            createdAt: true,
+          },
+        },
         price: true,
         deliveryCents: true,
         currency: true,
@@ -532,6 +566,81 @@ export const orderRouter = createTRPCRouter({
         },
       });
       return payout;
+    }),
+
+  // Caretaker/Admin: set payout status (RELEASED / FAILED)
+  setPayoutStatus: protectedProcedure
+    .input(setPayoutStatusInput)
+    .mutation(async ({ ctx, input }) => {
+      const updated = await ctx.db.supplierPayout.update({
+        where: { id: input.payoutId },
+        data: {
+          status: input.status,
+          releasedAt: input.status === "RELEASED" ? new Date() : null,
+        },
+      });
+      await ctx.db.auditLog.create({
+        data: {
+          orderId: updated.orderId,
+          actorId: ctx.session.user.id,
+          action: "PAYOUT_STATUS",
+          payload: { payoutId: updated.id, status: input.status },
+        },
+      });
+      return updated;
+    }),
+
+  // Caretaker/Admin: add a payment entry
+  addPayment: protectedProcedure
+    .input(addPaymentInput)
+    .mutation(async ({ ctx, input }) => {
+      const payment = await ctx.db.payment.create({
+        data: {
+          orderId: input.orderId,
+          amountCents: input.amountCents,
+          provider: input.provider,
+          providerRef: input.providerRef,
+          receiptUrl: input.receiptUrl,
+          status: input.status ?? PaymentStatus.PENDING,
+        },
+      });
+      await ctx.db.auditLog.create({
+        data: {
+          orderId: input.orderId,
+          actorId: ctx.session.user.id,
+          action: "ADD_PAYMENT",
+          payload: {
+            paymentId: payment.id,
+            amountCents: input.amountCents,
+            provider: input.provider,
+            status: payment.status,
+          },
+        },
+      });
+      return payment;
+    }),
+
+  // Caretaker/Admin: set payment status
+  setPaymentStatus: protectedProcedure
+    .input(setPaymentStatusInput)
+    .mutation(async ({ ctx, input }) => {
+      const updated = await ctx.db.payment.update({
+        where: { id: input.paymentId },
+        data: {
+          status: input.status,
+          ...(input.providerRef !== undefined ? { providerRef: input.providerRef } : {}),
+          ...(input.receiptUrl !== undefined ? { receiptUrl: input.receiptUrl } : {}),
+        },
+      });
+      await ctx.db.auditLog.create({
+        data: {
+          orderId: updated.orderId,
+          actorId: ctx.session.user.id,
+          action: "PAYMENT_STATUS",
+          payload: { paymentId: updated.id, status: input.status },
+        },
+      });
+      return updated;
     }),
 
   // Caretaker/Admin: send messages (logs for now)
