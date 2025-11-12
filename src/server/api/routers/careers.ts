@@ -1,6 +1,6 @@
 // src/server/api/routers/careers.ts
 import { z } from "zod";
-import { EmploymentType, OnsiteType, JobStatus, ApplicationStatus } from "@prisma/client";
+import { Prisma, EmploymentType, OnsiteType, JobStatus, ApplicationStatus } from "@prisma/client";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { caretakerProcedure, adminProcedure } from "../rbac";
 import { TRPCError } from "@trpc/server";
@@ -117,18 +117,17 @@ export const careersRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const q = input?.q?.trim();
-      const where = {
+      const OR: Prisma.JobApplicationWhereInput[] = q && q.length > 0
+        ? [
+            { name: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+            { phone: { contains: q, mode: "insensitive" } },
+          ]
+        : [];
+      const where: Prisma.JobApplicationWhereInput = {
         ...(input?.status ? { status: input.status } : {}),
-        ...(q && q.length > 0
-          ? {
-              OR: [
-                { name: { contains: q, mode: "insensitive" } },
-                { email: { contains: q, mode: "insensitive" } },
-                { phone: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      } as const;
+        ...(OR.length > 0 ? { OR } : {}),
+      };
       const page = input?.page ?? 1;
       const pageSize = input?.pageSize ?? 20;
       const skip = (page - 1) * pageSize;
