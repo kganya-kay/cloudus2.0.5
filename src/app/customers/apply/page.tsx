@@ -1,37 +1,28 @@
-// src/app/drivers/apply/page.tsx
+// src/app/customers/apply/page.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
 
-export default function DriverApplyPage() {
+export default function CustomerApplyPage() {
   const apply = api.careers.submitApplication.useMutation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [suburb, setSuburb] = useState("");
   const [city, setCity] = useState("");
-  const [vehicle, setVehicle] = useState("");
-  const [license, setLicense] = useState("");
   const [notes, setNotes] = useState("");
 
   const submit = () => {
     if (!name || !email) return;
-    apply.mutate({
-      type: "DRIVER",
-      name,
-      email,
-      phone: phone || undefined,
-      answers: { city, vehicle, license, notes },
-      source: "drivers-apply",
-    });
+    apply.mutate({ type: "CUSTOMER", name, email, phone: phone || undefined, answers: { suburb, city, notes }, source: "customers-apply" });
   };
 
   return (
     <main className="mx-auto max-w-2xl p-6">
       <nav className="mb-3 text-sm"><Link href="/" className="text-blue-700 hover:underline">← Home</Link></nav>
-      <h1 className="mb-2 text-2xl font-bold">Driver Onboarding</h1>
-      <p className="mb-4 text-sm text-gray-600">Apply to partner with Cloudus as a driver.</p>
+      <h1 className="mb-2 text-2xl font-bold">Customer Onboarding</h1>
       <div className="rounded-lg border bg-white p-4">
         <div className="grid gap-3 md:grid-cols-2">
           <div>
@@ -47,16 +38,12 @@ export default function DriverApplyPage() {
             <input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
           </div>
           <div>
+            <label className="text-xs text-gray-600">Suburb</label>
+            <input value={suburb} onChange={(e) => setSuburb(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
+          </div>
+          <div>
             <label className="text-xs text-gray-600">City</label>
             <input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">Vehicle</label>
-            <input value={vehicle} onChange={(e) => setVehicle(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">License/Permit</label>
-            <input value={license} onChange={(e) => setLicense(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
           </div>
           <div className="md:col-span-2">
             <label className="text-xs text-gray-600">Notes</label>
@@ -68,9 +55,7 @@ export default function DriverApplyPage() {
             {apply.isPending ? "Submitting…" : "Submit"}
           </button>
         </div>
-        {apply.isSuccess && (
-          <p className="mt-2 text-sm text-green-700">Thanks! We will be in touch soon.</p>
-        )}
+        {apply.isSuccess && <p className="mt-2 text-sm text-green-700">Thanks! We will be in touch soon.</p>}
       </div>
     </main>
   );

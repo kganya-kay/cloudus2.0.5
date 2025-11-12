@@ -16,11 +16,12 @@ redirect("/");
   return (
     <main className="mx-auto max-w-7xl p-6">
       {/* Quick links */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <Link href="/admin/suppliers" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Suppliers</Link>
         <Link href="/admin/orders" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Orders</Link>
         <Link href="/admin/shopitems" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Shop Items</Link>
         <Link href="/admin/reports" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Reports</Link>
+        <Link href="/admin/applications" className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50">Applications</Link>
       </div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Today</h1>

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { api } from "~/trpc/react";
 
 export default function SupplierApplyPage() {
-  const apply = api.careers.apply.useMutation();
+  const apply = api.careers.submitApplication.useMutation();
   const [company, setCompany] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -75,4 +75,3 @@ export default function SupplierApplyPage() {
     </main>
   );
 }
-
