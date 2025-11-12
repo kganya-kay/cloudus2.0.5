@@ -40,11 +40,15 @@ export default function LoginPage() {
           <button onClick={submit} disabled={busy || !email || !password} className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {busy ? "Signing in…" : "Sign in"}
           </button>
-          <button onClick={() => signIn("discord")} className="rounded-full border px-4 py-2 text-sm">Sign in with Discord</button>
+          <button
+            onClick={() => signIn("discord", { callbackUrl: "/" })}
+            className="rounded-full border px-4 py-2 text-sm"
+          >
+            Sign in with Discord
+          </button>
           <p className="text-xs text-gray-600">No account? <Link href="/auth/register" className="text-blue-700 hover:underline">Register</Link></p>
         </div>
       </div>
     </main>
   );
 }
-
