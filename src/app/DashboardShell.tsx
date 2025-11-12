@@ -71,11 +71,11 @@ export default function DashboardShell({
   ];
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-gray-900">
       {/* ===== Top App Bar (YouTube-style) ===== */}
       <Disclosure
         as="nav"
-        className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70"
+        className="sticky top-0 z-50 border-b border-blue-100 bg-gradient-to-r from-white/90 via-blue-50/60 to-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70"
       >
         <div className="mx-auto max-w-[1600px] px-3 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center gap-3">
@@ -93,7 +93,7 @@ export default function DashboardShell({
                   src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
                   className="h-8 w-8 rounded-full bg-gray-700 object-cover"
                 />
-                <span className="hidden sm:block text-lg font-semibold">
+                <span className="hidden sm:block text-lg font-semibold text-blue-700">
                   Cloudus
                 </span>
               </Link>
@@ -167,7 +167,7 @@ export default function DashboardShell({
       </Disclosure>
 
       {/* ===== Sticky Tabs Bar (below app bar) ===== */}
-      <div className="sticky top-16 z-40 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70">
+      <div className="sticky top-16 z-40 border-b border-blue-100 bg-gradient-to-r from-white/90 via-blue-50/40 to-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
         <div className="mx-auto max-w-[1600px] px-3 sm:px-6 lg:px-8">
           <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar">
             {tabs.map((t) => (
@@ -176,8 +176,8 @@ export default function DashboardShell({
                 onClick={() => setActiveTab(t.key)}
                 className={classNames(
                   activeTab === t.key
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-800 hover:bg-gray-200",
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-blue-50 text-blue-800 hover:bg-blue-100",
                   "whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium"
                 )}
               >
@@ -195,8 +195,8 @@ export default function DashboardShell({
           <aside className="hidden lg:block">
             <div className="sticky top-[116px] flex max-h-[calc(100vh-140px)] flex-col gap-6 overflow-auto pr-1">
               {/* Quick Links: now includes ALL nav links */}
-              <section className="rounded-2xl border bg-white p-3 shadow-sm">
-                <h3 className="mb-2 px-1 text-sm font-semibold text-gray-700">
+              <section className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+                <h3 className="mb-2 px-1 text-sm font-semibold text-blue-700">
                   Quick links
                 </h3>
                 <nav className="flex flex-col">
@@ -204,7 +204,7 @@ export default function DashboardShell({
                     <Link
                       key={item.name}
                       href={item.href}
-                      className="rounded-lg px-2 py-2 text-sm hover:bg-gray-50"
+                      className="rounded-lg px-2 py-2 text-sm hover:bg-blue-50"
                     >
                       {item.name}
                     </Link>
@@ -213,8 +213,8 @@ export default function DashboardShell({
               </section>
 
               {/* Best Suppliers */}
-              <section className="rounded-2xl border bg-white p-3 shadow-sm">
-                <h3 className="mb-2 px-1 text-sm font-semibold text-gray-700">
+              <section className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+                <h3 className="mb-2 px-1 text-sm font-semibold text-blue-700">
                   Cloudus Powered Services
                 </h3>
                 <ul className="space-y-2">
@@ -228,13 +228,13 @@ export default function DashboardShell({
                   ].map((s) => (
                     <li
                       key={s.name}
-                      className="flex items-center justify-between gap-2 rounded-lg p-2 hover:bg-gray-50"
+                      className="flex items-center justify-between gap-2 rounded-lg p-2 hover:bg-blue-50"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="inline-block h-6 w-6 rounded-full bg-gray-200" />
+                        <span className="inline-block h-6 w-6 rounded-full bg-blue-200" />
                         <p className="truncate text-sm">{s.name}</p>
                       </div>
-                      <span className="rounded-full border px-2 py-0.5 text-xs text-gray-600">
+                      <span className="rounded-full border border-blue-200 px-2 py-0.5 text-xs text-blue-700">
                         {s.tag}
                       </span>
                     </li>
@@ -243,8 +243,8 @@ export default function DashboardShell({
               </section>
 
               {/* Top Services / Products */}
-              <section className="rounded-2xl border bg-white p-3 shadow-sm">
-                <h3 className="mb-2 px-1 text-sm font-semibold text-gray-700">
+              <section className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+                <h3 className="mb-2 px-1 text-sm font-semibold text-blue-700">
                   Top Services / Products
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
@@ -259,7 +259,7 @@ export default function DashboardShell({
                     <Link
                       key={p.title}
                       href={p.href}
-                      className="rounded-xl border px-3 py-2 text-center text-xs hover:bg-gray-50"
+                      className="rounded-xl border border-blue-100 px-3 py-2 text-center text-xs hover:bg-blue-50"
                     >
                       {p.title}
                     </Link>
@@ -273,8 +273,8 @@ export default function DashboardShell({
           <main className="min-h-screen">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-bold">Dashboard</h1>
-                <p className="text-sm text-gray-500">Welcome {user.name}</p>
+                <h1 className="text-2xl font-bold text-blue-700">Dashboard</h1>
+                <p className="text-sm text-gray-600">Welcome {user.name}</p>
               </div>
               <div className="flex items-center gap-2">
                 {session ? (
