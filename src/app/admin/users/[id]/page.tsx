@@ -1,14 +1,13 @@
-// src/app/admin/users/[id]/page.tsx
+ï»¿// src/app/admin/users/[id]/page.tsx
 import { notFound, redirect } from "next/navigation";
-import type { PageProps } from "next";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 import ChangePassword from "../_components/ChangePassword";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminUserDetail({ params }: PageProps<{ id: string }>) {
-  const { id } = await params;
+export default async function AdminUserDetail(props: any) {
+  const { id } = await props.params;
   const session = await auth();
   const role = session?.user.role;
   if (!role || (role !== "ADMIN" && role !== "CARETAKER")) {
@@ -39,11 +38,11 @@ export default async function AdminUserDetail({ params }: PageProps<{ id: string
         <section className="rounded-xl border bg-white p-4">
           <h2 className="mb-3 text-lg font-semibold">Profile</h2>
           <div className="space-y-1 text-sm">
-            <p><span className="text-gray-600">Name:</span> {user.name ?? "—"}</p>
-            <p><span className="text-gray-600">Email:</span> {user.email ?? "—"}</p>
+            <p><span className="text-gray-600">Name:</span> {user.name ?? "ï¿½"}</p>
+            <p><span className="text-gray-600">Email:</span> {user.email ?? "ï¿½"}</p>
             <p><span className="text-gray-600">Role:</span> {user.role}</p>
-            <p><span className="text-gray-600">Supplier:</span> {user.supplier?.name ?? "—"}</p>
-            <p><span className="text-gray-600">Driver:</span> {user.driver?.name ?? "—"}</p>
+            <p><span className="text-gray-600">Supplier:</span> {user.supplier?.name ?? "ï¿½"}</p>
+            <p><span className="text-gray-600">Driver:</span> {user.driver?.name ?? "ï¿½"}</p>
           </div>
           <div className="mt-4">
             <ChangePassword userId={user.id} />
@@ -57,7 +56,7 @@ export default async function AdminUserDetail({ params }: PageProps<{ id: string
             {user.sessions.map((s) => (
               <div key={s.id} className="py-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">{s.sessionToken.slice(0, 12)}…</span>
+                  <span className="text-gray-700">{s.sessionToken.slice(0, 12)}ï¿½</span>
                   <span className="text-gray-500">exp {new Date(s.expires).toLocaleString()}</span>
                 </div>
               </div>
@@ -84,7 +83,7 @@ export default async function AdminUserDetail({ params }: PageProps<{ id: string
                     <td className="px-3 py-2 text-sm">{o.code}</td>
                     <td className="px-3 py-2 text-sm">{o.name}</td>
                     <td className="px-3 py-2 text-sm">{(o.price / 100).toFixed(2)}</td>
-                    <td className="px-3 py-2 text-sm">{(o as any).status ?? "—"}</td>
+                    <td className="px-3 py-2 text-sm">{(o as any).status ?? "ï¿½"}</td>
                     <td className="px-3 py-2 text-sm">{new Date(o.createdAt as any).toLocaleString()}</td>
                   </tr>
                 ))}

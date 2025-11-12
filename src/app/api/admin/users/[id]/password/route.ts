@@ -10,7 +10,8 @@ const bodySchema = z.object({ password: z.string().min(6).max(200) });
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, ctx: any) {
+  const { id } = await ctx?.params;
   const session = await auth();
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "CARETAKER")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,15 +28,14 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const user = await db.user.findUnique({ where: { id: params.id } });
+  const user = await db.user.findUnique({ where: { id } });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const passwordHash = await hashPassword(parsed.data.password);
   await db.$transaction([
-    db.user.update({ where: { id: params.id }, data: { passwordHash } }),
-    db.session.deleteMany({ where: { userId: params.id } }),
+    db.user.update({ where: { id }, data: { passwordHash } }),
+    db.session.deleteMany({ where: { userId: id } }),
   ]);
 
   return NextResponse.json({ ok: true });
 }
-
