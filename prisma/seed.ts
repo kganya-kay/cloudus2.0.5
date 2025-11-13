@@ -72,9 +72,10 @@ async function main() {
 
   // 6) a default driver
   const driver = await prisma.driver.upsert({
-    where: { phone: "27640000099" },
+    where: { id: "seed-driver" },
     update: {},
     create: {
+      id: "seed-driver",
       name: "Cloudus Driver",
       phone: "27640000099",
       email: "driver@cloudus.digital",
