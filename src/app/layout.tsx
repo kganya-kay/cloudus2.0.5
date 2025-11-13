@@ -5,6 +5,7 @@ import { type Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import { FloatingPortalLinks } from "./_components/FloatingPortalLinks";
 
 export const metadata: Metadata = {
   title: "cloudus",
@@ -19,7 +20,8 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable} h-full bg-gray-100`}>
       <body className="h-full">
         <SessionProvider>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+          <FloatingPortalLinks />
         </SessionProvider>
       </body>
     </html>
