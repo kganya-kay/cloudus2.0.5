@@ -287,9 +287,8 @@ export const driverRouter = createTRPCRouter({
       const completedDeliveries = deliveries.filter(
         (d) => d.status === DeliveryStatus.DELIVERED,
       );
-      const canceledDeliveries = deliveries.filter((d) =>
-        [DeliveryStatus.CANCELED, DeliveryStatus.FAILED].includes(d.status),
-      );
+      const canceledStatuses: DeliveryStatus[] = [DeliveryStatus.CANCELED, DeliveryStatus.FAILED];
+      const canceledDeliveries = deliveries.filter((d) => canceledStatuses.includes(d.status));
 
       const payoutRows = deliveries
         .map((d) => {

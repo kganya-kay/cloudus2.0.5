@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { UploadButton } from "~/utils/uploadthing";
 import { type RouterOutputs, api } from "~/trpc/react";
 import type { DriverListResponse, DriverListRow, SupplierListResponse, SupplierListRow } from "~/types/api";
-import type { DriverListRow, SupplierListRow, DriverListResponse, SupplierListResponse } from "~/types/api";
 // api imported above with RouterOutputs
 import { SpeedButtons } from "../../_components/SpeedButtons";
 import { StatusBadge } from "../../_components/StatusBadge";

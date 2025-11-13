@@ -20,26 +20,8 @@ export default async function DriverPage({
   const { id } = await params;
   if (!id) redirect("/admin/drivers");
 
-  const driver = (await db.driver.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      phone: true,
-      email: true,
-      suburb: true,
-      city: true,
-      vehicle: true,
-      isActive: true,
-      rating: true,
-      notes: true,
-      createdAt: true,
-      lastLocationLat: true,
-      lastLocationLng: true,
-      lastLocationAccuracy: true,
-      lastLocationAt: true,
-    },
-  })) as DriverProfile | null;
+  const driverRecord = await db.driver.findUnique({ where: { id } });
+  const driver = driverRecord as DriverProfile | null;
 
   if (!driver) {
     redirect("/admin/drivers");
