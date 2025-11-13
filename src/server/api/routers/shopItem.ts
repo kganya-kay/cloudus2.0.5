@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { Prisma } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -176,9 +176,40 @@ export const shopItemRouter = createTRPCRouter({
     }),
 
   /* CREATE ORDER for an item */
-  createOrder: protectedProcedure
+  createOrder: publicProcedure
     .input(createOrderInput)
     .mutation(async ({ ctx, input }) => {
+      const ensureCreatorUser = async () => {
+        if (ctx.session?.user?.id) {
+          return ctx.session.user.id;
+        }
+
+        if (input.customerEmail) {
+          const guest = await ctx.db.user.upsert({
+            where: { email: input.customerEmail },
+            update: {
+              name: input.customerName ?? undefined,
+            },
+            create: {
+              email: input.customerEmail,
+              name: input.customerName ?? "Guest customer",
+              role: Role.CUSTOMER,
+            },
+          });
+          return guest.id;
+        }
+
+        const guest = await ctx.db.user.create({
+          data: {
+            name: input.customerName ?? "Guest customer",
+            role: Role.CUSTOMER,
+          },
+        });
+        return guest.id;
+      };
+
+      const createdById = await ensureCreatorUser();
+
       const item = await ctx.db.shopItem.findUnique({
         where: { id: input.itemId },
         select: { id: true, name: true, price: true, description: true },
@@ -199,7 +230,7 @@ export const shopItemRouter = createTRPCRouter({
           link: "",
           api: "",
           links: [],
-          createdBy: { connect: { id: ctx.session.user.id } },
+          createdBy: { connect: { id: createdById } },
 
           createdFor: { connect: { id: item.id } },
 

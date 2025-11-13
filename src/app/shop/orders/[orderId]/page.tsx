@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckIcon } from "@heroicons/react/16/solid";
@@ -38,6 +38,8 @@ function useItemIdFromParams(): number | null {
 export default function CreateOrderPage() {
   const itemId = useItemIdFromParams();
   const [open, setOpen] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // form state (maps to createOrder input fields)
   const [customerName, setCustomerName] = useState("");
@@ -51,26 +53,76 @@ export default function CreateOrderPage() {
 
   const utils = api.useUtils();
 
+  const resetForm = useCallback(() => {
+    setCustomerName("");
+    setNote("");
+    setCustomerPhone("");
+    setAddressLine1("");
+    setSuburb("");
+    setCity("");
+    setQuantityOpt("1");
+    setCustomQty("1");
+  }, []);
+
+  const startStripeCheckout = useCallback(
+    async (orderId: number) => {
+      setOpen(true);
+      setCheckoutError(null);
+      setIsRedirecting(true);
+      try {
+        const response = await fetch("/api/payments/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId }),
+        });
+
+        const data = (await response.json().catch(() => null)) as
+          | { checkoutUrl?: string; error?: string }
+          | null;
+
+        if (!response.ok || typeof data?.checkoutUrl !== "string") {
+          const message =
+            data?.error ?? "We couldn't start the secure checkout. Please try again.";
+          throw new Error(message);
+        }
+
+        resetForm();
+        window.location.href = data.checkoutUrl;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to start Stripe checkout. Please try again.";
+        setCheckoutError(message);
+        setIsRedirecting(false);
+      }
+    },
+    [resetForm, setCheckoutError, setIsRedirecting, setOpen]
+  );
+
+  const handleDialogClose = useCallback(
+    (nextOpen: boolean) => {
+      if (isRedirecting) return;
+      setOpen(nextOpen);
+      if (!nextOpen) {
+        setCheckoutError(null);
+      }
+    },
+    [isRedirecting, setCheckoutError, setOpen]
+  );
+
   const { data: item, isLoading } = api.shopItem.getById.useQuery(
     { id: itemId ?? -1 },
     { enabled: itemId != null }
   );
 
   const createOrder = api.shopItem.createOrder.useMutation({
-    onSuccess: async () => {
-      // reset + success UI
-      setOpen(true);
-      setCustomerName("");
-      setNote("");
-      setCustomerPhone("");
-      setAddressLine1("");
-      setSuburb("");
-      setCity("");
-      setQuantityOpt("1");
-      setCustomQty("1");
-      // refresh item (orders list, etc.)
+    onSuccess: async (order) => {
       if (itemId != null) {
         await utils.shopItem.getById.invalidate({ id: itemId });
+      }
+      if (order?.id) {
+        await startStripeCheckout(order.id);
       }
     },
   });
@@ -256,9 +308,13 @@ export default function CreateOrderPage() {
         <button
           type="submit"
           className="rounded-full bg-blue-500 px-8 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:opacity-60"
-          disabled={createOrder.isPending || !item}
+          disabled={createOrder.isPending || isRedirecting || !item}
         >
-          {createOrder.isPending ? "Submitting Order..." : "Submit"}
+          {createOrder.isPending
+            ? "Submitting Order..."
+            : isRedirecting
+              ? "Redirecting..."
+              : "Submit"}
         </button>
       </form>
 
@@ -272,8 +328,8 @@ export default function CreateOrderPage() {
         </Link>
       </div>
 
-      {/* Success Dialog */}
-      <Dialog open={open} onClose={setOpen} className="relative z-10">
+      {/* Stripe Checkout Dialog */}
+      <Dialog open={open} onClose={handleDialogClose} className="relative z-10">
         <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white shadow-xl transition-all">
@@ -282,25 +338,24 @@ export default function CreateOrderPage() {
                 <CheckIcon className="h-6 w-6 text-green-600" />
               </div>
               <DialogTitle as="h3" className="mt-4 text-lg font-semibold text-gray-900">
-                Order Created Successfully!
+                {checkoutError ? "Unable to start payment" : "Redirecting to secure checkout"}
               </DialogTitle>
-              <p className="mt-2 text-sm text-gray-600">You’ll receive a payment link via:</p>
-              <p className="text-sm font-medium text-gray-800">Contact: {customerPhone || "—"}</p>
-              <div className="mt-6 flex justify-center gap-3">
-                <Link
-                  href="/shop"
-                  className="rounded-full bg-green-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
-                >
-                  Shop
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="rounded-full border border-gray-300 bg-white px-6 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-                >
-                  Close
-                </button>
-              </div>
+              <p className="mt-2 text-sm text-gray-600">
+                {checkoutError
+                  ? checkoutError
+                  : "Hang tight while we launch a secure Stripe payment page for you."}
+              </p>
+              {checkoutError && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleDialogClose(false)}
+                    className="rounded-full border border-gray-300 bg-white px-6 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
           </DialogPanel>
         </div>
