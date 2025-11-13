@@ -106,8 +106,9 @@ async function linkSuperAdminDriverProfile({
       select: { id: true },
     }));
 
+  const driverId = typeof driver === "string" ? driver : driver.id;
   await db.user.update({
     where: { id: userId },
-    data: { driverId: driver.id },
+    data: { driverId },
   });
 }
