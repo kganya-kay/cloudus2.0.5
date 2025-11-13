@@ -3,13 +3,17 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 import ChangePassword from "../_components/ChangePassword";
+import UserAdminControls from "../_components/UserAdminControls";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminUserDetail(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
   const session = await auth();
-  const role = session?.user.role;
+  if (!session?.user) {
+    redirect("/");
+  }
+  const role = session.user.role;
   if (!role || (role !== "ADMIN" && role !== "CARETAKER")) {
     redirect("/");
   }
@@ -48,6 +52,11 @@ export default async function AdminUserDetail(props: { params: Promise<{ id: str
             <ChangePassword userId={user.id} />
           </div>
         </section>
+
+        <UserAdminControls
+          user={{ id: user.id, name: user.name, email: user.email, role: user.role }}
+          isSelf={session.user.id === user.id}
+        />
 
         <section className="rounded-xl border bg-white p-4">
           <h2 className="mb-3 text-lg font-semibold">Active Sessions</h2>

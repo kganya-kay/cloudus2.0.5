@@ -9,6 +9,7 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import { verifyPassword } from "./password";
 import { db } from "~/server/db";
+import { SUPER_ADMIN_EMAIL } from "~/server/auth/super-admin";
 
 /* =========================
    Type augmentation
@@ -32,8 +33,6 @@ declare module "next-auth" {
 /* =========================
    NextAuth config (Auth.js v5)
    ========================= */
-const SUPER_ADMIN_EMAIL = "kganyakekana@gmail.com" as const;
-
 export const authConfig = {
   adapter: PrismaAdapter(db),
   secret: env.AUTH_SECRET,

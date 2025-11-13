@@ -3,11 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { Role } from "@prisma/client";
 import { protectedProcedure } from "./trpc";
 import { z } from "zod";
-
-const SUPER_ADMIN_EMAIL = "kganyakekana@gmail.com" as const;
-
-const isSuperAdmin = (email: string | null | undefined) =>
-  !!email && email.toLowerCase() === SUPER_ADMIN_EMAIL;
+import { isSuperAdminEmail } from "~/server/auth/super-admin";
 
 export const hasRole = (allowed: Role[]) =>
   protectedProcedure.use(async ({ ctx, next }) => {
@@ -15,7 +11,7 @@ export const hasRole = (allowed: Role[]) =>
     const role = ctx.session?.user.role;
 
     // Super admin bypasses all role checks
-    if (isSuperAdmin(email)) {
+    if (isSuperAdminEmail(email)) {
       return next();
     }
 
@@ -36,7 +32,7 @@ const orderIdSchema = z.object({ orderId: z.number().int().positive() });
 export const supplierOwnsOrder = supplierProcedure.use(async ({ ctx, input, next }) => {
   // Admins and super admin bypass supplier ownership check
   const email = ctx.session?.user.email ?? null;
-  if (isSuperAdmin(email) || ctx.session?.user.role === Role.ADMIN) {
+  if (isSuperAdminEmail(email) || ctx.session?.user.role === Role.ADMIN) {
     return next();
   }
 

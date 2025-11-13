@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { Role } from "@prisma/client";
+import { isSuperAdminEmail } from "~/server/auth/super-admin";
 
 
 import {
@@ -7,6 +9,13 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+
+const canManageAllProjects = (ctx: {
+  session: { user: { role: Role; email?: string | null } };
+}) => {
+  const email = ctx.session.user.email ?? null;
+  return ctx.session.user.role === Role.ADMIN || isSuperAdminEmail(email);
+};
 
 const updatableFields = z
   .object({
@@ -71,7 +80,9 @@ export const projectRouter = createTRPCRouter({
   getLatest: protectedProcedure.query(async ({ ctx }) => {
     const project = await ctx.db.project.findFirst({
       orderBy: { createdAt: "desc" },
-      where: { createdBy: { id: ctx.session.user.id } },
+      where: canManageAllProjects(ctx)
+        ? undefined
+        : { createdBy: { id: ctx.session.user.id } },
     });
 
     return project ?? null;
@@ -90,7 +101,9 @@ export const projectRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const projects = await ctx.db.project.findMany({
       orderBy: { createdAt: "desc" },
-      where: { createdBy: { id: ctx.session.user.id } },
+      where: canManageAllProjects(ctx)
+        ? undefined
+        : { createdBy: { id: ctx.session.user.id } },
     });
 
     return projects ?? null;
@@ -118,7 +131,7 @@ export const projectRouter = createTRPCRouter({
           message: "Project not found.",
         });
       }
-      if (project.createdBy?.id !== ctx.session.user.id) {
+      if (!canManageAllProjects(ctx) && project.createdBy?.id !== ctx.session.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Not allowed to delete this project.",
@@ -143,7 +156,7 @@ export const projectRouter = createTRPCRouter({
           message: "Project not found.",
         });
       }
-      if (project.createdBy?.id !== ctx.session.user.id) {
+      if (!canManageAllProjects(ctx) && project.createdBy?.id !== ctx.session.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Not allowed to update this project.",
