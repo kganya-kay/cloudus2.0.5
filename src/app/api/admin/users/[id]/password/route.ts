@@ -10,8 +10,8 @@ const bodySchema = z.object({ password: z.string().min(6).max(200) });
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request, context: { params: { id: string } }) {
-  const { id } = context.params;
+export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await auth();
   if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "CARETAKER")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
