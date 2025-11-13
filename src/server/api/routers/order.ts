@@ -521,6 +521,8 @@ export const orderRouter = createTRPCRouter({
         deliveryNotes,
         deliveryTrackingCode,
         proofPhotoUrl,
+        priceCents,
+        deliveryCents,
         ...rest
       } = input;
 
@@ -537,6 +539,12 @@ export const orderRouter = createTRPCRouter({
       }
 
       const data: Prisma.OrderUpdateInput = { ...rest };
+      if (priceCents !== undefined) {
+        data.price = priceCents;
+      }
+      if (deliveryCents !== undefined) {
+        data.deliveryCents = deliveryCents;
+      }
       if (supplierId !== undefined) {
         data.supplier = supplierId
           ? { connect: { id: supplierId } }
@@ -577,7 +585,7 @@ export const orderRouter = createTRPCRouter({
       }
 
       const nextDeliveryCents =
-        rest.deliveryCents ?? current.deliveryCents ?? 0;
+        deliveryCents ?? current.deliveryCents ?? 0;
 
       if (nextDeliveryCents > 0 && !nextDriverId) {
         throw new TRPCError({
