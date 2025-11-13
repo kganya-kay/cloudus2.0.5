@@ -3,17 +3,20 @@ import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 import { DashboardClient } from "./dashboard-client";
+import { isSuperAdminEmail } from "~/server/auth/super-admin";
 
 export default async function DriverDashboardPage() {
   const session = await auth();
   if (!session?.user) {
     redirect("/auth/login?next=/drivers/dashboard");
   }
-  if (session.user.role !== "DRIVER") {
+  const email = session.user.email ?? null;
+  const isSuperAdmin = isSuperAdminEmail(email);
+  if (session.user.role !== "DRIVER" && !isSuperAdmin) {
     redirect("/");
   }
 
-  const profile = await db.user.findUnique({
+  let profile = await db.user.findUnique({
     where: { id: session.user.id },
     select: {
       driverId: true,
@@ -22,7 +25,21 @@ export default async function DriverDashboardPage() {
   });
 
   if (!profile?.driverId) {
-    redirect("/drivers/apply?toast=link_driver");
+    if (!isSuperAdmin) {
+      redirect("/drivers/apply?toast=link_driver");
+    }
+    await linkSuperAdminDriverProfile({
+      userId: session.user.id,
+      name: session.user.name ?? null,
+      email,
+    });
+    profile = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        driverId: true,
+        driver: { select: { name: true } },
+      },
+    });
   }
 
   const initialName =
@@ -58,4 +75,39 @@ export default async function DriverDashboardPage() {
       <DashboardClient initialName={initialName} />
     </main>
   );
+}
+
+async function linkSuperAdminDriverProfile({
+  userId,
+  name,
+  email,
+}: {
+  userId: string;
+  name: string | null;
+  email: string | null;
+}) {
+  const existingDriver =
+    email &&
+    (await db.driver.findFirst({
+      where: { email },
+      select: { id: true },
+    }));
+
+  const driver =
+    existingDriver ??
+    (await db.driver.create({
+      data: {
+        name: name ?? email ?? "Driver tester",
+        phone: email ?? "0000000000",
+        email: email ?? undefined,
+        notes: "Auto-linked for super admin testing",
+        isActive: true,
+      },
+      select: { id: true },
+    }));
+
+  await db.user.update({
+    where: { id: userId },
+    data: { driverId: driver.id },
+  });
 }
