@@ -81,12 +81,13 @@ async function linkSuperAdminSupplierProfile({
   name: string | null;
   email: string | null;
 }) {
-  const existing =
-    email &&
-    (await db.supplier.findFirst({
+  let existing: { id: string } | null = null;
+  if (email) {
+    existing = await db.supplier.findFirst({
       where: { email },
       select: { id: true },
-    }));
+    });
+  }
 
   const supplier =
     existing ??

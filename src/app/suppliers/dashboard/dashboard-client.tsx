@@ -322,9 +322,11 @@ export function SupplierDashboardClient({
                     {data.payouts.map((payout) => (
                       <tr key={payout.id}>
                         <td className="px-4 py-2 font-semibold text-gray-900">
-                          {payout.order?.code ?? "—"}
+                          {payout.order?.code ?? payout.orderId}
                           <div className="text-xs text-gray-500">
-                            {formatDateTime(payout.createdAt)}
+                            {formatDateTime(
+                              payout.releasedAt ?? payout.order?.createdAt,
+                            ) ?? "—"}
                           </div>
                         </td>
                         <td className="px-4 py-2 text-xs uppercase text-gray-600">

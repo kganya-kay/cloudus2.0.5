@@ -4,7 +4,6 @@ import { Prisma, Role, FulfilmentStatus } from "@prisma/client";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { caretakerProcedure } from "../rbac";
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
 
 const DASHBOARD_ORDER_LIMIT = 100;
 const DASHBOARD_SHOP_ITEMS = 12;
@@ -78,7 +77,7 @@ export const supplierRouter = createTRPCRouter({
         });
       }
 
-      const [supplier, orders, payouts, shopItems] = await Promise.all([
+      const [supplier, orders, payoutRows, shopItems] = await Promise.all([
         ctx.db.supplier.findUnique({
           where: { id: supplierId },
           select: {
@@ -115,15 +114,15 @@ export const supplierRouter = createTRPCRouter({
         }),
         ctx.db.supplierPayout.findMany({
           where: { supplierId },
-          orderBy: { createdAt: "desc" },
+          orderBy: [{ releasedAt: "desc" }, { id: "desc" }],
           take: DASHBOARD_PAYOUTS,
           select: {
             id: true,
             amountCents: true,
             status: true,
             releasedAt: true,
-            createdAt: true,
-            order: { select: { id: true, code: true } },
+            orderId: true,
+            Order: { select: { id: true, code: true, createdAt: true } },
           },
         }),
         ctx.db.shopItem.findMany({
@@ -146,6 +145,14 @@ export const supplierRouter = createTRPCRouter({
       }
 
       const { active, completed, canceled } = summaryFromOrders(orders);
+      const payouts = payoutRows.map((row) => ({
+        id: row.id,
+        amountCents: row.amountCents,
+        status: row.status,
+        releasedAt: row.releasedAt,
+        orderId: row.orderId,
+        order: row.Order,
+      }));
 
       const payoutsByStatus = payouts.reduce(
         (acc, p) => {
