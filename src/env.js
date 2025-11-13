@@ -11,10 +11,7 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    AUTH_URL:
-      process.env.NODE_ENV === "production"
-        ? z.string().url()
-        : z.string().url().optional(),
+    AUTH_URL: z.string().url().optional(),
     AUTH_DISCORD_ID: z.string(),
     AUTH_DISCORD_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
@@ -30,18 +27,9 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    OZOW_SITE_CODE:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
-    OZOW_API_KEY:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
-    OZOW_PRIVATE_KEY:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
+    OZOW_SITE_CODE: z.string().optional(),
+    OZOW_API_KEY: z.string().optional(),
+    OZOW_PRIVATE_KEY: z.string().optional(),
     OZOW_MODE: z.enum(["test", "live"]).default("test"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
