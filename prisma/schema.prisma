@@ -294,6 +294,15 @@ model Order {
   auditLogs     AuditLog[]
   SupplierQuote SupplierQuote[]
 
+  customerLocationLat      Float?
+  customerLocationLng      Float?
+  customerLocationAccuracy Float?
+  customerLocationAt       DateTime?
+  supplierLocationLat      Float?
+  supplierLocationLng      Float?
+  supplierLocationAccuracy Float?
+  supplierLocationAt       DateTime?
+
   @@index([name])
   @@index([status])
   @@index([caretakerId])
@@ -517,6 +526,10 @@ model Supplier {
   SupplierPayout SupplierPayout[]
   User           User[]
   shopItems      ShopItem[]
+  lastLocationLat      Float?
+  lastLocationLng      Float?
+  lastLocationAccuracy Float?
+  lastLocationAt       DateTime?
 }
 
 model Driver {

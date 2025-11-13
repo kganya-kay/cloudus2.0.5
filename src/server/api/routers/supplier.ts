@@ -37,6 +37,12 @@ const summaryFromOrders = (orders: Array<{ status: FulfilmentStatus }>) => {
   return { active, completed, canceled };
 };
 
+const locationInput = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracy: z.number().min(0).max(10000).nullable().optional(),
+});
+
 export const supplierRouter = createTRPCRouter({
   dashboard: protectedProcedure
     .input(z.object({ supplierId: z.string().optional() }).optional())
@@ -77,7 +83,7 @@ export const supplierRouter = createTRPCRouter({
         });
       }
 
-      const [supplier, orders, payoutRows, shopItems] = await Promise.all([
+      const [supplierRecord, orders, payoutRows, shopItems] = await Promise.all([
         ctx.db.supplier.findUnique({
           where: { id: supplierId },
           select: {
@@ -91,8 +97,12 @@ export const supplierRouter = createTRPCRouter({
             rating: true,
             pricePerKg: true,
             createdAt: true,
+            lastLocationLat: true,
+            lastLocationLng: true,
+            lastLocationAccuracy: true,
+            lastLocationAt: true,
           },
-        }),
+        } as any),
         ctx.db.order.findMany({
           where: { supplierId },
           orderBy: { createdAt: "desc" },
@@ -140,9 +150,32 @@ export const supplierRouter = createTRPCRouter({
         }),
       ]);
 
-      if (!supplier) {
+      if (!supplierRecord) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Supplier not found." });
       }
+      const supplierBase = supplierRecord as unknown as Record<string, unknown>;
+      const supplier = {
+        ...supplierBase,
+        lastLocationLat: (supplierRecord as any)?.lastLocationLat ?? null,
+        lastLocationLng: (supplierRecord as any)?.lastLocationLng ?? null,
+        lastLocationAccuracy: (supplierRecord as any)?.lastLocationAccuracy ?? null,
+        lastLocationAt: (supplierRecord as any)?.lastLocationAt ?? null,
+      } as {
+        id: string;
+        name: string | null;
+        phone: string | null;
+        email: string | null;
+        city: string | null;
+        suburb: string | null;
+        isActive: boolean;
+        rating: number | null;
+        pricePerKg: number | null;
+        createdAt: Date;
+        lastLocationLat: number | null;
+        lastLocationLng: number | null;
+        lastLocationAccuracy: number | null;
+        lastLocationAt: Date | null;
+      };
 
       const { active, completed, canceled } = summaryFromOrders(orders);
       const payouts = payoutRows.map((row) => ({
@@ -231,9 +264,59 @@ export const supplierRouter = createTRPCRouter({
           api: "",
           createdBy: { connect: { id: ctx.session.user.id } },
           contributors: { connect: [{ id: ctx.session.user.id }] },
-          supplier: { connect: { id: supplierId } },
-        },
+      supplier: { connect: { id: supplierId } },
+      },
+    });
+  }),
+
+  shareLocation: protectedProcedure
+    .input(locationInput)
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { supplierId: true, role: true },
       });
+
+      if (!user?.supplierId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No supplier profile linked to this account.",
+        });
+      }
+
+      if (
+        user.role !== Role.SUPPLIER &&
+        user.role !== Role.ADMIN &&
+        user.role !== Role.CARETAKER
+      ) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const supplierResult = await ctx.db.supplier.update({
+        where: { id: user.supplierId },
+        data: {
+          lastLocationLat: input.lat,
+          lastLocationLng: input.lng,
+          lastLocationAccuracy: input.accuracy ?? null,
+          lastLocationAt: new Date(),
+        },
+        select: {
+          id: true,
+          lastLocationLat: true,
+          lastLocationLng: true,
+          lastLocationAccuracy: true,
+          lastLocationAt: true,
+        },
+      } as any);
+      const supplier = supplierResult as unknown as {
+        id: string;
+        lastLocationLat: number | null;
+        lastLocationLng: number | null;
+        lastLocationAccuracy: number | null;
+        lastLocationAt: Date | null;
+      };
+
+      return { supplier };
     }),
 
   // Payout summaries: totals and weekly released sums

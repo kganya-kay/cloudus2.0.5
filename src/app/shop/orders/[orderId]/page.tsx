@@ -40,6 +40,13 @@ export default function CreateOrderPage() {
   const [open, setOpen] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [customerLocation, setCustomerLocation] = useState<{
+    lat: number;
+    lng: number;
+    accuracy?: number | null;
+  } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   // form state (maps to createOrder input fields)
   const [customerName, setCustomerName] = useState("");
@@ -62,6 +69,9 @@ export default function CreateOrderPage() {
     setCity("");
     setQuantityOpt("1");
     setCustomQty("1");
+    setCustomerLocation(null);
+    setGeoError(null);
+    setLocating(false);
   }, []);
 
   const startStripeCheckout = useCallback(
@@ -205,6 +215,13 @@ export default function CreateOrderPage() {
             addressLine1: addressLine1 || undefined,
             suburb: suburb || undefined,
             city: city || undefined,
+            customerLocation: customerLocation
+              ? {
+                  lat: customerLocation.lat,
+                  lng: customerLocation.lng,
+                  accuracy: customerLocation.accuracy ?? undefined,
+                }
+              : undefined,
             estimatedKg: qtyNumber, // treat quantity as estimated KG for laundry
             // deliveryCents: 0, // set if you add delivery
             // currency: "ZAR",
@@ -271,6 +288,58 @@ export default function CreateOrderPage() {
               onChange={(e) => setCity(e.target.value)}
               className="w-full rounded-full border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
             />
+          </div>
+
+          <div className="sm:col-span-3 rounded-2xl border border-dashed px-4 py-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Share my location</p>
+                <p className="text-xs text-gray-500">
+                  Pin your GPS location to help drivers find you faster.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof navigator === "undefined" || !navigator.geolocation) {
+                    setGeoError("Your device cannot share location.");
+                    return;
+                  }
+                  setLocating(true);
+                  setGeoError(null);
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      setCustomerLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy ?? null,
+                      });
+                      setLocating(false);
+                    },
+                    (error) => {
+                      setGeoError(
+                        error.code === error.PERMISSION_DENIED
+                          ? "Permission denied. Please enable location access."
+                          : error.message ?? "Unable to fetch your location.",
+                      );
+                      setLocating(false);
+                    },
+                    { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 },
+                  );
+                }}
+                disabled={locating}
+                className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+              >
+                {locating ? "Locating..." : "Use my location"}
+              </button>
+            </div>
+            {customerLocation && (
+              <p className="mt-2 text-xs text-green-700">
+                Location pinned ({customerLocation.lat.toFixed(5)},{" "}
+                {customerLocation.lng.toFixed(5)})
+              </p>
+            )}
+            {geoError && <p className="mt-2 text-xs text-red-600">{geoError}</p>}
           </div>
 
           <div>

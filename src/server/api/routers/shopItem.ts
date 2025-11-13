@@ -44,6 +44,12 @@ const listInput = z.object({
   query: z.string().trim().optional(),
 });
 
+const locationInput = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracy: z.number().min(0).max(10000).nullable().optional(),
+});
+
 const createOrderInput = z.object({
   itemId: z.number().int().positive(),
   name: z.string().min(1).optional(),
@@ -60,6 +66,8 @@ const createOrderInput = z.object({
   estimatedKg: z.number().positive().optional(),
   supplierId: z.string().optional(),
   caretakerId: z.string().optional(),
+  customerLocation: locationInput.optional(),
+  supplierLocation: locationInput.optional(),
 });
 
 const contributorInput = z.object({
@@ -241,6 +249,22 @@ export const shopItemRouter = createTRPCRouter({
           addressLine1: input.addressLine1,
           suburb: input.suburb,
           city: input.city,
+          ...(input.customerLocation
+            ? {
+                customerLocationLat: input.customerLocation.lat,
+                customerLocationLng: input.customerLocation.lng,
+                customerLocationAccuracy: input.customerLocation.accuracy ?? null,
+                customerLocationAt: new Date(),
+              }
+            : {}),
+          ...(input.supplierLocation
+            ? {
+                supplierLocationLat: input.supplierLocation.lat,
+                supplierLocationLng: input.supplierLocation.lng,
+                supplierLocationAccuracy: input.supplierLocation.accuracy ?? null,
+                supplierLocationAt: new Date(),
+              }
+            : {}),
 
           deliveryCents: input.deliveryCents ?? 0,
           currency: input.currency ?? "ZAR",

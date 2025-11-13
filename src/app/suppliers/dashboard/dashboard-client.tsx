@@ -33,6 +33,9 @@ export function SupplierDashboardClient({
     viewerRole === "ADMIN" || viewerRole === "CARETAKER";
   const [supplierId, setSupplierId] = useState(initialSupplierId ?? "");
   const [supplierSearch, setSupplierSearch] = useState("");
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
 
   const dashboardInput = canImpersonate && supplierId
     ? { supplierId }
@@ -58,6 +61,17 @@ export function SupplierDashboardClient({
     },
   });
 
+  const shareLocationMutation = api.supplier.shareLocation.useMutation({
+    onSuccess: async () => {
+      setShareMessage("Location shared.");
+      setGeoError(null);
+      await dashboardQuery.refetch();
+    },
+    onError: (err) => {
+      setGeoError(err.message ?? "Unable to share location.");
+    },
+  });
+
   const supplierName =
     dashboardQuery.data?.supplier.name ??
     initialSupplierName ??
@@ -65,6 +79,46 @@ export function SupplierDashboardClient({
 
   const isLoading = dashboardQuery.isLoading || dashboardQuery.isRefetching;
   const data = dashboardQuery.data;
+  const canShareLocation = viewerRole === "SUPPLIER";
+  const lastShared =
+    data?.supplier.lastLocationAt && formatDateTime(data.supplier.lastLocationAt);
+
+  const requestShareLocation = () => {
+    if (!canShareLocation) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoError("Your device does not support sharing location.");
+      return;
+    }
+    setLocating(true);
+    setGeoError(null);
+    setShareMessage(null);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          await shareLocationMutation.mutateAsync({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy ?? null,
+          });
+        } catch (err) {
+          setGeoError(
+            err instanceof Error ? err.message : "Unable to share your location.",
+          );
+        } finally {
+          setLocating(false);
+        }
+      },
+      (error) => {
+        setGeoError(
+          error.code === error.PERMISSION_DENIED
+            ? "Permission denied. Please enable location access."
+            : error.message ?? "Unable to fetch your location.",
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 },
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -124,6 +178,34 @@ export function SupplierDashboardClient({
                 </p>
               </div>
             </div>
+            {canShareLocation && (
+              <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-white/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Share pickup location</p>
+                  <p className="text-xs text-gray-600">
+                    {lastShared
+                      ? `Last shared ${lastShared}`
+                      : "Share your current pickup point for drivers."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={requestShareLocation}
+                  disabled={locating || shareLocationMutation.isPending}
+                  className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                >
+                  {locating || shareLocationMutation.isPending
+                    ? "Sharing..."
+                    : "Share location"}
+                </button>
+              </div>
+            )}
+            {canShareLocation && geoError && (
+              <p className="mt-2 text-xs text-red-600">{geoError}</p>
+            )}
+            {canShareLocation && shareMessage && (
+              <p className="mt-2 text-xs text-emerald-700">{shareMessage}</p>
+            )}
             <div className="mt-6 grid gap-4 md:grid-cols-4">
               <StatCard
                 label="Active orders"
