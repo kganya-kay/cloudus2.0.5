@@ -43,7 +43,7 @@ export default async function DriverDashboardPage() {
   }
 
   const initialName =
-    profile.driver?.name ?? session.user.name ?? session.user.email ?? undefined;
+    profile?.driver?.name ?? session.user.name ?? session.user.email ?? undefined;
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-6">
