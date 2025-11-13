@@ -1,11 +1,234 @@
 // src/server/api/routers/supplier.ts
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
-import { createTRPCRouter } from "~/server/api/trpc";
+import { Prisma, Role, FulfilmentStatus } from "@prisma/client";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { caretakerProcedure } from "../rbac";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
+const DASHBOARD_ORDER_LIMIT = 100;
+const DASHBOARD_SHOP_ITEMS = 12;
+const DASHBOARD_PAYOUTS = 25;
+
+const activeOrderStatuses: FulfilmentStatus[] = [
+  FulfilmentStatus.NEW,
+  FulfilmentStatus.SOURCING_SUPPLIER,
+  FulfilmentStatus.SUPPLIER_CONFIRMED,
+  FulfilmentStatus.IN_PROGRESS,
+  FulfilmentStatus.READY_FOR_DELIVERY,
+  FulfilmentStatus.OUT_FOR_DELIVERY,
+];
+const completedOrderStatuses: FulfilmentStatus[] = [
+  FulfilmentStatus.DELIVERED,
+  FulfilmentStatus.CLOSED,
+];
+const canceledOrderStatuses: FulfilmentStatus[] = [
+  FulfilmentStatus.CANCELED,
+];
+
+const summaryFromOrders = (orders: Array<{ status: FulfilmentStatus }>) => {
+  let active = 0;
+  let completed = 0;
+  let canceled = 0;
+  for (const order of orders) {
+    if (activeOrderStatuses.includes(order.status)) active += 1;
+    else if (completedOrderStatuses.includes(order.status)) completed += 1;
+    else if (canceledOrderStatuses.includes(order.status)) canceled += 1;
+  }
+  return { active, completed, canceled };
+};
 
 export const supplierRouter = createTRPCRouter({
+  dashboard: protectedProcedure
+    .input(z.object({ supplierId: z.string().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const viewerRole = ctx.session.user.role;
+      const canImpersonate =
+        viewerRole === Role.ADMIN || viewerRole === Role.CARETAKER;
+
+      let supplierId = input?.supplierId ?? null;
+      if (supplierId && !canImpersonate) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      if (!supplierId) {
+        const userRecord = await ctx.db.user.findUnique({
+          where: { id: ctx.session.user.id },
+          select: { supplierId: true, role: true },
+        });
+        if (!userRecord?.supplierId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No supplier profile linked to this account.",
+          });
+        }
+        if (
+          userRecord.role !== Role.SUPPLIER &&
+          !canImpersonate
+        ) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        supplierId = userRecord.supplierId;
+      }
+
+      if (!supplierId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Supplier ID required.",
+        });
+      }
+
+      const [supplier, orders, payouts, shopItems] = await Promise.all([
+        ctx.db.supplier.findUnique({
+          where: { id: supplierId },
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            city: true,
+            suburb: true,
+            isActive: true,
+            rating: true,
+            pricePerKg: true,
+            createdAt: true,
+          },
+        }),
+        ctx.db.order.findMany({
+          where: { supplierId },
+          orderBy: { createdAt: "desc" },
+          take: DASHBOARD_ORDER_LIMIT,
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            status: true,
+            price: true,
+            deliveryCents: true,
+            currency: true,
+            customerName: true,
+            suburb: true,
+            city: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        ctx.db.supplierPayout.findMany({
+          where: { supplierId },
+          orderBy: { createdAt: "desc" },
+          take: DASHBOARD_PAYOUTS,
+          select: {
+            id: true,
+            amountCents: true,
+            status: true,
+            releasedAt: true,
+            createdAt: true,
+            order: { select: { id: true, code: true } },
+          },
+        }),
+        ctx.db.shopItem.findMany({
+          where: { supplierId },
+          orderBy: { createdAt: "desc" },
+          take: DASHBOARD_SHOP_ITEMS,
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            price: true,
+            createdAt: true,
+            image: true,
+          },
+        }),
+      ]);
+
+      if (!supplier) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Supplier not found." });
+      }
+
+      const { active, completed, canceled } = summaryFromOrders(orders);
+
+      const payoutsByStatus = payouts.reduce(
+        (acc, p) => {
+          acc[p.status] = (acc[p.status] ?? 0) + (p.amountCents ?? 0);
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      const activeOrders = orders.filter((o) =>
+        activeOrderStatuses.includes(o.status),
+      );
+      const recentOrders = orders.slice(0, 15);
+
+      return {
+        supplier,
+        stats: {
+          totalOrders: orders.length,
+          activeOrders: active,
+          completedOrders: completed,
+          canceledOrders: canceled,
+          pendingPayoutCents: payoutsByStatus.PENDING ?? 0,
+          releasedPayoutCents: payoutsByStatus.RELEASED ?? 0,
+          failedPayoutCents: payoutsByStatus.FAILED ?? 0,
+        },
+        activeOrders,
+        recentOrders,
+        payouts,
+        shopItems,
+      };
+    }),
+
+  portalCreateShopItem: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        description: z.string().min(5),
+        type: z.string().min(1),
+        priceCents: z.number().int().nonnegative(),
+        image: z.string().url().nullable().optional(),
+        link: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const viewerRole = ctx.session.user.role;
+      const userRecord = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { supplierId: true, role: true },
+      });
+
+      const supplierId = userRecord?.supplierId ?? null;
+      if (!supplierId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No supplier profile linked to this account.",
+        });
+      }
+      if (
+        userRecord?.role !== Role.SUPPLIER &&
+        viewerRole !== Role.ADMIN &&
+        viewerRole !== Role.CARETAKER
+      ) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      return ctx.db.shopItem.create({
+        data: {
+          name: input.name,
+          description: input.description,
+          type: input.type,
+          price: input.priceCents,
+          image:
+            input.image ??
+            "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
+          link: input.link ?? "",
+          api: "",
+          createdBy: { connect: { id: ctx.session.user.id } },
+          contributors: { connect: [{ id: ctx.session.user.id }] },
+          supplier: { connect: { id: supplierId } },
+        },
+      });
+    }),
+
   // Payout summaries: totals and weekly released sums
   payoutSummary: caretakerProcedure
     .input(z.object({ id: z.string().min(1), weeks: z.number().int().positive().max(52).default(12) }))

@@ -9,7 +9,7 @@ const DRIVER_LINK = {
 };
 
 const SUPPLIER_LINK = {
-  href: "/suppliers/apply",
+  href: "/suppliers/dashboard",
   label: "Supplier portal",
 };
 
