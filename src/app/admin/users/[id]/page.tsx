@@ -6,8 +6,8 @@ import ChangePassword from "../_components/ChangePassword";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminUserDetail({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function AdminUserDetail(props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
   const session = await auth();
   const role = session?.user.role;
   if (!role || (role !== "ADMIN" && role !== "CARETAKER")) {
