@@ -12,7 +12,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const json = await req.json();
+    const json: unknown = await req.json();
     const parsed = bodySchema.safeParse(json);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
@@ -25,11 +25,11 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await hashPassword(password);
-    await (db as any).user.create({
+    await db.user.create({
       data: { name, email, passwordHash },
     });
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

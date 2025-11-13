@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import type { DriverListResponse, DriverListRow } from "~/types/api";
 
 export default function TableClient() {
   const [q, setQ] = useState("");
@@ -11,12 +12,16 @@ export default function TableClient() {
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
-  const { data, isLoading } = api.driver.list.useQuery({
+  const rawQuery = api.driver.list.useQuery({
     q: q.trim() || undefined,
     onlyActive: onlyActive || undefined,
     page,
     pageSize,
   });
+  const query: { data: DriverListResponse | undefined; isLoading: boolean } = {
+    data: rawQuery.data as DriverListResponse | undefined,
+    isLoading: rawQuery.isLoading,
+  };
 
   const utils = api.useUtils();
   const toggle = api.driver.toggleActive.useMutation({
@@ -25,11 +30,13 @@ export default function TableClient() {
     },
   });
 
-  if (isLoading) return <p className="text-sm text-gray-500">Loading…</p>;
+  if (query.isLoading) {
+    return <p className="text-sm text-gray-500">Loading…</p>;
+  }
 
-  type Row = NonNullable<typeof data>["items"][number];
-  const rows: Row[] = data?.items ?? [];
-  const total = data?.total ?? 0;
+  const driverData = query.data ?? null;
+  const rows: DriverListRow[] = driverData?.items ?? [];
+  const total = driverData?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -119,7 +126,9 @@ export default function TableClient() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-sm text-gray-500">No drivers found.</td>
+                <td colSpan={5} className="px-3 py-6 text-center text-sm text-gray-500">
+                  No drivers found.
+                </td>
               </tr>
             )}
           </tbody>
@@ -128,4 +137,3 @@ export default function TableClient() {
     </div>
   );
 }
-

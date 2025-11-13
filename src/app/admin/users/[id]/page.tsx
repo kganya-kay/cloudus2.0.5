@@ -1,4 +1,4 @@
-﻿// src/app/admin/users/[id]/page.tsx
+// src/app/admin/users/[id]/page.tsx
 import { notFound, redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
@@ -6,8 +6,8 @@ import ChangePassword from "../_components/ChangePassword";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminUserDetail(props: any) {
-  const { id } = await props.params;
+export default async function AdminUserDetail({ params }: { params: { id: string } }) {
+  const { id } = params;
   const session = await auth();
   const role = session?.user.role;
   if (!role || (role !== "ADMIN" && role !== "CARETAKER")) {
@@ -38,11 +38,11 @@ export default async function AdminUserDetail(props: any) {
         <section className="rounded-xl border bg-white p-4">
           <h2 className="mb-3 text-lg font-semibold">Profile</h2>
           <div className="space-y-1 text-sm">
-            <p><span className="text-gray-600">Name:</span> {user.name ?? "�"}</p>
-            <p><span className="text-gray-600">Email:</span> {user.email ?? "�"}</p>
+            <p><span className="text-gray-600">Name:</span> {user.name ?? "—"}</p>
+            <p><span className="text-gray-600">Email:</span> {user.email ?? "—"}</p>
             <p><span className="text-gray-600">Role:</span> {user.role}</p>
-            <p><span className="text-gray-600">Supplier:</span> {user.supplier?.name ?? "�"}</p>
-            <p><span className="text-gray-600">Driver:</span> {user.driver?.name ?? "�"}</p>
+            <p><span className="text-gray-600">Supplier:</span> {user.supplier?.name ?? "—"}</p>
+            <p><span className="text-gray-600">Driver:</span> {user.driver?.name ?? "—"}</p>
           </div>
           <div className="mt-4">
             <ChangePassword userId={user.id} />
@@ -56,7 +56,7 @@ export default async function AdminUserDetail(props: any) {
             {user.sessions.map((s) => (
               <div key={s.id} className="py-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">{s.sessionToken.slice(0, 12)}�</span>
+                  <span className="text-gray-700">{s.sessionToken.slice(0, 12)}…</span>
                   <span className="text-gray-500">exp {new Date(s.expires).toLocaleString()}</span>
                 </div>
               </div>
@@ -83,13 +83,15 @@ export default async function AdminUserDetail(props: any) {
                     <td className="px-3 py-2 text-sm">{o.code}</td>
                     <td className="px-3 py-2 text-sm">{o.name}</td>
                     <td className="px-3 py-2 text-sm">{(o.price / 100).toFixed(2)}</td>
-                    <td className="px-3 py-2 text-sm">{(o as any).status ?? "�"}</td>
-                    <td className="px-3 py-2 text-sm">{new Date(o.createdAt as any).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-sm">{o.status}</td>
+                    <td className="px-3 py-2 text-sm">{new Date(o.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}
                 {orders.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-sm text-gray-600">No recent orders.</td>
+                    <td colSpan={5} className="px-3 py-6 text-center text-sm text-gray-600">
+                      No recent orders.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -100,5 +102,3 @@ export default async function AdminUserDetail(props: any) {
     </main>
   );
 }
-
-

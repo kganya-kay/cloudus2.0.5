@@ -5,6 +5,8 @@ import type { FulfilmentStatus, DeliveryStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { UploadButton } from "~/utils/uploadthing";
 import { type RouterOutputs, api } from "~/trpc/react";
+import type { DriverListResponse, DriverListRow, SupplierListResponse, SupplierListRow } from "~/types/api";
+import type { DriverListRow, SupplierListRow, DriverListResponse, SupplierListResponse } from "~/types/api";
 // api imported above with RouterOutputs
 import { SpeedButtons } from "../../_components/SpeedButtons";
 import { StatusBadge } from "../../_components/StatusBadge";
@@ -220,10 +222,22 @@ export default function Client({ id }: { id: number }) {
   const requiresDriver = Number(deliveryRands || "0") > 0;
   const outstandingCents = Math.max(0, totalCents - paidCents);
 
-  const { data: suppliers } = api.supplier.list.useQuery({ q: supplierQuery || undefined, onlyActive: true, page: 1, pageSize: 50 });
-  type SupplierRow = NonNullable<typeof suppliers>["items"][number];
-  const { data: drivers } = api.driver.list.useQuery({ q: driverQuery || undefined, onlyActive: true, page: 1, pageSize: 50 });
-  type DriverRow = NonNullable<typeof drivers>["items"][number];
+  const supplierResult = api.supplier.list.useQuery({
+    q: supplierQuery || undefined,
+    onlyActive: true,
+    page: 1,
+    pageSize: 50,
+  }) as { data: SupplierListResponse | undefined };
+  const supplierOptions: SupplierListRow[] = supplierResult.data?.items ?? [];
+
+  const driverResult = api.driver.list.useQuery({
+    q: driverQuery || undefined,
+    onlyActive: true,
+    page: 1,
+    pageSize: 50,
+  }) as { data: DriverListResponse | undefined };
+  const driverOptions: DriverListRow[] = driverResult.data?.items ?? [];
+
   type UserRow = NonNullable<RouterOutputs["user"]["getAll"]>[number];
   const { data: users } = api.user.getAll.useQuery();
   const caretakers: UserRow[] = (users ?? []).filter((u) => u.role === "CARETAKER");
@@ -436,7 +450,7 @@ export default function Client({ id }: { id: number }) {
                     />
                     <select value={driverId} onChange={(e) => setDriverId(e.target.value)} className="w-56 rounded-full border px-3 py-2 text-sm">
                       <option value="">Unassigned</option>
-                      {drivers?.items?.map((d: DriverRow) => (
+                      {driverOptions.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name ?? d.phone ?? d.id}
                         </option>
@@ -607,7 +621,7 @@ export default function Client({ id }: { id: number }) {
                     />
                     <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="w-56 rounded-full border px-3 py-2 text-sm">
                       <option value="">Unassigned</option>
-                      {suppliers?.items?.map((s: SupplierRow) => (
+                      {supplierOptions.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name} {s.city ? `• ${s.city}` : ""}
                         </option>

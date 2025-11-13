@@ -18,16 +18,20 @@ export default async function AdminUsersPage() {
     );
   }
 
-  type UserRow = User & { supplier: Supplier | null; driver: Driver | null; _count: { sessions: number; ordersCreated: number } };
+  type UserRow = User & {
+    supplier: Supplier | null;
+    driver: Driver | null;
+    _count: { sessions: number; ordersCreated: number };
+  };
 
-  const users = (await db.user.findMany({
-    orderBy: [{ email: "asc" as any }],
+  const users: UserRow[] = await db.user.findMany({
+    orderBy: { email: "asc" },
     include: {
       supplier: true,
       driver: true,
       _count: { select: { sessions: true, ordersCreated: true } },
     },
-  } as any)) as unknown as UserRow[];
+  });
 
   return (
     <main className="mx-auto max-w-6xl p-6">
@@ -45,7 +49,7 @@ export default async function AdminUsersPage() {
               <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Orders</th>
               <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Supplier</th>
               <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Driver</th>
-              <th className="px-4 py-2"></th>
+              <th className="px-4 py-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
@@ -58,8 +62,10 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-2 text-sm">{u._count?.ordersCreated ?? 0}</td>
                 <td className="px-4 py-2 text-sm">{u.supplier?.name ?? "—"}</td>
                 <td className="px-4 py-2 text-sm">{u.driver?.name ?? "—"}</td>
-                <td className="px-4 py-2 text-sm text-right">
-                  <Link href={`/admin/users/${u.id}`} className="rounded-full border px-3 py-1 text-xs">Manage</Link>
+                <td className="px-4 py-2 text-right">
+                  <Link href={`/admin/users/${u.id}`} className="rounded-full border px-3 py-1 text-xs">
+                    Manage
+                  </Link>
                 </td>
               </tr>
             ))}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
+import type { DriverListRow, DriverListResponse } from "~/types/api";
 
 type ActiveField = "phone" | "price" | "delivery";
 
@@ -41,8 +42,13 @@ export default function AdminManualOrder() {
       await utils.order.listToday.invalidate();
     },
   });
-  const { data: drivers } = api.driver.list.useQuery({ q: driverSearch || undefined, onlyActive: true, page: 1, pageSize: 50 });
-  type DriverRow = NonNullable<typeof drivers>["items"][number];
+  const driverResult = api.driver.list.useQuery({
+    q: driverSearch || undefined,
+    onlyActive: true,
+    page: 1,
+    pageSize: 50,
+  }) as { data: DriverListResponse | undefined };
+  const driverOptions: DriverListRow[] = driverResult.data?.items ?? [];
 
   const onDigit = (d: string) => {
     if (!open) return;
@@ -171,7 +177,7 @@ export default function AdminManualOrder() {
               />
               <select value={driverId} onChange={(e) => setDriverId(e.target.value)} className="w-48 rounded border px-2 py-1 text-sm">
                 <option value="">Unassigned</option>
-                {drivers?.items?.map((d: DriverRow) => (
+                {driverOptions.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name ?? d.phone ?? d.id}
                   </option>

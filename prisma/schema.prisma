@@ -531,6 +531,10 @@ model Driver {
   rating    Float?
   notes     String?
   createdAt DateTime @default(now())
+  lastLocationLat      Float?
+  lastLocationLng      Float?
+  lastLocationAccuracy Float?
+  lastLocationAt       DateTime?
 
   User       User[]
   deliveries Delivery[]

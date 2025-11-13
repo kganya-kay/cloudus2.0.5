@@ -1,7 +1,8 @@
 // src/server/api/routers/driver.ts
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { createTRPCRouter } from "~/server/api/trpc";
+import { DeliveryStatus, Role } from "@prisma/client";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { caretakerProcedure } from "../rbac";
 import { TRPCError } from "@trpc/server";
 
@@ -23,7 +24,7 @@ export const driverRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...rest } = input;
-      return (ctx.db as any).driver.update({ where: { id }, data: rest });
+      return ctx.db.driver.update({ where: { id }, data: rest });
     }),
 
   create: caretakerProcedure
@@ -41,7 +42,7 @@ export const driverRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return (ctx.db as any).driver.create({
+      return ctx.db.driver.create({
         data: {
           name: input.name,
           phone: input.phone,
@@ -59,7 +60,7 @@ export const driverRouter = createTRPCRouter({
   getById: caretakerProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
-      return (ctx.db as any).driver.findUniqueOrThrow({
+      return ctx.db.driver.findUniqueOrThrow({
         where: { id: input.id },
         select: {
           id: true,
@@ -73,6 +74,10 @@ export const driverRouter = createTRPCRouter({
           rating: true,
           notes: true,
           createdAt: true,
+          lastLocationLat: true,
+          lastLocationLng: true,
+          lastLocationAccuracy: true,
+          lastLocationAt: true,
         },
       });
     }),
@@ -113,13 +118,13 @@ export const driverRouter = createTRPCRouter({
       const take = pageSize;
 
       const [items, total] = await Promise.all([
-        (ctx.db as any).driver.findMany({
+        ctx.db.driver.findMany({
           where,
           orderBy: [{ isActive: "desc" }, { name: "asc" }],
           skip,
           take,
         }),
-        (ctx.db as any).driver.count({ where }),
+        ctx.db.driver.count({ where }),
       ]);
 
       return { items, total, page, pageSize };
@@ -128,7 +133,7 @@ export const driverRouter = createTRPCRouter({
   toggleActive: caretakerProcedure
     .input(z.object({ id: z.string(), isActive: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      return (ctx.db as any).driver.update({ where: { id: input.id }, data: { isActive: input.isActive } });
+      return ctx.db.driver.update({ where: { id: input.id }, data: { isActive: input.isActive } });
     }),
 
   delete: caretakerProcedure
@@ -137,8 +142,8 @@ export const driverRouter = createTRPCRouter({
       const driverId = input.id;
 
       const [users, deliveries] = await Promise.all([
-        (ctx.db as any).user.count({ where: { driverId } }),
-        (ctx.db as any).delivery.count({ where: { driverId } }),
+        ctx.db.user.count({ where: { driverId } }),
+        ctx.db.delivery.count({ where: { driverId } }),
       ]);
 
       const blockers: string[] = [];
@@ -153,7 +158,7 @@ export const driverRouter = createTRPCRouter({
       }
 
       try {
-        await (ctx.db as any).driver.delete({ where: { id: driverId } });
+        await ctx.db.driver.delete({ where: { id: driverId } });
         return { ok: true as const };
       } catch (err: unknown) {
         if ((err as any)?.code === "P2025") {
@@ -161,5 +166,222 @@ export const driverRouter = createTRPCRouter({
         }
         throw err;
       }
+    }),
+
+  dashboard: protectedProcedure
+    .input(z.object({ driverId: z.string().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const session = ctx.session;
+      if (!session?.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      const sessionRole = session.user.role as Role | null;
+      const requestedDriverId = input?.driverId?.trim();
+      let driverId: string | null = requestedDriverId ?? null;
+
+      if (driverId) {
+        const canImpersonate =
+          sessionRole === Role.ADMIN || sessionRole === Role.CARETAKER;
+        if (!canImpersonate) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+      } else {
+        const userRecord = await ctx.db.user.findUnique({
+          where: { id: session.user.id },
+          select: { driverId: true, role: true },
+        });
+        if (!userRecord?.driverId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No driver profile found for this account.",
+          });
+        }
+        if (
+          userRecord.role !== Role.DRIVER &&
+          sessionRole !== Role.ADMIN &&
+          sessionRole !== Role.CARETAKER
+        ) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        driverId = userRecord.driverId;
+      }
+
+      if (!driverId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Driver required" });
+      }
+
+      const driver = await ctx.db.driver.findUnique({
+        where: { id: driverId },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
+          suburb: true,
+          city: true,
+          vehicle: true,
+          isActive: true,
+          rating: true,
+          notes: true,
+          createdAt: true,
+          lastLocationLat: true,
+          lastLocationLng: true,
+          lastLocationAccuracy: true,
+          lastLocationAt: true,
+        },
+      });
+
+      if (!driver) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Driver not found" });
+      }
+
+      const MAX_ITEMS = 100;
+      const deliveries = await ctx.db.delivery.findMany({
+        where: { driverId },
+        orderBy: { createdAt: "desc" },
+        take: MAX_ITEMS,
+        select: {
+          id: true,
+          status: true,
+          pickupWindowStart: true,
+          pickupWindowEnd: true,
+          dropoffWindowStart: true,
+          dropoffWindowEnd: true,
+          pickupAt: true,
+          deliveredAt: true,
+          notes: true,
+          trackingCode: true,
+          proofPhotoUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          order: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              customerName: true,
+              customerPhone: true,
+              suburb: true,
+              city: true,
+              deliveryCents: true,
+              price: true,
+              currency: true,
+              status: true,
+              createdAt: true,
+            },
+          },
+        },
+      });
+
+      const activeStatuses: DeliveryStatus[] = [
+        DeliveryStatus.PENDING,
+        DeliveryStatus.SCHEDULED,
+        DeliveryStatus.PICKUP_IN_PROGRESS,
+        DeliveryStatus.OUT_FOR_DELIVERY,
+      ];
+
+      const activeDeliveries = deliveries.filter((d) =>
+        activeStatuses.includes(d.status),
+      );
+      const completedDeliveries = deliveries.filter(
+        (d) => d.status === DeliveryStatus.DELIVERED,
+      );
+      const canceledDeliveries = deliveries.filter((d) =>
+        [DeliveryStatus.CANCELED, DeliveryStatus.FAILED].includes(d.status),
+      );
+
+      const payoutRows = deliveries
+        .map((d) => {
+          const amountCents = d.order?.deliveryCents ?? 0;
+          return {
+            id: d.id,
+            deliveryStatus: d.status,
+            deliveredAt: d.deliveredAt,
+            createdAt: d.createdAt,
+            amountCents,
+            order: d.order,
+          };
+        })
+        .filter((row) => row.amountCents > 0);
+
+      const lifetimePayoutCents = payoutRows
+        .filter((row) => row.deliveryStatus === DeliveryStatus.DELIVERED)
+        .reduce((sum, row) => sum + row.amountCents, 0);
+
+      const pendingPayoutCents = payoutRows
+        .filter(
+          (row) =>
+            row.deliveryStatus !== DeliveryStatus.DELIVERED &&
+            row.deliveryStatus !== DeliveryStatus.CANCELED &&
+            row.deliveryStatus !== DeliveryStatus.FAILED,
+        )
+        .reduce((sum, row) => sum + row.amountCents, 0);
+
+      const payoutHistory = payoutRows
+        .sort((a, b) => {
+          const aTime = (a.deliveredAt ?? a.createdAt).getTime();
+          const bTime = (b.deliveredAt ?? b.createdAt).getTime();
+          return bTime - aTime;
+        })
+        .slice(0, 20);
+
+      return {
+        driver,
+        stats: {
+          assigned: deliveries.length,
+          active: activeDeliveries.length,
+          completed: completedDeliveries.length,
+          canceled: canceledDeliveries.length,
+          lifetimePayoutCents,
+          pendingPayoutCents,
+        },
+        upcomingDeliveries: activeDeliveries.slice(0, 10),
+        recentDeliveries: deliveries.slice(0, 15),
+        payoutHistory,
+      };
+    }),
+
+  shareLocation: protectedProcedure
+    .input(
+      z.object({
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        accuracy: z.number().min(0).max(10000).nullable().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const session = ctx.session;
+      if (!session?.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      const userRecord = await ctx.db.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true, driverId: true },
+      });
+
+      if (!userRecord || userRecord.role !== Role.DRIVER || !userRecord.driverId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const driver = await ctx.db.driver.update({
+        where: { id: userRecord.driverId },
+        data: {
+          lastLocationLat: input.lat,
+          lastLocationLng: input.lng,
+          lastLocationAccuracy: input.accuracy ?? null,
+          lastLocationAt: new Date(),
+        },
+        select: {
+          id: true,
+          lastLocationLat: true,
+          lastLocationLng: true,
+          lastLocationAccuracy: true,
+          lastLocationAt: true,
+        },
+      });
+
+      return { driver };
     }),
 });

@@ -65,6 +65,18 @@ export default function Client() {
             <label className="text-xs text-gray-600">Vehicle</label>
             <input value={vehicle} onChange={(e) => setVehicle(e.target.value)} className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
           </div>
+          <div>
+            <label className="text-xs text-gray-600">Rating (0-5)</label>
+            <input
+              type="number"
+              min="0"
+              max="5"
+              step="0.1"
+              value={rating}
+              onChange={(e) => setRating(e.target.value)}
+              className="mt-1 w-full rounded-full border px-4 py-2 text-sm"
+            />
+          </div>
           <div className="md:col-span-2">
             <label className="text-xs text-gray-600">Notes</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
@@ -80,4 +92,3 @@ export default function Client() {
     </div>
   );
 }
-

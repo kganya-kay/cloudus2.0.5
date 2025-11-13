@@ -10,7 +10,9 @@ export default function ChangePassword({ userId }: { userId: string }) {
   const [err, setErr] = useState<string | null>(null);
 
   const onSave = async () => {
-    setBusy(true); setMsg(null); setErr(null);
+    setBusy(true);
+    setMsg(null);
+    setErr(null);
     try {
       const res = await fetch(`/api/admin/users/${userId}/password`, {
         method: "POST",
@@ -18,8 +20,8 @@ export default function ChangePassword({ userId }: { userId: string }) {
         body: JSON.stringify({ password }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        setErr(j?.error ?? "Failed to update password");
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        setErr(payload?.error ?? "Failed to update password");
       } else {
         setMsg("Password updated and sessions invalidated.");
         setPassword("");
@@ -56,4 +58,3 @@ export default function ChangePassword({ userId }: { userId: string }) {
     </div>
   );
 }
-
