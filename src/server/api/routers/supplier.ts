@@ -90,6 +90,7 @@ export const supplierRouter = createTRPCRouter({
             id: true,
             name: true,
             phone: true,
+            addressLine1: true,
             email: true,
             city: true,
             suburb: true,
@@ -156,6 +157,10 @@ export const supplierRouter = createTRPCRouter({
       const supplierBase = supplierRecord as unknown as Record<string, unknown>;
       const supplier = {
         ...supplierBase,
+        addressLine1:
+          typeof supplierBase.addressLine1 === "string"
+            ? (supplierBase.addressLine1 as string)
+            : null,
         lastLocationLat: (supplierRecord as any)?.lastLocationLat ?? null,
         lastLocationLng: (supplierRecord as any)?.lastLocationLng ?? null,
         lastLocationAccuracy: (supplierRecord as any)?.lastLocationAccuracy ?? null,
@@ -164,6 +169,7 @@ export const supplierRouter = createTRPCRouter({
         id: string;
         name: string | null;
         phone: string | null;
+        addressLine1: string | null;
         email: string | null;
         city: string | null;
         suburb: string | null;
@@ -268,6 +274,65 @@ export const supplierRouter = createTRPCRouter({
       },
     });
   }),
+
+  portalUpdateLocation: protectedProcedure
+    .input(
+      z.object({
+        addressLine1: z.string().min(3),
+        suburb: z.string().min(1),
+        city: z.string().min(1),
+        location: locationInput.optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { supplierId: true, role: true },
+      });
+
+      if (!user?.supplierId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No supplier profile linked to this account.",
+        });
+      }
+      if (
+        user.role !== Role.SUPPLIER &&
+        user.role !== Role.ADMIN &&
+        user.role !== Role.CARETAKER
+      ) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const supplier = await ctx.db.supplier.update({
+        where: { id: user.supplierId },
+        data: {
+          addressLine1: input.addressLine1,
+          suburb: input.suburb,
+          city: input.city,
+          ...(input.location
+            ? {
+                lastLocationLat: input.location.lat,
+                lastLocationLng: input.location.lng,
+                lastLocationAccuracy: input.location.accuracy ?? null,
+                lastLocationAt: new Date(),
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+          addressLine1: true,
+          suburb: true,
+          city: true,
+          lastLocationLat: true,
+          lastLocationLng: true,
+          lastLocationAccuracy: true,
+          lastLocationAt: true,
+        },
+      });
+
+      return { supplier };
+    }),
 
   shareLocation: protectedProcedure
     .input(locationInput)

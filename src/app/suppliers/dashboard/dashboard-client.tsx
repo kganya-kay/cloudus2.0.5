@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { RouterInputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 
@@ -36,6 +36,12 @@ export function SupplierDashboardClient({
   const [geoError, setGeoError] = useState<string | null>(null);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  const [addressLine1, setAddressLine1] = useState("");
+  const [suburbInput, setSuburbInput] = useState("");
+  const [cityInput, setCityInput] = useState("");
+  const [latInput, setLatInput] = useState("");
+  const [lngInput, setLngInput] = useState("");
+  const [accuracyInput, setAccuracyInput] = useState("");
 
   const dashboardInput = canImpersonate && supplierId
     ? { supplierId }
@@ -61,14 +67,14 @@ export function SupplierDashboardClient({
     },
   });
 
-  const shareLocationMutation = api.supplier.shareLocation.useMutation({
+  const updateLocation = api.supplier.portalUpdateLocation.useMutation({
     onSuccess: async () => {
-      setShareMessage("Location shared.");
+      setShareMessage("Location saved.");
       setGeoError(null);
       await dashboardQuery.refetch();
     },
     onError: (err) => {
-      setGeoError(err.message ?? "Unable to share location.");
+      setGeoError(err.message ?? "Unable to save location.");
     },
   });
 
@@ -79,12 +85,41 @@ export function SupplierDashboardClient({
 
   const isLoading = dashboardQuery.isLoading || dashboardQuery.isRefetching;
   const data = dashboardQuery.data;
-  const canShareLocation = viewerRole === "SUPPLIER";
-  const lastShared =
-    data?.supplier.lastLocationAt && formatDateTime(data.supplier.lastLocationAt);
+  const canEditLocation = viewerRole === "SUPPLIER" && !canImpersonate;
 
-  const requestShareLocation = () => {
-    if (!canShareLocation) return;
+  useEffect(() => {
+    if (!data?.supplier) return;
+    setAddressLine1(data.supplier.addressLine1 ?? "");
+    setSuburbInput(data.supplier.suburb ?? "");
+    setCityInput(data.supplier.city ?? "");
+    setLatInput(
+      typeof data.supplier.lastLocationLat === "number"
+        ? data.supplier.lastLocationLat.toString()
+        : "",
+    );
+    setLngInput(
+      typeof data.supplier.lastLocationLng === "number"
+        ? data.supplier.lastLocationLng.toString()
+        : "",
+    );
+    setAccuracyInput(
+      typeof data.supplier.lastLocationAccuracy === "number"
+        ? data.supplier.lastLocationAccuracy.toString()
+        : "",
+    );
+    setShareMessage(null);
+    setGeoError(null);
+  }, [
+    data?.supplier?.id,
+    data?.supplier?.addressLine1,
+    data?.supplier?.suburb,
+    data?.supplier?.city,
+    data?.supplier?.lastLocationLat,
+    data?.supplier?.lastLocationLng,
+    data?.supplier?.lastLocationAccuracy,
+  ]);
+
+  const handleUseGps = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setGeoError("Your device does not support sharing location.");
       return;
@@ -93,20 +128,15 @@ export function SupplierDashboardClient({
     setGeoError(null);
     setShareMessage(null);
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          await shareLocationMutation.mutateAsync({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy ?? null,
-          });
-        } catch (err) {
-          setGeoError(
-            err instanceof Error ? err.message : "Unable to share your location.",
-          );
-        } finally {
-          setLocating(false);
-        }
+      (position) => {
+        setLatInput(position.coords.latitude.toString());
+        setLngInput(position.coords.longitude.toString());
+        setAccuracyInput(
+          typeof position.coords.accuracy === "number"
+            ? position.coords.accuracy.toString()
+            : "",
+        );
+        setLocating(false);
       },
       (error) => {
         setGeoError(
@@ -118,6 +148,40 @@ export function SupplierDashboardClient({
       },
       { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 },
     );
+  };
+
+  const handleSaveLocation = (event: React.FormEvent) => {
+    event.preventDefault();
+    const latNum =
+      latInput.trim().length > 0 ? Number(latInput.trim()) : undefined;
+    const lngNum =
+      lngInput.trim().length > 0 ? Number(lngInput.trim()) : undefined;
+    const accuracyNum =
+      accuracyInput.trim().length > 0 ? Number(accuracyInput.trim()) : undefined;
+
+    if ((latNum != null && !Number.isFinite(latNum)) || (lngNum != null && !Number.isFinite(lngNum))) {
+      setGeoError("Latitude and longitude must be numeric.");
+      return;
+    }
+
+    const locationPayload =
+      latNum != null && lngNum != null
+        ? {
+            lat: latNum,
+            lng: lngNum,
+            accuracy:
+              accuracyNum != null && Number.isFinite(accuracyNum)
+                ? accuracyNum
+                : undefined,
+          }
+        : undefined;
+
+    updateLocation.mutate({
+      addressLine1: addressLine1.trim(),
+      suburb: suburbInput.trim(),
+      city: cityInput.trim(),
+      location: locationPayload,
+    });
   };
 
   return (
@@ -178,34 +242,6 @@ export function SupplierDashboardClient({
                 </p>
               </div>
             </div>
-            {canShareLocation && (
-              <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-white/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Share pickup location</p>
-                  <p className="text-xs text-gray-600">
-                    {lastShared
-                      ? `Last shared ${lastShared}`
-                      : "Share your current pickup point for drivers."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={requestShareLocation}
-                  disabled={locating || shareLocationMutation.isPending}
-                  className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
-                >
-                  {locating || shareLocationMutation.isPending
-                    ? "Sharing..."
-                    : "Share location"}
-                </button>
-              </div>
-            )}
-            {canShareLocation && geoError && (
-              <p className="mt-2 text-xs text-red-600">{geoError}</p>
-            )}
-            {canShareLocation && shareMessage && (
-              <p className="mt-2 text-xs text-emerald-700">{shareMessage}</p>
-            )}
             <div className="mt-6 grid gap-4 md:grid-cols-4">
               <StatCard
                 label="Active orders"
@@ -229,6 +265,127 @@ export function SupplierDashboardClient({
               />
             </div>
           </header>
+
+          <section className="rounded-2xl border bg-white shadow-sm">
+            <header className="flex items-center justify-between border-b px-4 py-3">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Pickup location</h2>
+                <p className="text-sm text-gray-500">
+                  Set your preferred pickup address and GPS coordinates.
+                </p>
+              </div>
+            </header>
+            {canEditLocation ? (
+              <form className="grid gap-3 p-4 sm:grid-cols-2" onSubmit={handleSaveLocation}>
+                <div className="sm:col-span-2">
+                  <label className="text-xs uppercase text-gray-500">Street address</label>
+                  <input
+                    value={addressLine1}
+                    onChange={(e) => setAddressLine1(e.target.value)}
+                    placeholder="123 Main Road"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase text-gray-500">Suburb</label>
+                  <input
+                    value={suburbInput}
+                    onChange={(e) => setSuburbInput(e.target.value)}
+                    placeholder="Suburb"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase text-gray-500">City</label>
+                  <input
+                    value={cityInput}
+                    onChange={(e) => setCityInput(e.target.value)}
+                    placeholder="City"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase text-gray-500">Latitude</label>
+                  <input
+                    value={latInput}
+                    onChange={(e) => setLatInput(e.target.value)}
+                    placeholder="-26.2041"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase text-gray-500">Longitude</label>
+                  <input
+                    value={lngInput}
+                    onChange={(e) => setLngInput(e.target.value)}
+                    placeholder="28.0473"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase text-gray-500">Accuracy (m)</label>
+                  <input
+                    value={accuracyInput}
+                    onChange={(e) => setAccuracyInput(e.target.value)}
+                    placeholder="5"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2 sm:col-span-2">
+                  <button
+                    type="button"
+                    onClick={handleUseGps}
+                    disabled={locating}
+                    className="rounded-full border border-emerald-200 px-4 py-2 text-xs font-semibold text-emerald-700 disabled:opacity-60"
+                  >
+                    {locating ? "Capturing..." : "Use my current GPS"}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updateLocation.isPending}
+                    className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                  >
+                    {updateLocation.isPending ? "Saving..." : "Save location"}
+                  </button>
+                </div>
+                {(geoError || updateLocation.error) && (
+                  <p className="sm:col-span-2 text-xs text-red-600">
+                    {geoError ?? updateLocation.error?.message}
+                  </p>
+                )}
+                {shareMessage && (
+                  <p className="sm:col-span-2 text-xs text-emerald-700">{shareMessage}</p>
+                )}
+              </form>
+            ) : (
+              <div className="grid gap-2 p-4 text-sm">
+                <p>
+                  <span className="text-gray-500">Address:</span>{" "}
+                  {data.supplier.addressLine1 ?? "—"}
+                </p>
+                <p>
+                  <span className="text-gray-500">Area:</span>{" "}
+                  {[data.supplier.suburb, data.supplier.city].filter(Boolean).join(", ") || "—"}
+                </p>
+                <p>
+                  <span className="text-gray-500">Coordinates:</span>{" "}
+                  {typeof data.supplier.lastLocationLat === "number" &&
+                  typeof data.supplier.lastLocationLng === "number"
+                    ? `${data.supplier.lastLocationLat.toFixed(5)}, ${data.supplier.lastLocationLng.toFixed(5)}`
+                    : "Not set"}
+                </p>
+                <p>
+                  <span className="text-gray-500">Last updated:</span>{" "}
+                  {data.supplier.lastLocationAt
+                    ? formatDateTime(data.supplier.lastLocationAt) ?? "—"
+                    : "—"}
+                </p>
+              </div>
+            )}
+          </section>
 
           <section className="rounded-2xl border bg-white shadow-sm">
             <header className="flex items-center justify-between border-b px-4 py-3">

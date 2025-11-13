@@ -511,6 +511,7 @@ model Supplier {
   id         String          @id @default(cuid())
   name       String
   phone      String
+  addressLine1 String?
   email      String?
   suburb     String?
   city       String?
