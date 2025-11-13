@@ -21,11 +21,14 @@ export default function AdminManualOrder() {
   const [deliveryStr, setDeliveryStr] = useState(""); // rands
   const [method, setMethod] = useState<string>("CASH");
   const [ref, setRef] = useState("");
+  const [driverSearch, setDriverSearch] = useState("");
+  const [driverId, setDriverId] = useState("");
 
   const utils = api.useUtils();
 
   const priceCents = useMemo(() => Math.max(0, Math.round(Number(priceStr || "0") * 100)), [priceStr]);
   const deliveryCents = useMemo(() => Math.max(0, Math.round(Number(deliveryStr || "0") * 100)), [deliveryStr]);
+  const requiresDriver = deliveryCents > 0;
 
   const createManual = api.order.createManual.useMutation({
     onSuccess: async () => {
@@ -34,9 +37,12 @@ export default function AdminManualOrder() {
       setCustomerName(""); setCustomerPhone(""); setCustomerEmail("");
       setAddressLine1(""); setSuburb(""); setCity(""); setNote("");
       setPriceStr(""); setDeliveryStr(""); setMethod("CASH"); setRef("");
+      setDriverId(""); setDriverSearch("");
       await utils.order.listToday.invalidate();
     },
   });
+  const { data: drivers } = api.driver.list.useQuery({ q: driverSearch || undefined, onlyActive: true, page: 1, pageSize: 50 });
+  type DriverRow = NonNullable<typeof drivers>["items"][number];
 
   const onDigit = (d: string) => {
     if (!open) return;
@@ -58,6 +64,10 @@ export default function AdminManualOrder() {
 
   const submit = () => {
     if (!customerName || !customerPhone || !priceCents) return;
+    if (requiresDriver && !driverId) {
+      alert("Assign a driver when a delivery fee is charged.");
+      return;
+    }
     createManual.mutate({
       customerName,
       customerPhone,
@@ -70,6 +80,7 @@ export default function AdminManualOrder() {
       deliveryCents,
       paymentMethod: method,
       paymentRef: ref || undefined,
+      driverId: driverId || undefined,
     });
   };
 
@@ -128,6 +139,9 @@ export default function AdminManualOrder() {
           <div>
             <label className="mb-1 block text-xs text-gray-600">Delivery (R)</label>
             <input value={deliveryStr} onChange={(e) => setDeliveryStr(e.target.value.replace(/[^0-9.]/g, ""))} onFocus={() => setActive("delivery")} className="w-full rounded border px-2 py-1 text-sm" />
+            {requiresDriver && !driverId && (
+              <p className="mt-1 text-xs text-red-600">Driver required when delivery is charged.</p>
+            )}
           </div>
           <div className="rounded border p-2">
             <div className="mb-2 flex gap-2 text-xs">
@@ -141,6 +155,28 @@ export default function AdminManualOrder() {
               ))}
               <button onClick={onBackspace} className="col-span-2 rounded bg-gray-100 py-2 text-sm hover:bg-gray-200">Backspace</button>
               <button onClick={onClear} className="rounded bg-gray-100 py-2 text-sm hover:bg-gray-200">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <div className="md:col-span-1">
+            <label className="mb-1 block text-xs text-gray-600">Driver</label>
+            <div className="flex gap-2">
+              <input
+                placeholder="Search drivers"
+                value={driverSearch}
+                onChange={(e) => setDriverSearch(e.target.value)}
+                className="w-full rounded border px-2 py-1 text-sm"
+              />
+              <select value={driverId} onChange={(e) => setDriverId(e.target.value)} className="w-48 rounded border px-2 py-1 text-sm">
+                <option value="">Unassigned</option>
+                {drivers?.items?.map((d: DriverRow) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name ?? d.phone ?? d.id}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -169,4 +205,3 @@ export default function AdminManualOrder() {
     </section>
   );
 }
-

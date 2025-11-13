@@ -136,12 +136,14 @@ export const driverRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const driverId = input.id;
 
-      const [users] = await Promise.all([
+      const [users, deliveries] = await Promise.all([
         (ctx.db as any).user.count({ where: { driverId } }),
+        (ctx.db as any).delivery.count({ where: { driverId } }),
       ]);
 
       const blockers: string[] = [];
       if (users > 0) blockers.push("linked users");
+      if (deliveries > 0) blockers.push("linked deliveries");
 
       if (blockers.length > 0) {
         throw new TRPCError({

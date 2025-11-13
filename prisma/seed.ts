@@ -70,8 +70,22 @@ async function main() {
     },
   });
 
-  // 6) an example order
-  await prisma.order.create({
+  // 6) a default driver
+  const driver = await prisma.driver.upsert({
+    where: { phone: "27640000099" },
+    update: {},
+    create: {
+      name: "Cloudus Driver",
+      phone: "27640000099",
+      email: "driver@cloudus.digital",
+      city: "Johannesburg",
+      suburb: "Rosebank",
+      vehicle: "Panel Van",
+    },
+  });
+
+  // 7) an example order linked to a delivery
+  const order = await prisma.order.create({
     data: {
       name: "Laundry Order",
       createdById: user.id,
@@ -91,6 +105,20 @@ async function main() {
       status: "SOURCING_SUPPLIER",
       supplierId: supplier.id,
     },
+    select: { id: true },
+  });
+
+  await prisma.delivery.create({
+    data: {
+      orderId: order.id,
+      driverId: driver.id,
+      status: "SCHEDULED",
+      pickupWindowStart: new Date(),
+      pickupWindowEnd: new Date(Date.now() + 60 * 60 * 1000),
+      dropoffWindowStart: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      dropoffWindowEnd: new Date(Date.now() + 4 * 60 * 60 * 1000),
+      notes: "Seed delivery for demo data",
+    },
   });
 }
 
@@ -103,4 +131,3 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
-

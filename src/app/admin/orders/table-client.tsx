@@ -105,6 +105,7 @@ export default function TableClient() {
               <th className="px-3 py-2">Phone</th>
               <th className="px-3 py-2">Area</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Driver</th>
               <th className="px-3 py-2">Total</th>
               <th className="px-3 py-2">Created</th>
             </tr>
@@ -121,6 +122,14 @@ export default function TableClient() {
                 <td className="px-3 py-2">{o.customerPhone ?? "—"}</td>
                 <td className="px-3 py-2">{[o.suburb, o.city].filter(Boolean).join(", ")}</td>
                 <td className="px-3 py-2"><StatusBadge status={o.status} /></td>
+                <td className="px-3 py-2">
+                  {o.delivery?.driver?.name ?? "—"}
+                  {o.delivery?.status && (
+                    <span className="ml-2 rounded-full border px-2 py-0.5 text-[11px] text-gray-600">
+                      {o.delivery.status.replaceAll("_", " ")}
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-2">R {Math.round(((o.price ?? 0) + (o.deliveryCents ?? 0)) / 100)}</td>
                 <td className="px-3 py-2 text-sm text-gray-600">
                   {o.createdAt ? new Date((o.createdAt as unknown as string)).toLocaleString() : "—"}
@@ -129,7 +138,7 @@ export default function TableClient() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-sm text-gray-500">
+                <td colSpan={8} className="px-3 py-6 text-center text-sm text-gray-500">
                   No orders found.
                 </td>
               </tr>

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { Prisma, Role } from "@prisma/client";
+import { Prisma, Role, DeliveryStatus } from "@prisma/client";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -252,6 +252,11 @@ export const shopItemRouter = createTRPCRouter({
           ...(input.caretakerId && {
             caretaker: { connect: { id: input.caretakerId } },
           }),
+          delivery: {
+            create: {
+              status: DeliveryStatus.PENDING,
+            },
+          },
         },
       });
     }),

@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { Prisma, FulfilmentStatus, Role, PaymentStatus } from "@prisma/client";
+import {
+  Prisma,
+  FulfilmentStatus,
+  Role,
+  PaymentStatus,
+  DeliveryStatus,
+} from "@prisma/client";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -46,6 +52,15 @@ const updateOrderInput = z.object({
   estimatedKg: z.number().positive().nullable().optional(),
   supplierId: z.string().nullable().optional(),
   caretakerId: z.string().nullable().optional(),
+  driverId: z.string().nullable().optional(),
+  deliveryStatus: z.nativeEnum(DeliveryStatus).optional(),
+  pickupWindowStart: z.string().nullable().optional(),
+  pickupWindowEnd: z.string().nullable().optional(),
+  dropoffWindowStart: z.string().nullable().optional(),
+  dropoffWindowEnd: z.string().nullable().optional(),
+  deliveryNotes: z.string().nullable().optional(),
+  deliveryTrackingCode: z.string().nullable().optional(),
+  proofPhotoUrl: z.string().url().nullable().optional(),
 });
 
 const changeStatusInput = z.object({
@@ -128,6 +143,21 @@ function canTransition(from: FulfilmentStatus, to: FulfilmentStatus) {
   return ALLOWED_FROM[from]?.includes(to) ?? false;
 }
 
+function deriveDeliveryStatus(
+  status: FulfilmentStatus,
+): DeliveryStatus | null {
+  switch (status) {
+    case FulfilmentStatus.OUT_FOR_DELIVERY:
+      return DeliveryStatus.OUT_FOR_DELIVERY;
+    case FulfilmentStatus.DELIVERED:
+      return DeliveryStatus.DELIVERED;
+    case FulfilmentStatus.CANCELED:
+      return DeliveryStatus.CANCELED;
+    default:
+      return null;
+  }
+}
+
 export const orderRouter = createTRPCRouter({
   // Caretaker: list all orders with filters + pagination
   list: caretakerProcedure
@@ -179,6 +209,14 @@ export const orderRouter = createTRPCRouter({
             suburb: true,
             city: true,
             createdAt: true,
+            delivery: {
+              select: {
+                id: true,
+                status: true,
+                driverId: true,
+                driver: { select: { id: true, name: true } },
+              },
+            },
           },
           skip,
           take,
@@ -203,9 +241,38 @@ export const orderRouter = createTRPCRouter({
         deliveryCents: z.number().int().nonnegative().default(0),
         paymentMethod: z.string().min(1), // e.g. CASH | CARD | EFT | OTHER
         paymentRef: z.string().optional(),
+        driverId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const driverRecord = input.driverId
+        ? await ctx.db.driver.findUnique({
+            where: { id: input.driverId },
+            select: { id: true, isActive: true },
+          })
+        : null;
+
+      if (input.driverId && !driverRecord) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Driver not found",
+        });
+      }
+
+      if (driverRecord && !driverRecord.isActive) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Driver is inactive",
+        });
+      }
+
+      if ((input.deliveryCents ?? 0) > 0 && !driverRecord) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Assign a driver when a delivery fee is charged.",
+        });
+      }
+
       const order = await ctx.db.order.create({
         data: {
           name: "Manual Order",
@@ -222,6 +289,17 @@ export const orderRouter = createTRPCRouter({
           suburb: input.suburb ?? null,
           city: input.city ?? null,
           caretaker: { connect: { id: ctx.session.user.id } },
+          delivery: {
+            create: {
+              status: driverRecord
+                ? DeliveryStatus.SCHEDULED
+                : DeliveryStatus.PENDING,
+              notes: input.note ?? null,
+              ...(driverRecord && {
+                driver: { connect: { id: driverRecord.id } },
+              }),
+            },
+          },
           status: FulfilmentStatus.NEW,
         },
         select: { id: true },
@@ -338,6 +416,34 @@ export const orderRouter = createTRPCRouter({
         addressLine1: true,
         estimatedKg: true,
         caretakerId: true,
+        delivery: {
+          select: {
+            id: true,
+            status: true,
+            driverId: true,
+            notes: true,
+            trackingCode: true,
+            proofPhotoUrl: true,
+            pickupWindowStart: true,
+            pickupWindowEnd: true,
+            dropoffWindowStart: true,
+            dropoffWindowEnd: true,
+            pickupAt: true,
+            deliveredAt: true,
+            driver: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+                email: true,
+                suburb: true,
+                city: true,
+                vehicle: true,
+                isActive: true,
+              },
+            },
+          },
+        },
       },
     });
   }),
@@ -364,6 +470,28 @@ export const orderRouter = createTRPCRouter({
         data: { status: input.status },
       });
 
+      const derived = deriveDeliveryStatus(input.status);
+      if (derived) {
+        const timestampData =
+          derived === DeliveryStatus.OUT_FOR_DELIVERY
+            ? { pickupAt: new Date() }
+            : derived === DeliveryStatus.DELIVERED
+              ? { deliveredAt: new Date() }
+              : {};
+        await ctx.db.delivery.upsert({
+          where: { orderId: input.orderId },
+          create: {
+            order: { connect: { id: input.orderId } },
+            status: derived,
+            ...timestampData,
+          },
+          update: {
+            status: derived,
+            ...timestampData,
+          },
+        });
+      }
+
       await ctx.db.auditLog.create({
         data: {
           orderId: input.orderId,
@@ -380,7 +508,34 @@ export const orderRouter = createTRPCRouter({
   update: caretakerProcedure
     .input(updateOrderInput)
     .mutation(async ({ ctx, input }) => {
-      const { orderId, supplierId, caretakerId, ...rest } = input;
+      const {
+        orderId,
+        supplierId,
+        caretakerId,
+        driverId,
+        deliveryStatus,
+        pickupWindowStart,
+        pickupWindowEnd,
+        dropoffWindowStart,
+        dropoffWindowEnd,
+        deliveryNotes,
+        deliveryTrackingCode,
+        proofPhotoUrl,
+        ...rest
+      } = input;
+
+      const current = await ctx.db.order.findUnique({
+        where: { id: orderId },
+        select: {
+          deliveryCents: true,
+          delivery: { select: { driverId: true } },
+        },
+      });
+
+      if (!current) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+      }
+
       const data: Prisma.OrderUpdateInput = { ...rest };
       if (supplierId !== undefined) {
         data.supplier = supplierId
@@ -393,11 +548,119 @@ export const orderRouter = createTRPCRouter({
           : { disconnect: true };
       }
 
-      try {
-        return await ctx.db.order.update({ where: { id: orderId }, data });
-      } catch (err) {
-        throw err;
+      let nextDriverId =
+        driverId === undefined
+          ? current.delivery?.driverId ?? null
+          : driverId ?? null;
+
+      if (driverId !== undefined && driverId !== null) {
+        const driver = await ctx.db.driver.findUnique({
+          where: { id: driverId },
+          select: { id: true, isActive: true },
+        });
+
+        if (!driver) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Driver not found",
+          });
+        }
+
+        if (!driver.isActive) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Driver is inactive",
+          });
+        }
+
+        nextDriverId = driver.id;
       }
+
+      const nextDeliveryCents =
+        rest.deliveryCents ?? current.deliveryCents ?? 0;
+
+      if (nextDeliveryCents > 0 && !nextDriverId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Assign a driver when a delivery fee is charged.",
+        });
+      }
+
+      const needsDeliveryUpdate =
+        driverId !== undefined ||
+        deliveryStatus !== undefined ||
+        pickupWindowStart !== undefined ||
+        pickupWindowEnd !== undefined ||
+        dropoffWindowStart !== undefined ||
+        dropoffWindowEnd !== undefined ||
+        deliveryNotes !== undefined ||
+        deliveryTrackingCode !== undefined ||
+        proofPhotoUrl !== undefined;
+
+      const parseDate = (value?: string | null) =>
+        value && value.length > 0 ? new Date(value) : null;
+
+      return ctx.db.$transaction(async (tx) => {
+        const updatedOrder = await tx.order.update({
+          where: { id: orderId },
+          data,
+        });
+
+        if (needsDeliveryUpdate) {
+          const deliveryData: Prisma.DeliveryUpdateInput = {};
+
+          if (driverId !== undefined) {
+            deliveryData.driver = nextDriverId
+              ? { connect: { id: nextDriverId } }
+              : { disconnect: true };
+          }
+          if (deliveryStatus !== undefined) {
+            deliveryData.status = deliveryStatus;
+          }
+          if (pickupWindowStart !== undefined) {
+            deliveryData.pickupWindowStart = parseDate(pickupWindowStart);
+          }
+          if (pickupWindowEnd !== undefined) {
+            deliveryData.pickupWindowEnd = parseDate(pickupWindowEnd);
+          }
+          if (dropoffWindowStart !== undefined) {
+            deliveryData.dropoffWindowStart = parseDate(dropoffWindowStart);
+          }
+          if (dropoffWindowEnd !== undefined) {
+            deliveryData.dropoffWindowEnd = parseDate(dropoffWindowEnd);
+          }
+          if (deliveryNotes !== undefined) {
+            deliveryData.notes = deliveryNotes ?? null;
+          }
+          if (deliveryTrackingCode !== undefined) {
+            deliveryData.trackingCode = deliveryTrackingCode ?? null;
+          }
+          if (proofPhotoUrl !== undefined) {
+            deliveryData.proofPhotoUrl = proofPhotoUrl ?? null;
+          }
+
+          await tx.delivery.upsert({
+            where: { orderId },
+            create: {
+              order: { connect: { id: orderId } },
+              status: deliveryStatus ?? DeliveryStatus.PENDING,
+              pickupWindowStart: parseDate(pickupWindowStart) ?? undefined,
+              pickupWindowEnd: parseDate(pickupWindowEnd) ?? undefined,
+              dropoffWindowStart: parseDate(dropoffWindowStart) ?? undefined,
+              dropoffWindowEnd: parseDate(dropoffWindowEnd) ?? undefined,
+              notes: deliveryNotes ?? null,
+              trackingCode: deliveryTrackingCode ?? null,
+              proofPhotoUrl: proofPhotoUrl ?? null,
+              ...(nextDriverId
+                ? { driver: { connect: { id: nextDriverId } } }
+                : {}),
+            },
+            update: deliveryData,
+          });
+        }
+
+        return updatedOrder;
+      });
     }),
 
   // Supplier: update readiness (limited status set)
@@ -434,6 +697,28 @@ export const orderRouter = createTRPCRouter({
         where: { id: input.orderId },
         data: { status: input.status },
       });
+
+      const derived = deriveDeliveryStatus(input.status);
+      if (derived) {
+        const timestampData =
+          derived === DeliveryStatus.OUT_FOR_DELIVERY
+            ? { pickupAt: new Date() }
+            : derived === DeliveryStatus.DELIVERED
+              ? { deliveredAt: new Date() }
+              : {};
+        await ctx.db.delivery.upsert({
+          where: { orderId: input.orderId },
+          create: {
+            order: { connect: { id: input.orderId } },
+            status: derived,
+            ...timestampData,
+          },
+          update: {
+            status: derived,
+            ...timestampData,
+          },
+        });
+      }
 
       await ctx.db.auditLog.create({
         data: {
