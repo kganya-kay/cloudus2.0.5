@@ -5,11 +5,10 @@ import { db } from "~/server/db";
 import { SupplierDashboardClient } from "./dashboard-client";
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
 
-export default async function SupplierDashboardPage({
-  searchParams,
-}: {
-  searchParams?: { supplierId?: string };
+export default async function SupplierDashboardPage(props: {
+  searchParams: Promise<{ supplierId?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const session = await auth();
   if (!session?.user) {
     redirect("/auth/login?next=/suppliers/dashboard");
