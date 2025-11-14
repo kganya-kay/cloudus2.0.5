@@ -6,6 +6,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { notifyOrderCreated } from "../notification-service";
 
 /* ----------------------- Zod Schemas ----------------------- */
 
@@ -230,7 +231,7 @@ export const shopItemRouter = createTRPCRouter({
         ? input.priceCentsOverride
         : item.price;
 
-      return ctx.db.order.create({
+      const order = await ctx.db.order.create({
         data: {
           name: input.name ?? `Order: ${item.name}`,
           description: input.description ?? item.description ?? "Order created",
@@ -282,7 +283,12 @@ export const shopItemRouter = createTRPCRouter({
             },
           },
         },
+        select: { id: true },
       });
+
+      await notifyOrderCreated(ctx, order.id);
+
+      return order;
     }),
 
   /* LIST with search + cursor pagination */

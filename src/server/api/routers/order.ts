@@ -18,6 +18,13 @@ import {
   supplierProcedure,
   supplierOwnsOrder,
 } from "../rbac";
+import {
+  notifyDriverAssignment,
+  notifyOrderCreated,
+  notifyOrderStatusChanged,
+  notifyPaymentUpdate,
+  notifyPayoutUpdate,
+} from "../notification-service";
 
 // Utility to get today's date range
 const todayRange = () => {
@@ -328,6 +335,11 @@ export const orderRouter = createTRPCRouter({
         },
       });
 
+      await notifyOrderCreated(ctx, order.id);
+      if (driverRecord?.id) {
+        await notifyDriverAssignment(ctx, order.id, driverRecord.id);
+      }
+
       return { id: order.id };
     }),
   // Summary metrics for admin dashboard
@@ -501,6 +513,8 @@ export const orderRouter = createTRPCRouter({
         },
       });
 
+      await notifyOrderStatusChanged(ctx, input.orderId, input.status);
+
       return updated;
     }),
 
@@ -608,7 +622,7 @@ export const orderRouter = createTRPCRouter({
       const parseDate = (value?: string | null) =>
         value && value.length > 0 ? new Date(value) : null;
 
-      return ctx.db.$transaction(async (tx) => {
+      const updated = await ctx.db.$transaction(async (tx) => {
         const updatedOrder = await tx.order.update({
           where: { id: orderId },
           data,
@@ -669,6 +683,12 @@ export const orderRouter = createTRPCRouter({
 
         return updatedOrder;
       });
+
+      if (driverId !== undefined && nextDriverId) {
+        await notifyDriverAssignment(ctx, orderId, nextDriverId);
+      }
+
+      return updated;
     }),
 
   // Supplier: update readiness (limited status set)
@@ -736,6 +756,8 @@ export const orderRouter = createTRPCRouter({
           payload: { from: ord.status, to: input.status },
         },
       });
+
+      await notifyOrderStatusChanged(ctx, input.orderId, input.status);
 
       return updated;
     }),
@@ -858,6 +880,7 @@ export const orderRouter = createTRPCRouter({
           payload: { payoutId: payout.id, amountCents: input.amountCents },
         },
       });
+      await notifyPayoutUpdate(ctx, input.orderId, "PENDING", input.amountCents);
       return payout;
     }),
 
@@ -880,6 +903,7 @@ export const orderRouter = createTRPCRouter({
           payload: { payoutId: updated.id, status: input.status },
         },
       });
+      await notifyPayoutUpdate(ctx, updated.orderId, input.status, updated.amountCents);
       return updated;
     }),
 
@@ -910,6 +934,13 @@ export const orderRouter = createTRPCRouter({
           },
         },
       });
+      await notifyPaymentUpdate(
+        ctx,
+        payment.orderId,
+        payment.status ?? PaymentStatus.PENDING,
+        payment.amountCents,
+        payment.provider,
+      );
       return payment;
     }),
 
@@ -933,6 +964,13 @@ export const orderRouter = createTRPCRouter({
           payload: { paymentId: updated.id, status: input.status },
         },
       });
+      await notifyPaymentUpdate(
+        ctx,
+        updated.orderId,
+        updated.status,
+        updated.amountCents,
+        updated.provider,
+      );
       return updated;
     }),
 

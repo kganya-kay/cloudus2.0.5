@@ -494,6 +494,7 @@ model User {
   addresses UserAddress[]
   // back-rel for posts authored by this user
   posts     Post[]        @relation("PostCreatedBy")
+  notifications Notification[]
 }
 
 model VerificationToken {
@@ -531,6 +532,22 @@ model Supplier {
   lastLocationLng      Float?
   lastLocationAccuracy Float?
   lastLocationAt       DateTime?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 model Driver {
