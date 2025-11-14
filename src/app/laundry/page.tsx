@@ -29,7 +29,7 @@ export default function LaundryPage() {
             <p className="font-semibold text-gray-900">Need help or bulk service?</p>
             <p className="text-xs text-gray-500">Chat to our team for recurring pickups, office laundry, or special care.</p>
             <Link
-              href="https://wa.me/27820000000"
+              href="https://wa.me/27640204765"
               target="_blank"
               className="mt-3 inline-flex items-center justify-center rounded-full border border-blue-200 px-4 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50"
             >
