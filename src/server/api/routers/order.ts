@@ -125,6 +125,21 @@ const messageInput = z.object({
   text: z.string().min(1),
 });
 
+const createLaundryInput = z.object({
+  customerName: z.string().min(1),
+  customerPhone: z.string().min(5),
+  customerEmail: z.string().email().optional(),
+  addressLine1: z.string().min(3),
+  suburb: z.string().min(2),
+  city: z.string().min(2),
+  serviceType: z.string().min(2).optional(),
+  instructions: z.string().optional(),
+  estimatedKg: z.number().min(1).max(200),
+});
+
+const LAUNDRY_PRICE_PER_KG_CENTS = 2500;
+const LAUNDRY_DELIVERY_CENTS = 3000;
+
 const exportCsvInput = z.object({
   from: z.string().datetime().optional(), // ISO
   to: z.string().datetime().optional(), // ISO
@@ -859,6 +874,70 @@ export const orderRouter = createTRPCRouter({
 
     return order ?? null;
   }),
+
+  createLaundry: publicProcedure
+    .input(createLaundryInput)
+    .mutation(async ({ ctx, input }) => {
+      const ensureCreator = async () => {
+        if (ctx.session?.user?.id) return ctx.session.user.id;
+        if (input.customerEmail) {
+          const guest = await ctx.db.user.upsert({
+            where: { email: input.customerEmail },
+            update: { name: input.customerName },
+            create: {
+              email: input.customerEmail,
+              name: input.customerName,
+              role: Role.CUSTOMER,
+            },
+          });
+          return guest.id;
+        }
+        const guest = await ctx.db.user.create({
+          data: {
+            name: input.customerName,
+            role: Role.CUSTOMER,
+          },
+        });
+        return guest.id;
+      };
+
+      const creatorId = await ensureCreator();
+      const qty = Math.max(1, Math.round(input.estimatedKg));
+      const priceCents = qty * LAUNDRY_PRICE_PER_KG_CENTS;
+      const deliveryCents = LAUNDRY_DELIVERY_CENTS;
+      const descriptionParts = [input.serviceType, input.instructions].filter(Boolean);
+
+      const order = await ctx.db.order.create({
+        data: {
+          name: "Laundry Order",
+          description: descriptionParts.join(" • ") || "Laundry service order",
+          price: priceCents,
+          deliveryCents,
+          link: "laundry",
+          api: "laundry",
+          links: [],
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          customerEmail: input.customerEmail ?? null,
+          addressLine1: input.addressLine1,
+          suburb: input.suburb,
+          city: input.city,
+          estimatedKg: input.estimatedKg,
+          createdBy: { connect: { id: creatorId } },
+          status: FulfilmentStatus.NEW,
+          delivery: {
+            create: {
+              status: DeliveryStatus.PENDING,
+            },
+          },
+        },
+        select: { id: true },
+      });
+
+      await notifyOrderCreated(ctx, order.id);
+
+      return { id: order.id };
+    }),
 
   // Caretaker/Admin: trigger supplier payout
   triggerPayout: protectedProcedure

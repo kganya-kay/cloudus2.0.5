@@ -47,14 +47,13 @@ export default function LaundryDetails() {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link href="/shop" className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+        <Link href="/laundry" className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
           Order Laundry
         </Link>
-        <Link href="/shop/orders" className="rounded-full border px-4 py-2 text-sm hover:bg-gray-50">
-          View My Orders
+        <Link href="/laundry#track" className="rounded-full border px-4 py-2 text-sm hover:bg-gray-50">
+          Track & FAQs
         </Link>
       </div>
     </section>
   );
 }
-
