@@ -221,6 +221,6 @@ export function LaundryOrderClient() {
 
 const formatEstimate = (kg: number) => {
   if (!Number.isFinite(kg) || kg <= 0) return "—";
-  const price = Math.round(kg) * 25 + 30;
+  const price = Math.round(kg) * 40 + 30;
   return `~ R${price.toFixed(0)}`;
 };

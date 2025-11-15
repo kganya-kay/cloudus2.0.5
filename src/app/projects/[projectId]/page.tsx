@@ -147,6 +147,18 @@ function InlineEditNumber({
   );
 }
 
+const formatCurrency = (value?: number) => {
+  try {
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+      maximumFractionDigits: 0,
+    }).format(value ?? 0);
+  } catch {
+    return `R ${value ?? 0}`;
+  }
+};
+
 function InlineEditToggle({
   value,
   onSave,
@@ -286,9 +298,6 @@ export default function LatestProject() {
   const utils = api.useUtils();
 
   const selectedProject = api.project.select.useQuery({ id: parsedId });
-  const selectedProjectUser = api.user.select.useQuery({
-    id: selectedProject.data?.createdById ?? "",
-  });
 
   // Update + Delete mutations
   const updateProject = api.project.update.useMutation({
@@ -323,6 +332,20 @@ export default function LatestProject() {
     deleteProject.mutate({ id: p.id });
   };
 
+  const handleBidSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const amount = Number(bidAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("Bid amount must be greater than zero.");
+      return;
+    }
+    createBid.mutate({
+      projectId: parsedId,
+      amount: Math.round(amount),
+      message: bidMessage.trim() || undefined,
+    });
+  };
+
   // Create flow (unchanged)
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -330,6 +353,8 @@ export default function LatestProject() {
   const [price, setPrice] = useState(0);
   const [contactNumber, setContactNumber] = useState("");
   const [link, setLink] = useState("");
+  const [bidAmount, setBidAmount] = useState("");
+  const [bidMessage, setBidMessage] = useState("");
 
   const createProject = api.project.create.useMutation({
     onSuccess: async () => {
@@ -347,7 +372,36 @@ export default function LatestProject() {
     },
   });
 
+  const createBid = api.project.bid.useMutation({
+    onSuccess: async () => {
+      await utils.project.select.invalidate({ id: parsedId });
+      setBidAmount("");
+      setBidMessage("");
+      alert("Bid submitted for review.");
+    },
+    onError: (error) => alert(error.message ?? "Unable to submit bid."),
+  });
+
+  const respondBid = api.project.respondBid.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.project.listBids.invalidate({ projectId: parsedId }),
+        utils.project.select.invalidate({ id: parsedId }),
+      ]);
+    },
+    onError: (error) => alert(error.message ?? "Unable to update bid."),
+  });
+
   const p = selectedProject.data;
+  const viewer = p?.viewerContext;
+  const canBid = !!viewer && !viewer.isOwner && !viewer.isContributor && !!viewer.userId;
+  const viewerBid = viewer?.bid ?? null;
+  const canManageBids = !!viewer?.canManageBids;
+
+  const projectBids = api.project.listBids.useQuery(
+    { projectId: parsedId },
+    { enabled: canManageBids },
+  );
 
   return (
     <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-white shadow-md rounded-xl">
@@ -392,10 +446,10 @@ export default function LatestProject() {
               <p className="text-xs text-gray-600">
                 Created by{" "}
                 <span className="font-medium text-blue-500">
-                  {selectedProjectUser.data?.name ?? "—"}
+                  {p.createdBy?.name ?? "—"}
                 </span>
               </p>
-              <p className="text-xs text-gray-500">{selectedProjectUser.data?.email ?? "—"}</p>
+              <p className="text-xs text-gray-500">{p.createdBy?.email ?? "—"}</p>
             </div>
           </div>
 
@@ -551,15 +605,24 @@ export default function LatestProject() {
             />
           </div>
 
-          {/* Contributors (api field) inline edit if you want */}
+          {/* Contributors */}
           <div className="mt-6">
             <p className="text-sm font-semibold text-blue-500 mb-2">Contributors</p>
-            <div className="bg-gray-50 p-2 rounded-lg">
-              <InlineEditText
-                value={p.api ?? ""}
-                onSave={(val) => updateProject.mutate({ id: p.id, data: { api: val } as never })}
-              // ^ cast only if 'api' isn't part of your updatable schema; otherwise add it to updatableFields and remove cast.
-              />
+            <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+              {p.contributors.length === 0 ? (
+                <p>No contributors yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {p.contributors.map((contributor) => (
+                    <span
+                      key={contributor.id}
+                      className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-800 shadow-sm"
+                    >
+                      {contributor.name ?? contributor.email ?? contributor.id}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -572,6 +635,130 @@ export default function LatestProject() {
               Available: {p.price - (p.cost ?? 0)}
             </div>
             <div className="flex-1 bg-red-300 text-center text-sm py-2 rounded-lg">Bids</div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border bg-white p-4 shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900">Contribute to this project</h3>
+              {!viewer?.userId ? (
+                <p className="mt-2 text-sm text-gray-600">
+                  <Link href="/api/auth/signin" className="text-blue-600 underline">
+                    Sign in
+                  </Link>{" "}
+                  to place a bid and collaborate.
+                </p>
+              ) : viewer?.isOwner ? (
+                <p className="mt-2 text-sm text-gray-600">You're the project owner.</p>
+              ) : viewer?.isContributor ? (
+                <p className="mt-2 text-sm text-gray-600">You're already a contributor.</p>
+              ) : (
+                <form className="mt-3 space-y-3" onSubmit={handleBidSubmit}>
+                  <div>
+                    <label className="text-xs uppercase text-gray-500">Your bid (budget portion)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                      placeholder="e.g. 5000"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase text-gray-500">Why you're a good fit</label>
+                    <textarea
+                      value={bidMessage}
+                      onChange={(e) => setBidMessage(e.target.value)}
+                      className="mt-1 w-full rounded-2xl border px-3 py-2 text-sm"
+                      rows={3}
+                      placeholder="Include relevant skills, timeline, or questions."
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={createBid.isPending}
+                    className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {createBid.isPending ? "Submitting..." : "Submit bid"}
+                  </button>
+                </form>
+              )}
+              {viewerBid && (
+                <div className="mt-4 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
+                  <p className="font-semibold text-gray-800">Your latest bid</p>
+                  <p>
+                    Amount: <span className="font-semibold">{formatCurrency(viewerBid.amount)}</span>
+                  </p>
+                  <p>Status: {viewerBid.status.toLowerCase()}</p>
+                  {viewerBid.message && <p className="mt-1 text-gray-500">“{viewerBid.message}”</p>}
+                </div>
+              )}
+            </div>
+
+            {canManageBids && (
+              <div className="rounded-2xl border bg-white p-4 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900">Bid requests</h3>
+                {projectBids.isLoading ? (
+                  <p className="text-sm text-gray-500">Loading bids...</p>
+                ) : projectBids.data?.length ? (
+                  <div className="mt-3 space-y-3">
+                    {projectBids.data.map((bid) => (
+                      <div key={bid.id} className="rounded-xl border bg-gray-50 p-3 text-sm">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {bid.user?.name ?? bid.user?.email ?? bid.userId}
+                            </p>
+                            <p className="text-xs text-gray-500">{bid.user?.email ?? "—"}</p>
+                          </div>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              bid.status === "APPROVED"
+                                ? "bg-green-100 text-green-700"
+                                : bid.status === "REJECTED"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {bid.status.toLowerCase()}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-gray-700">
+                          Bid: <span className="font-semibold">{formatCurrency(bid.amount)}</span>
+                        </p>
+                        {bid.message && (
+                          <p className="mt-1 text-xs text-gray-500">“{bid.message}”</p>
+                        )}
+                        {bid.status === "PENDING" && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => respondBid.mutate({ bidId: bid.id, action: "APPROVE" })}
+                              disabled={respondBid.isPending}
+                              className="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => respondBid.mutate({ bidId: bid.id, action: "REJECT" })}
+                              disabled={respondBid.isPending}
+                              className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No bids yet.</p>
+                )}
+              </div>
+            )}
           </div>
         </>
       ) : (

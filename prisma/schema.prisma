@@ -89,6 +89,12 @@ enum Role {
   DRIVER
 }
 
+enum ProjectBidStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // =====================
 // Shared Address Book
 // =====================
@@ -187,6 +193,7 @@ model Project {
   contactNumber Int      @default(00000000000)
   cost          Int      @default(0)
   rating        Int      @default(5)
+  bids          ProjectBid[]
 
   // Social
   comments Comment[] @relation("ProjectComments")
@@ -485,6 +492,7 @@ model User {
   // M-N contributor relations
   projectContributions  Project[]  @relation("ProjectContributors")
   shopItemContributions ShopItem[] @relation("ShopItemContributors")
+  projectBids          ProjectBid[]
 
   // Careers
   jobPosts        Job[]            @relation("JobCreatedBy")
@@ -532,6 +540,24 @@ model Supplier {
   lastLocationLng      Float?
   lastLocationAccuracy Float?
   lastLocationAt       DateTime?
+}
+
+model ProjectBid {
+  id         Int               @id @default(autoincrement())
+  projectId  Int
+  userId     String
+  amount     Int
+  message    String?
+  status     ProjectBidStatus  @default(PENDING)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  project    Project           @relation(fields: [projectId], references: [id])
+  user       User              @relation(fields: [userId], references: [id])
+
+  @@index([projectId])
+  @@index([userId])
+  @@unique([projectId, userId], map: "project_bid_unique_user")
 }
 
 model Notification {
