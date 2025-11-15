@@ -125,6 +125,12 @@ const messageInput = z.object({
   text: z.string().min(1),
 });
 
+const locationInput = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracy: z.number().min(0).max(10000).nullable().optional(),
+});
+
 const createLaundryInput = z.object({
   customerName: z.string().min(1),
   customerPhone: z.string().min(5),
@@ -135,6 +141,7 @@ const createLaundryInput = z.object({
   serviceType: z.string().min(2).optional(),
   instructions: z.string().optional(),
   estimatedKg: z.number().min(1).max(200),
+  customerLocation: locationInput.optional(),
 });
 
 const LAUNDRY_PRICE_PER_KG_CENTS = 2500;
@@ -923,6 +930,14 @@ export const orderRouter = createTRPCRouter({
           suburb: input.suburb,
           city: input.city,
           estimatedKg: input.estimatedKg,
+          ...(input.customerLocation
+            ? {
+                customerLocationLat: input.customerLocation.lat,
+                customerLocationLng: input.customerLocation.lng,
+                customerLocationAccuracy: input.customerLocation.accuracy ?? null,
+                customerLocationAt: new Date(),
+              }
+            : {}),
           createdBy: { connect: { id: creatorId } },
           status: FulfilmentStatus.NEW,
           delivery: {

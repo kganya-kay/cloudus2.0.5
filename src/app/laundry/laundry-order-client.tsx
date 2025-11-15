@@ -9,7 +9,7 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { api } from "~/trpc/react";
+import { api, type RouterInputs } from "~/trpc/react";
 
 export function LaundryOrderClient() {
   const [customerName, setCustomerName] = useState("");
@@ -24,6 +24,10 @@ export function LaundryOrderClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
+  const [customerLocation, setCustomerLocation] =
+    useState<RouterInputs["order"]["createLaundry"]["customerLocation"] | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
 
   const utils = api.useUtils();
 
@@ -76,6 +80,7 @@ export function LaundryOrderClient() {
       serviceType,
       instructions: instructions || undefined,
       estimatedKg: weight,
+      customerLocation: customerLocation ?? undefined,
     });
   };
 
@@ -150,6 +155,56 @@ export function LaundryOrderClient() {
               required
             />
           </div>
+          <div className="rounded-2xl border border-dashed border-blue-200 px-4 py-3 text-xs text-gray-600">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Share my pickup location</p>
+                <p className="text-xs text-gray-500">
+                  Pin your GPS coordinates to help drivers find you faster.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof navigator === "undefined" || !navigator.geolocation) {
+                    setGeoError("Your device cannot share location.");
+                    return;
+                  }
+                  setLocating(true);
+                  setGeoError(null);
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      setCustomerLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy ?? undefined,
+                      });
+                      setLocating(false);
+                    },
+                    (error) => {
+                      setGeoError(
+                        error.code === error.PERMISSION_DENIED
+                          ? "Permission denied. Please enable location access."
+                          : error.message ?? "Unable to fetch your location.",
+                      );
+                      setLocating(false);
+                    },
+                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
+                  );
+                }}
+                disabled={locating}
+                className="rounded-full border border-blue-200 px-4 py-2 text-xs font-semibold text-blue-700 disabled:opacity-60"
+              >
+                {locating ? "Capturing..." : "Use my GPS"}
+              </button>
+            </div>
+            {customerLocation && (
+              <p className="mt-2 text-xs text-green-700">
+                Location pinned ({customerLocation.lat.toFixed(5)}, {customerLocation.lng.toFixed(5)})
+              </p>
+            )}
+            {geoError && <p className="mt-2 text-xs text-red-600">{geoError}</p>}
+          </div>
         </div>
         <div className="space-y-3">
           <textarea
@@ -221,6 +276,6 @@ export function LaundryOrderClient() {
 
 const formatEstimate = (kg: number) => {
   if (!Number.isFinite(kg) || kg <= 0) return "—";
-  const price = Math.round(kg) * 40 + 30;
+  const price = Math.round(kg) * 40 + 50;
   return `~ R${price.toFixed(0)}`;
 };
