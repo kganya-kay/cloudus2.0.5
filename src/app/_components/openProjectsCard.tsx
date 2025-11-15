@@ -1,46 +1,43 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Link from "next/link";
 
-const bull = (
-  <Box
-    component="span"
-    sx={{ display: 'inline-block', mx: '2px', transform: 'scale(0.8)' }}
-  >
-    •
-  </Box>
-);
-
-const card = (
-  <React.Fragment>
-    <CardContent className='bg-green-200 place-items-center'>
-      <div>
-      <Typography variant="h2" component="div" >
-        15
-      </Typography>
-      
-      </div>
-      <Typography variant="h5" component="div">
-        Open Projects
-      </Typography>
-      
-      
-    </CardContent>
-    <CardActions className='justify-center'>
-      <Button style={{ minWidth: '200px', minHeight: '30px', position:"inherit"}} variant='outlined'  size="medium" href='./projects'>View Your Projects</Button>
-    </CardActions>
-  </React.Fragment>
-);
-
-export default function OutlinedCard() {
+export default function OpenProjectsCard() {
   return (
-    <Box sx={{ minWidth: 275 }} >
-      <Card variant="outlined" >{card}</Card>
-      <br />
-    </Box>
+    <section className="rounded-3xl border border-blue-100 bg-blue-50/60 p-6 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.5em] text-blue-500">Contribute</p>
+          <h3 className="text-2xl font-semibold text-blue-900">15 open briefs need collaborators this month</h3>
+          <p className="text-sm text-blue-900/70">
+            Designers, engineers, suppliers, and operators can bid on project tasks, reserve budget, and request payouts
+            once work is approved. Use this to build your portfolio or onboard your team.
+          </p>
+        </div>
+        <div className="rounded-2xl bg-white px-4 py-3 text-center shadow">
+          <p className="text-sm font-semibold text-blue-900">Live briefs</p>
+          <p className="text-3xl font-bold text-blue-600">15</p>
+          <p className="text-xs uppercase tracking-wide text-blue-400">updated hourly</p>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Link
+          href="/projects"
+          className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          View open projects
+        </Link>
+        <Link
+          href="/projects/create"
+          className="rounded-full border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-800 hover:bg-white"
+        >
+          Post a new brief
+        </Link>
+        <Link
+          href="/projects#bid"
+          className="rounded-full border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-800 hover:bg-white"
+        >
+          Learn how bidding works
+        </Link>
+      </div>
+    </section>
   );
 }

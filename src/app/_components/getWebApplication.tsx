@@ -1,68 +1,77 @@
-import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
-import { ChevronDownIcon, PhoneIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
-import {
-  ArrowPathIcon,
-  ChartPieIcon,
-  CursorArrowRaysIcon,
-  FingerPrintIcon,
-  SquaresPlusIcon,
-} from '@heroicons/react/24/outline'
+import Link from "next/link";
 
-const solutions = [
-  { name: 'Analytics', description: 'Get a better understanding of your traffic', href: '#', icon: ChartPieIcon },
-  { name: 'Engagement', description: 'Speak directly to your customers', href: '#', icon: CursorArrowRaysIcon },
-  { name: 'Security', description: "Your customers' data will be safe and secure", href: '#', icon: FingerPrintIcon },
-  { name: 'Integrations', description: 'Connect with third-party tools', href: '#', icon: SquaresPlusIcon },
-  { name: 'Automations', description: 'Build strategic funnels that will convert', href: '#', icon: ArrowPathIcon },
-]
-const callsToAction = [
-  { name: 'Watch demo', href: '#video', icon: PlayCircleIcon },
-  { name: 'Contact sales', href: '#contactSales', icon: PhoneIcon },
-]
+const journeys = [
+  {
+    title: "Launch an online shop",
+    description: "Sell services or digital products with instant payments and automated fulfilment.",
+    href: "/shop",
+  },
+  {
+    title: "Publish a portfolio project",
+    description: "Showcase internal builds, open briefs, and invite collaborators on /projects.",
+    href: "/projects",
+  },
+  {
+    title: "Offer a managed service",
+    description: "Use /laundry, /drivers/dashboard, and /suppliers/apply as templates for your own ops portals.",
+    href: "/laundry",
+  },
+];
 
-export default function Example() {
+export default function GetWebApplication() {
   return (
-    <Popover className="relative">
-      <PopoverButton className="inline-flex items-center gap-x-1 px-4 rounded-s text-sm/6 font-semibold text-gray-900">
-        <span className=''>Solutions</span>
-        <ChevronDownIcon aria-hidden="true" className="size-5" />
-      </PopoverButton>
-
-      <PopoverPanel
-        transition
-        className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-max -translate-x-1/2 px-4 transition data-closed:translate-y-1 data-closed:opacity-0 data-enter:duration-200 data-enter:ease-out data-leave:duration-150 data-leave:ease-in"
-      >
-        <div className="w-screen max-w-md flex-auto overflow-hidden rounded-3xl bg-white text-sm/6 shadow-lg ring-1 ring-gray-900/5">
-          <div className="p-4">
-            {solutions.map((item) => (
-              <div key={item.name} className="group relative flex gap-x-6 rounded-lg p-4 hover:bg-gray-50">
-                <div className="mt-1 flex size-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
-                  <item.icon aria-hidden="true" className="size-6 text-gray-600 group-hover:text-indigo-600" />
-                </div>
-                <div>
-                  <a href={item.href} className="font-semibold text-gray-900">
-                    {item.name}
-                    <span className="absolute inset-0" />
-                  </a>
-                  <p className="mt-1 text-gray-600">{item.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-gray-900/5 bg-gray-50">
-            {callsToAction.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center justify-center gap-x-2.5 p-3 font-semibold text-gray-900 hover:bg-gray-100"
-              >
-                <item.icon aria-hidden="true" className="size-5 flex-none text-gray-400" />
-                {item.name}
-              </a>
-            ))}
+    <section className="rounded-3xl bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-8 text-white shadow-xl lg:p-10">
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div className="space-y-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-blue-200">Cloudus platform</p>
+          <h2 className="text-3xl font-semibold leading-tight sm:text-4xl">
+            Build, launch, and manage every customer touchpoint from one command centre.
+          </h2>
+          <p className="text-sm text-blue-100">
+            Every route in this workspace is a working demo. Explore shop flows, project collaboration tools,
+            driver and supplier portals, or career pipelines, then reuse them for your own organisation.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/projects/create"
+              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-blue-900 shadow hover:bg-blue-50"
+            >
+              Start a project
+            </Link>
+            <Link
+              href="/calendar"
+              className="rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              Book a strategy call
+            </Link>
+            <Link
+              href="/careers"
+              className="rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              Hire our team
+            </Link>
           </div>
         </div>
-      </PopoverPanel>
-    </Popover>
-  )
+
+        <div className="space-y-4 rounded-2xl bg-white/5 p-6 shadow-inner backdrop-blur">
+          <p className="text-sm font-semibold text-blue-100">Pick a starting point</p>
+          <div className="space-y-4">
+            {journeys.map((journey) => (
+              <Link
+                key={journey.title}
+                href={journey.href}
+                className="flex flex-col rounded-2xl border border-white/10 bg-blue-950/30 p-4 transition hover:border-white/40"
+              >
+                <span className="text-sm font-semibold text-white">{journey.title}</span>
+                <span className="text-xs text-blue-200">{journey.description}</span>
+              </Link>
+            ))}
+          </div>
+          <div className="rounded-xl bg-slate-900/80 p-4 text-xs text-blue-100">
+            Prefer a guided tour? Launch the product configurator below or chat to our team via the contact form.
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }

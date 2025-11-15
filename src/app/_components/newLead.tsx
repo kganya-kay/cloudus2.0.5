@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, ChangeEvent } from 'react';
+import Link from "next/link";
+import React, { useState, ChangeEvent } from "react";
 
 const SalesforceLeadForm = () => {
   const [formData, setFormData] = useState({
@@ -13,18 +14,38 @@ const SalesforceLeadForm = () => {
     description: '',
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
-    <div id='contactSales' className="flex items-center justify-center min-h-screen bg-gray-100 p-3">
-      <form
-        action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00DWU00000LaXxh"
-        method="POST"
-        className="bg-white p-8 rounded-lg shadow-md w-[80vw] max-w-2xl text-gray-800"
-      >
+    <section
+      id="contactSales"
+      className="rounded-3xl border bg-white p-6 text-gray-800 shadow-sm"
+    >
+      <div className="grid gap-6 md:grid-cols-[1fr,1.2fr]">
+        <div className="space-y-4">
+          <p className="text-xs uppercase tracking-widest text-blue-500">Talk to Cloudus</p>
+          <h3 className="text-2xl font-semibold text-gray-900">Share your vision. We’ll co-create the roadmap.</h3>
+          <p className="text-sm text-gray-600">
+            Submit the Salesforce-powered form and our team will reach out within 24 hours. Tell us about the product,
+            operations workflow, or service you want to digitise. We’ll align the right squad, estimate budget,
+            and propose timelines.
+          </p>
+          <ul className="space-y-2 text-sm text-gray-700">
+            <li>�?� Need a quick chat? WhatsApp <a href="https://wa.me/27640204765" className="font-semibold text-blue-700 underline">+27 64 020 4765</a>.</li>
+            <li>�?� Prefer email? Drop a note to <a href="mailto:sales@cloudusdigital.com" className="font-semibold text-blue-700 underline">sales@cloudusdigital.com</a>.</li>
+            <li>�?� Already a customer? Log a request via <Link href="/projects" className="font-semibold text-blue-700 underline">/projects</Link>.</li>
+          </ul>
+        </div>
+        <form
+          action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00DWU00000LaXxh"
+          method="POST"
+          className="space-y-4 rounded-2xl border border-blue-100 bg-slate-50/60 p-6"
+        >
         <input type="hidden" name="oid" value="00DWU00000LaXxh" />
         <input type="hidden" name="retURL" value="http://cloudusdigital.com" />
 
@@ -106,17 +127,19 @@ const SalesforceLeadForm = () => {
           </div>
 
           <div>
-            <label htmlFor="description" className="block font-medium">Description:</label>
-            <input
+            <label htmlFor="description" className="block text-sm font-medium">
+              What do you need help with?
+            </label>
+            <textarea
               id="description"
               name="description"
-              type="text-area"
-              placeholder="Please provide a brief description of your inquiry."
-              maxLength={40}
+              placeholder="Tell us about the outcome, audience, and preferred launch date."
+              maxLength={255}
               value={formData.description}
               onChange={handleChange}
               required
-              className="w-full border rounded px-3 py-2"
+              className="w-full rounded px-3 py-2"
+              rows={3}
             />
           </div>
 
@@ -144,16 +167,17 @@ const SalesforceLeadForm = () => {
             </select>
           </div>
 
-          <div className="text-center pt-4">
+          <div className="pt-2 text-center">
             <input
               type="submit"
-              value="Submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+              value="Send request"
+              className="rounded-full bg-blue-600 px-6 py-2 text-white transition hover:bg-blue-700"
             />
           </div>
         </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </section>
   );
 };
 

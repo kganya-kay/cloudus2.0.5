@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
@@ -318,9 +319,59 @@ export default function NewProductFlow() {
 
   return (
     <>
-      <Button variant="outlined" onClick={handleOpen}>
-        Launch New Product
-      </Button>
+      <section className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-4">
+          <p className="text-xs uppercase tracking-widest text-blue-500">Quote in minutes</p>
+          <h3 className="text-2xl font-semibold text-gray-900">
+            Launch digital products, custom apps, or managed services with our guided configurator.
+          </h3>
+          <p className="text-sm text-gray-600">
+            Choose your product type, set pricing, and capture requirements. We sync the lead with Salesforce,
+            trigger /shop order flows, and reserve production slots in /calendar automatically.
+          </p>
+          <ul className="space-y-2 text-sm text-gray-700">
+            <li>�?� Generate instant quotes for /shop orders or bespoke engagements</li>
+            <li>�?� Route opportunities to the correct Cloudus squad via /team and /projects</li>
+            <li>�?� Share branded proposals with your clients without leaving the platform</li>
+          </ul>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="contained" onClick={handleOpen} className="!rounded-full !bg-blue-600">
+              Launch configurator
+            </Button>
+            <Button
+              component={Link}
+              href="/calendar"
+              variant="outlined"
+              className="!rounded-full"
+            >
+              Book a discovery call
+            </Button>
+            <Button
+              component={Link}
+              href="/shop"
+              variant="text"
+              className="!rounded-full !text-blue-700"
+            >
+              Browse packaged services
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-3 rounded-2xl border border-dashed border-blue-200 bg-blue-50 p-5 text-sm text-gray-700">
+          <p className="text-xs font-semibold uppercase text-blue-600">What to expect</p>
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>Select a product, describe the outcome, and choose a launch budget.</li>
+            <li>We generate a Salesforce lead + Cloudus /projects brief for your team.</li>
+            <li>Schedule design, engineering, and go-live checkpoints on /calendar.</li>
+          </ol>
+          <p className="text-xs text-gray-600">
+            Prefer a concierge experience? Email{" "}
+            <Link href="mailto:sales@cloudusdigital.com" className="font-semibold text-blue-800 underline">
+              sales@cloudusdigital.com
+            </Link>{" "}
+            and we’ll guide you through the process.
+          </p>
+        </div>
+      </section>
 
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>

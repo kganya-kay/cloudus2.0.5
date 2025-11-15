@@ -40,11 +40,13 @@ export default function Special() {
           </svg>
 
           <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
+            <p className="text-xs uppercase tracking-[0.5em] text-rose-200">Featured launch</p>
             <h2 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              Get A Web Application for your Business.
+              Launch a branded web experience with Cloudus.
             </h2>
-            <p className="mt-6 text-pretty text-lg/8 text-gray-300">
-              Simplify and digitize your business to leverage the power of the Cloud.
+            <p className="mt-6 text-pretty text-sm text-gray-300">
+              Bundle storefronts from /shop, fulfilment from /drivers/dashboard, and collaboration from /projects
+              into a single deployment. We plug into your existing CRM, billing, and support stack.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
@@ -75,6 +77,18 @@ export default function Special() {
               >
                 WhatsApp Us
               </a>
+              <Link
+                href="/projects"
+                className="rounded-md border border-white/30 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                Browse live builds
+              </Link>
+              <Link
+                href="/laundry"
+                className="rounded-md border border-white/30 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                See service portals
+              </Link>
             </div>
           </div>
 

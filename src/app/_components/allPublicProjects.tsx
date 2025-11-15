@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Button from "@mui/material/Button/Button";
 import { api } from "~/trpc/react";
 
@@ -44,18 +45,12 @@ export default function AllProjects() {
       ) : null}
 
       {/* Title */}
-      <div className="mb-6 flex justify-center">
-        <h1
-          className="
-            inline-block
-            w-full sm:w-1/2
-            rounded-lg border-2 border-blue-500 p-4
-            text-center text-3xl font-bold tracking-tight text-gray-800
-            bg-white shadow-sm
-          "
-        >
-          Our Projects
-        </h1>
+      <div className="mb-6 flex flex-col items-center gap-2 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Flagship & open-source projects</h1>
+        <p className="text-sm text-gray-600">
+          Explore customer launches, product experiments, and community initiatives. Fork an idea, request access,
+          or start your own brief from <Link href="/projects/create" className="text-blue-700 underline">/projects/create</Link>.
+        </p>
       </div>
 
       {/* Grid of project cards */}
@@ -115,14 +110,22 @@ export default function AllProjects() {
                 </div>
 
                 {/* CTA */}
-                <div className="mt-2">
+                <div className="mt-2 flex gap-2">
                   <Button
                     href={`projects/${project.id}`}
                     variant="contained"
-                    className="w-full !rounded-xl !bg-blue-600 !py-2 !text-white hover:!bg-blue-700"
-                    style={{ minWidth: "200px", minHeight: "36px", position: "inherit" }}
+                    className="!rounded-xl !bg-blue-600 !py-2 !text-white hover:!bg-blue-700"
+                    style={{ minWidth: "140px", minHeight: "36px", position: "inherit" }}
                   >
-                    View Project
+                    View
+                  </Button>
+                  <Button
+                    href={`projects/${project.id}#bid`}
+                    variant="outlined"
+                    className="!rounded-xl"
+                    style={{ minWidth: "140px", minHeight: "36px", position: "inherit" }}
+                  >
+                    Bid or contribute
                   </Button>
                 </div>
               </div>
