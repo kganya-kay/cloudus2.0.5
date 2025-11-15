@@ -637,7 +637,7 @@ export default function LatestProject() {
             <div className="flex-1 bg-red-300 text-center text-sm py-2 rounded-lg">Bids</div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div id="bid" className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border bg-white p-4 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900">Contribute to this project</h3>
               {!viewer?.userId ? (

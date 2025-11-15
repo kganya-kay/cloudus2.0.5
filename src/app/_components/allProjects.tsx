@@ -121,7 +121,7 @@ export default function AllProjects() {
                     View Project
                   </Button>
                   <Button
-                    href={`projects/${project.id}/bid`}
+                    href={`projects/${project.id}#bid`}
                     variant="outlined"
                     className="!rounded-xl"
                     style={{ minWidth: "200px", minHeight: "36px", position: "inherit" }}
