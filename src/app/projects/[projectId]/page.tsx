@@ -4,11 +4,12 @@ import Button from "@mui/material/Button";
 import { UploadButton } from "@uploadthing/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { OurFileRouter } from "~/app/api/uploadthing/core";
 import { api } from "~/trpc/react";
 import { IconButton } from "@mui/material";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import type { ProjectTaskPayoutType } from "@prisma/client";
 
 
 // Helper: safely extract a usable URL from UploadThing's callback result
@@ -148,14 +149,15 @@ function InlineEditNumber({
 }
 
 const formatCurrency = (value?: number) => {
+  const amount = typeof value === "number" ? value / 100 : 0;
   try {
     return new Intl.NumberFormat("en-ZA", {
       style: "currency",
       currency: "ZAR",
       maximumFractionDigits: 0,
-    }).format(value ?? 0);
+    }).format(amount);
   } catch {
-    return `R ${value ?? 0}`;
+    return `R ${amount.toFixed(0)}`;
   }
 };
 
@@ -296,6 +298,8 @@ export default function LatestProject() {
   const parsedId = projectId ? Number(projectId) : 1;
 
   const utils = api.useUtils();
+  const tasksQuery = api.project.tasks.useQuery({ projectId: parsedId });
+  const tasks = tasksQuery.data ?? [];
 
   const selectedProject = api.project.select.useQuery({ id: parsedId });
 
@@ -332,6 +336,77 @@ export default function LatestProject() {
     deleteProject.mutate({ id: p.id });
   };
 
+  const handleCreateTask = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const cents = Math.round(Number(newTaskBudget) * 100);
+    if (!newTaskTitle.trim()) {
+      alert("Task title is required.");
+      return;
+    }
+    if (!Number.isFinite(cents) || cents <= 0) {
+      alert("Budget must be greater than zero.");
+      return;
+    }
+    createTaskMutation.mutate({
+      projectId: parsedId,
+      title: newTaskTitle.trim(),
+      description: newTaskDescription.trim() || undefined,
+      budgetCents: cents,
+    });
+  };
+
+  const handleDeleteTask = (taskId: number) => {
+    if (!confirm("Delete this task? This cannot be undone.")) return;
+    deleteTaskMutation.mutate({ taskId });
+  };
+
+  const handleSplitBudget = () => {
+    splitTaskBudgetMutation.mutate({ projectId: parsedId });
+  };
+
+  const handleClaimTask = (taskId: number) => {
+    claimTaskMutation.mutate({ taskId });
+  };
+
+  const handleStartTask = (taskId: number) => {
+    progressTaskMutation.mutate({ taskId, status: "IN_PROGRESS" });
+  };
+
+  const handleSubmitTask = (taskId: number) => {
+    progressTaskMutation.mutate({ taskId, status: "SUBMITTED" });
+  };
+
+  const handleApproveTask = (taskId: number) => {
+    reviewTaskMutation.mutate({ taskId, action: "APPROVE" });
+  };
+
+  const handleRejectTask = (taskId: number) => {
+    reviewTaskMutation.mutate({ taskId, action: "REJECT" });
+  };
+
+  const handleRequestPayout = (taskId: number, type: ProjectTaskPayoutType) => {
+    requestTaskPayoutMutation.mutate({ taskId, type });
+  };
+
+  const handleRequestCustomPayout = (taskId: number) => {
+    const raw = window.prompt("Enter payout amount (R):");
+    if (!raw) return;
+    const cents = Math.round(Number(raw) * 100);
+    if (!Number.isFinite(cents) || cents <= 0) {
+      alert("Invalid amount.");
+      return;
+    }
+    requestTaskPayoutMutation.mutate({
+      taskId,
+      type: "CUSTOM",
+      amountCents: cents,
+    });
+  };
+
+  const handleRespondPayout = (requestId: number, action: "APPROVE" | "REJECT") => {
+    respondTaskPayoutMutation.mutate({ requestId, action });
+  };
+
   const handleBidSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const amount = Number(bidAmount);
@@ -353,6 +428,9 @@ export default function LatestProject() {
   const [price, setPrice] = useState(0);
   const [contactNumber, setContactNumber] = useState("");
   const [link, setLink] = useState("");
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskBudget, setNewTaskBudget] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [bidMessage, setBidMessage] = useState("");
 
@@ -393,6 +471,46 @@ export default function LatestProject() {
   });
 
   const p = selectedProject.data;
+  const refreshTasks = useCallback(async () => {
+    await utils.project.tasks.invalidate({ projectId: parsedId });
+  }, [parsedId, utils]);
+  const createTaskMutation = api.project.createTask.useMutation({
+    onSuccess: async () => {
+      await refreshTasks();
+      setNewTaskTitle("");
+      setNewTaskBudget("");
+      setNewTaskDescription("");
+    },
+    onError: (error) => alert(error.message ?? "Unable to create task."),
+  });
+  const deleteTaskMutation = api.project.deleteTask.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to delete task."),
+  });
+  const splitTaskBudgetMutation = api.project.splitTaskBudget.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to split budget."),
+  });
+  const claimTaskMutation = api.project.claimTask.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to claim task."),
+  });
+  const progressTaskMutation = api.project.progressTask.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to update task."),
+  });
+  const reviewTaskMutation = api.project.reviewTask.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to review task."),
+  });
+  const requestTaskPayoutMutation = api.project.requestTaskPayout.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to request payout."),
+  });
+  const respondTaskPayoutMutation = api.project.respondTaskPayout.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to update payout."),
+  });
   const viewer = p?.viewerContext;
   const canBid = !!viewer && !viewer.isOwner && !viewer.isContributor && !!viewer.userId;
   const viewerBid = viewer?.bid ?? null;
@@ -635,6 +753,261 @@ export default function LatestProject() {
               Available: {p.price - (p.cost ?? 0)}
             </div>
             <div className="flex-1 bg-red-300 text-center text-sm py-2 rounded-lg">Bids</div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Project tasks &amp; budget</h3>
+                <p className="text-sm text-gray-600">Break down deliverables, assign contributors, and track payouts.</p>
+              </div>
+              {canManageBids && tasks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleSplitBudget}
+                  disabled={splitTaskBudgetMutation.isPending}
+                  className="rounded-full border border-blue-200 px-4 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+                >
+                  {splitTaskBudgetMutation.isPending ? "Splitting..." : "Split budget evenly"}
+                </button>
+              )}
+            </div>
+
+            {canManageBids && (
+              <form className="mt-4 grid gap-3 md:grid-cols-3" onSubmit={handleCreateTask}>
+                <div className="md:col-span-1">
+                  <label className="text-xs uppercase text-gray-500">Task title</label>
+                  <input
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    placeholder="e.g. Landing page UI"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="text-xs uppercase text-gray-500">Budget (R)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={newTaskBudget}
+                    onChange={(e) => setNewTaskBudget(e.target.value)}
+                    placeholder="1500"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="text-xs uppercase text-gray-500">Notes</label>
+                  <input
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                    placeholder="Deliverables or timeline"
+                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <button
+                    type="submit"
+                    disabled={createTaskMutation.isPending}
+                    className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {createTaskMutation.isPending ? "Adding task..." : "Add task"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="mt-6">
+              {tasksQuery.isLoading ? (
+                <p className="text-sm text-gray-500">Loading tasks...</p>
+              ) : tasks.length === 0 ? (
+                <p className="text-sm text-gray-500">No tasks yet. Project owner can add deliverables above.</p>
+              ) : (
+                <div className="space-y-4">
+                  {tasks.map((task) => {
+                    const assignedName =
+                      task.assignedTo?.name ??
+                      task.assignedTo?.email ??
+                      (task.assignedToId ? "Contributor" : "Unassigned");
+                    const isAssignedToViewer =
+                      viewer?.userId && task.assignedToId === viewer.userId;
+                    const pendingPayout = task.payoutRequests.find(
+                      (request) => request.status === "PENDING",
+                    );
+                    return (
+                      <div key={task.id} className="rounded-2xl border bg-gray-50 p-4 shadow-sm">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-base font-semibold text-gray-900">{task.title}</p>
+                            <p className="text-xs text-gray-500">
+                              Budget {formatCurrency(task.budgetCents)} • Assigned to {assignedName}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase text-gray-700">
+                            {task.status.replaceAll("_", " ")}
+                          </span>
+                        </div>
+                        {task.description && (
+                          <p className="mt-2 text-sm text-gray-600">{task.description}</p>
+                        )}
+
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
+                          {task.submissionNote && (
+                            <span className="rounded-full bg-white px-2 py-0.5">
+                              Submission note: {task.submissionNote}
+                            </span>
+                          )}
+                          {pendingPayout && (
+                            <span className="rounded-full bg-white px-2 py-0.5 text-amber-700">
+                              Payout pending ({formatCurrency(pendingPayout.amountCents)})
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {!task.assignedToId && viewer?.isContributor && (
+                            <button
+                              type="button"
+                              onClick={() => handleClaimTask(task.id)}
+                              disabled={claimTaskMutation.isPending}
+                              className="rounded-full border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+                            >
+                              Claim task
+                            </button>
+                          )}
+                          {isAssignedToViewer && task.status === "IN_PROGRESS" && (
+                            <button
+                              type="button"
+                              onClick={() => handleSubmitTask(task.id)}
+                              disabled={progressTaskMutation.isPending}
+                              className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                            >
+                              Submit for approval
+                            </button>
+                          )}
+                          {isAssignedToViewer && task.status === "BACKLOG" && (
+                            <button
+                              type="button"
+                              onClick={() => handleStartTask(task.id)}
+                              disabled={progressTaskMutation.isPending}
+                              className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                            >
+                              Start task
+                            </button>
+                          )}
+                          {isAssignedToViewer && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleRequestPayout(task.id, "HALF")}
+                                disabled={requestTaskPayoutMutation.isPending}
+                                className="rounded-full border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 disabled:opacity-50"
+                              >
+                                Request 50% payout
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRequestPayout(task.id, "FULL")}
+                                disabled={requestTaskPayoutMutation.isPending}
+                                className="rounded-full border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 disabled:opacity-50"
+                              >
+                                Request full payout
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRequestCustomPayout(task.id)}
+                                disabled={requestTaskPayoutMutation.isPending}
+                                className="rounded-full border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 disabled:opacity-50"
+                              >
+                                Request custom payout
+                              </button>
+                            </>
+                          )}
+                          {canManageBids && task.status === "SUBMITTED" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleApproveTask(task.id)}
+                                disabled={reviewTaskMutation.isPending}
+                                className="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                              >
+                                Approve task
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRejectTask(task.id)}
+                                disabled={reviewTaskMutation.isPending}
+                                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                              >
+                                Needs changes
+                              </button>
+                            </>
+                          )}
+                          {canManageBids && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTask(task.id)}
+                              disabled={deleteTaskMutation.isPending}
+                              className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+
+                        {canManageBids && task.payoutRequests.length > 0 && (
+                          <div className="mt-3 rounded-xl bg-white p-3 text-xs text-gray-700">
+                            <p className="font-semibold text-gray-900">Payout requests</p>
+                            <div className="mt-2 space-y-2">
+                              {task.payoutRequests.map((request) => (
+                                <div key={request.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-2 py-1">
+                                  <div>
+                                    <p className="font-semibold">
+                                      {request.user?.name ?? request.user?.email ?? "Contributor"}
+                                    </p>
+                                    <p className="text-gray-500">
+                                      {formatCurrency(request.amountCents)} • {request.type.toLowerCase()}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    {request.status === "PENDING" ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRespondPayout(request.id, "APPROVE")}
+                                          disabled={respondTaskPayoutMutation.isPending}
+                                          className="rounded-full bg-green-600 px-3 py-1 text-white disabled:opacity-50"
+                                        >
+                                          Approve
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRespondPayout(request.id, "REJECT")}
+                                          disabled={respondTaskPayoutMutation.isPending}
+                                          className="rounded-full bg-red-600 px-3 py-1 text-white disabled:opacity-50"
+                                        >
+                                          Reject
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                                        {request.status.toLowerCase()}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <div id="bid" className="mt-6 grid gap-4 md:grid-cols-2">

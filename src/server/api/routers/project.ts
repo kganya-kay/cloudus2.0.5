@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { Role, ProjectBidStatus } from "@prisma/client";
+import {
+  Role,
+  ProjectBidStatus,
+  ProjectTaskStatus,
+  ProjectTaskPayoutType,
+  ProjectTaskPayoutStatus,
+} from "@prisma/client";
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
 
 
@@ -15,6 +21,49 @@ const canManageAllProjects = (ctx: {
 }) => {
   const email = ctx.session?.user?.email ?? null;
   return ctx.session?.user?.role === Role.ADMIN || isSuperAdminEmail(email);
+};
+
+const ensureProjectOwner = async (
+  ctx: { db: any; session: { user: { id: string; role: Role; email?: string | null } } },
+  projectId: number,
+) => {
+  const project = await ctx.db.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, createdById: true, price: true },
+  });
+  if (!project) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+  }
+  if (!canManageAllProjects(ctx) && project.createdById !== ctx.session.user.id) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return project;
+};
+
+const ensureProjectContributor = async (
+  ctx: { db: any; session: { user: { id: string; role: Role; email?: string | null } } },
+  projectId: number,
+) => {
+  const project = await ctx.db.project.findUnique({
+    where: { id: projectId },
+    select: {
+      id: true,
+      createdById: true,
+      contributors: { select: { id: true } },
+    },
+  });
+  if (!project) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+  }
+  const viewerId = ctx.session.user.id;
+  const isContributor =
+    viewerId === project.createdById ||
+    project.contributors.some((contributor: { id: string }) => contributor.id === viewerId) ||
+    canManageAllProjects(ctx);
+  if (!isContributor) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return project;
 };
 
 const updatableFields = z
@@ -48,6 +97,47 @@ const bidListInput = z.object({
 
 const respondBidInput = z.object({
   bidId: z.number().int().positive(),
+  action: z.enum(["APPROVE", "REJECT"]),
+});
+
+const projectIdParam = z.object({ projectId: z.number().int().positive() });
+
+const createTaskInput = z.object({
+  projectId: z.number().int().positive(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  budgetCents: z.number().int().nonnegative(),
+});
+
+const updateTaskInput = z.object({
+  taskId: z.number().int().positive(),
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  budgetCents: z.number().int().nonnegative().optional(),
+});
+
+const taskIdInput = z.object({ taskId: z.number().int().positive() });
+
+const taskProgressInput = z.object({
+  taskId: z.number().int().positive(),
+  status: z.enum(["IN_PROGRESS", "SUBMITTED"]),
+  note: z.string().max(2000).optional(),
+});
+
+const taskReviewInput = z.object({
+  taskId: z.number().int().positive(),
+  action: z.enum(["APPROVE", "REJECT"]),
+  note: z.string().max(2000).optional(),
+});
+
+const payoutRequestInput = z.object({
+  taskId: z.number().int().positive(),
+  type: z.nativeEnum(ProjectTaskPayoutType),
+  amountCents: z.number().int().positive().optional(),
+});
+
+const payoutRespondInput = z.object({
+  requestId: z.number().int().positive(),
   action: z.enum(["APPROVE", "REJECT"]),
 });
 
@@ -336,6 +426,292 @@ export const projectRouter = createTRPCRouter({
       });
 
       return { status: nextStatus };
+    }),
+
+  tasks: publicProcedure
+    .input(projectIdParam)
+    .query(async ({ ctx, input }) => {
+      const tasks = await ctx.db.projectTask.findMany({
+        where: { projectId: input.projectId },
+        orderBy: { createdAt: "asc" },
+        include: {
+          assignedTo: { select: { id: true, name: true, email: true } },
+          payoutRequests: {
+            orderBy: { createdAt: "desc" },
+            include: { user: { select: { id: true, name: true, email: true } } },
+          },
+        },
+      });
+      return tasks;
+    }),
+
+  createTask: protectedProcedure
+    .input(createTaskInput)
+    .mutation(async ({ ctx, input }) => {
+      await ensureProjectOwner(ctx, input.projectId);
+      return ctx.db.projectTask.create({
+        data: {
+          projectId: input.projectId,
+          title: input.title,
+          description: input.description ?? null,
+          budgetCents: input.budgetCents,
+        },
+      });
+    }),
+
+  updateTask: protectedProcedure
+    .input(updateTaskInput)
+    .mutation(async ({ ctx, input }) => {
+      const task = await ctx.db.projectTask.findUnique({
+        where: { id: input.taskId },
+        select: { projectId: true },
+      });
+      if (!task) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+      await ensureProjectOwner(ctx, task.projectId);
+      return ctx.db.projectTask.update({
+        where: { id: input.taskId },
+        data: {
+          ...(input.title !== undefined ? { title: input.title } : {}),
+          ...(input.description !== undefined ? { description: input.description ?? null } : {}),
+          ...(input.budgetCents !== undefined ? { budgetCents: input.budgetCents } : {}),
+        },
+      });
+    }),
+
+  deleteTask: protectedProcedure
+    .input(taskIdInput)
+    .mutation(async ({ ctx, input }) => {
+      const task = await ctx.db.projectTask.findUnique({
+        where: { id: input.taskId },
+        select: { projectId: true },
+      });
+      if (!task) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+      await ensureProjectOwner(ctx, task.projectId);
+      await ctx.db.projectTaskPayoutRequest.deleteMany({
+        where: { taskId: input.taskId },
+      });
+      return ctx.db.projectTask.delete({ where: { id: input.taskId } });
+    }),
+
+  splitTaskBudget: protectedProcedure
+    .input(projectIdParam)
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectOwner(ctx, input.projectId);
+      const tasks = await ctx.db.projectTask.findMany({
+        where: { projectId: project.id },
+        orderBy: { createdAt: "asc" },
+      });
+      if (tasks.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Add tasks before splitting the budget.",
+        });
+      }
+      const totalBudget = project.price > 0 ? project.price : tasks.reduce((sum, task) => sum + task.budgetCents, 0);
+      if (totalBudget <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Project budget must be greater than zero.",
+        });
+      }
+      const evenShare = Math.floor(totalBudget / tasks.length);
+      let remainder = totalBudget - evenShare * tasks.length;
+      await Promise.all(
+        tasks.map((task, index) => {
+          const bonus = index === tasks.length - 1 ? remainder : 0;
+          const nextAmount = evenShare + bonus;
+          remainder = remainder - bonus;
+          return ctx.db.projectTask.update({
+            where: { id: task.id },
+            data: { budgetCents: nextAmount },
+          });
+        }),
+      );
+      return { ok: true as const };
+    }),
+
+  claimTask: protectedProcedure
+    .input(taskIdInput)
+    .mutation(async ({ ctx, input }) => {
+      const task = await ctx.db.projectTask.findUnique({
+        where: { id: input.taskId },
+        select: { id: true, projectId: true, assignedToId: true, status: true },
+      });
+      if (!task) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+      await ensureProjectContributor(ctx, task.projectId);
+      if (task.assignedToId && task.assignedToId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Task is already assigned to another contributor.",
+        });
+      }
+      return ctx.db.projectTask.update({
+        where: { id: task.id },
+        data: {
+          assignedToId: ctx.session.user.id,
+          status:
+            task.status === ProjectTaskStatus.BACKLOG
+              ? ProjectTaskStatus.IN_PROGRESS
+              : task.status,
+        },
+      });
+    }),
+
+  progressTask: protectedProcedure
+    .input(taskProgressInput)
+    .mutation(async ({ ctx, input }) => {
+      const task = await ctx.db.projectTask.findUnique({
+        where: { id: input.taskId },
+        select: {
+          projectId: true,
+          assignedToId: true,
+          status: true,
+        },
+      });
+      if (!task) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+      if (task.assignedToId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only the assigned contributor can update this task.",
+        });
+      }
+      const nextStatus =
+        input.status === "IN_PROGRESS"
+          ? ProjectTaskStatus.IN_PROGRESS
+          : ProjectTaskStatus.SUBMITTED;
+      const data: Record<string, unknown> = { status: nextStatus };
+      if (input.status === "SUBMITTED") {
+        data.submittedAt = new Date();
+        data.submissionNote = input.note ?? null;
+      } else {
+        data.submissionNote = input.note ?? null;
+      }
+      return ctx.db.projectTask.update({
+        where: { id: input.taskId },
+        data,
+      });
+    }),
+
+  reviewTask: protectedProcedure
+    .input(taskReviewInput)
+    .mutation(async ({ ctx, input }) => {
+      const task = await ctx.db.projectTask.findUnique({
+        where: { id: input.taskId },
+        select: { projectId: true },
+      });
+      if (!task) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+      await ensureProjectOwner(ctx, task.projectId);
+      const nextStatus =
+        input.action === "APPROVE"
+          ? ProjectTaskStatus.COMPLETED
+          : ProjectTaskStatus.REJECTED;
+      return ctx.db.projectTask.update({
+        where: { id: input.taskId },
+        data: {
+          status: nextStatus,
+          approvedAt: input.action === "APPROVE" ? new Date() : null,
+          submissionNote: input.note ?? null,
+        },
+      });
+    }),
+
+  requestTaskPayout: protectedProcedure
+    .input(payoutRequestInput)
+    .mutation(async ({ ctx, input }) => {
+      const task = await ctx.db.projectTask.findUnique({
+        where: { id: input.taskId },
+        select: {
+          projectId: true,
+          budgetCents: true,
+          assignedToId: true,
+          payoutRequests: {
+            where: { status: ProjectTaskPayoutStatus.PENDING },
+            select: { id: true },
+          },
+        },
+      });
+      if (!task) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+      if (task.assignedToId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only the assigned contributor can request payouts.",
+        });
+      }
+      if (task.payoutRequests.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You already have a pending payout request for this task.",
+        });
+      }
+      let amount = 0;
+      if (input.type === ProjectTaskPayoutType.HALF) {
+        amount = Math.round(task.budgetCents / 2);
+      } else if (input.type === ProjectTaskPayoutType.FULL) {
+        amount = task.budgetCents;
+      } else {
+        amount = input.amountCents ?? 0;
+      }
+      if (amount <= 0 || amount > task.budgetCents) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid payout amount.",
+        });
+      }
+      return ctx.db.projectTaskPayoutRequest.create({
+        data: {
+          taskId: input.taskId,
+          userId: ctx.session.user.id,
+          amountCents: amount,
+          type: input.type,
+          status: ProjectTaskPayoutStatus.PENDING,
+        },
+      });
+    }),
+
+  respondTaskPayout: protectedProcedure
+    .input(payoutRespondInput)
+    .mutation(async ({ ctx, input }) => {
+      const request = await ctx.db.projectTaskPayoutRequest.findUnique({
+        where: { id: input.requestId },
+        select: {
+          id: true,
+          status: true,
+          task: { select: { projectId: true } },
+        },
+      });
+      if (!request) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Payout request not found." });
+      }
+      await ensureProjectOwner(ctx, request.task.projectId);
+      if (request.status !== ProjectTaskPayoutStatus.PENDING) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Payout request already processed.",
+        });
+      }
+      const nextStatus =
+        input.action === "APPROVE"
+          ? ProjectTaskPayoutStatus.APPROVED
+          : ProjectTaskPayoutStatus.REJECTED;
+      return ctx.db.projectTaskPayoutRequest.update({
+        where: { id: request.id },
+        data: {
+          status: nextStatus,
+          resolvedAt: new Date(),
+        },
+      });
     }),
 
   getSecretMessage: protectedProcedure.query(() => {
