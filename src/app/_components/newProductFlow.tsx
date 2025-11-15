@@ -13,7 +13,7 @@ import {
   StepLabel,
 } from "@mui/material";
 
-const steps = ["Product Details", "Pricing", "Confirmation"];
+const steps = ["About your idea", "Experience & budget", "Review & launch"];
 const products = [
   "Web Development",
   "Mobile App Development",
