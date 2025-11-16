@@ -472,14 +472,22 @@ export default function LatestProject() {
 
   const handleBidSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const amount = Number(bidAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      alert("Bid amount must be greater than zero.");
+    if (selectedBidTaskIds.length === 0) {
+      alert("Select at least one available task to bid on.");
+      return;
+    }
+    const selectedTasks = tasks.filter((task) => selectedBidTaskIds.includes(task.id));
+    const totalCents = selectedTasks.reduce(
+      (sum, task) => sum + (task.budgetCents ?? 0),
+      0,
+    );
+    if (!Number.isFinite(totalCents) || totalCents <= 0) {
+      alert("Selected tasks must have a budget assigned by the owner.");
       return;
     }
     createBid.mutate({
       projectId: parsedId,
-      amount: Math.round(amount),
+      amount: totalCents,
       message: bidMessage.trim() || undefined,
     });
   };
@@ -494,7 +502,7 @@ export default function LatestProject() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskBudget, setNewTaskBudget] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
-  const [bidAmount, setBidAmount] = useState("");
+  const [selectedBidTaskIds, setSelectedBidTaskIds] = useState<number[]>([]);
   const [bidMessage, setBidMessage] = useState("");
 
   const createProject = api.project.create.useMutation({
@@ -516,7 +524,7 @@ export default function LatestProject() {
   const createBid = api.project.bid.useMutation({
     onSuccess: async () => {
       await utils.project.select.invalidate({ id: parsedId });
-      setBidAmount("");
+      setSelectedBidTaskIds([]);
       setBidMessage("");
       alert("Bid submitted for review.");
     },
@@ -543,6 +551,11 @@ export default function LatestProject() {
     typeof paymentSummary?.paidCents === "number" ? paymentSummary.paidCents : 0;
   const outstandingCents = Math.max(totalBudgetCents - paidCents, 0);
   const pendingPayment = paymentSummary?.pendingPayment ?? null;
+  const availableBidTasks = tasks.filter((task) => !task.assignedToId);
+  const selectedBidTotalCents = tasks.reduce((sum, task) => {
+    if (!selectedBidTaskIds.includes(task.id)) return sum;
+    return sum + (task.budgetCents ?? 0);
+  }, 0);
   const refreshTasks = useCallback(async () => {
     await utils.project.tasks.invalidate({ projectId: parsedId });
   }, [parsedId, utils]);
@@ -1166,17 +1179,48 @@ export default function LatestProject() {
               ) : (
                 <form className="mt-3 space-y-3" onSubmit={handleBidSubmit}>
                   <div>
-                    <label className="text-xs uppercase text-gray-500">Your bid (budget portion)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
-                      placeholder="e.g. 5000"
-                      required
-                    />
+                    <label className="text-xs uppercase text-gray-500">
+                      Select the tasks you can deliver
+                    </label>
+                    {availableBidTasks.length ? (
+                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-2xl border bg-white p-3 text-left text-sm text-gray-700">
+                        {availableBidTasks.map((task) => {
+                          const checked = selectedBidTaskIds.includes(task.id);
+                          return (
+                            <label key={task.id} className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                checked={checked}
+                                onChange={() =>
+                                  setSelectedBidTaskIds((prev) =>
+                                    checked
+                                      ? prev.filter((id) => id !== task.id)
+                                      : [...prev, task.id],
+                                  )
+                                }
+                              />
+                              <span>
+                                <span className="font-semibold text-gray-900">{task.title}</span>
+                                <span className="block text-xs text-gray-500">
+                                  {formatCurrency(task.budgetCents)} · {task.status.replaceAll("_", " ")}
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-2 rounded-2xl border border-dashed border-gray-200 p-3 text-sm text-gray-500">
+                        Project owner hasn&apos;t published unassigned tasks yet. Check back later.
+                      </p>
+                    )}
+                    <p className="mt-2 text-xs text-gray-500">
+                      Selected budget total:{" "}
+                      <span className="font-semibold text-gray-900">
+                        {formatCurrency(selectedBidTotalCents)}
+                      </span>
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs uppercase text-gray-500">Why you're a good fit</label>
@@ -1190,7 +1234,7 @@ export default function LatestProject() {
                   </div>
                   <button
                     type="submit"
-                    disabled={createBid.isPending}
+                    disabled={createBid.isPending || availableBidTasks.length === 0}
                     className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                   >
                     {createBid.isPending ? "Submitting..." : "Submit bid"}
