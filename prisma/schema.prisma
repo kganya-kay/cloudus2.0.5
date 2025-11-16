@@ -116,6 +116,29 @@ enum ProjectTaskPayoutType {
   CUSTOM
 }
 
+enum FeedPostType {
+  PROJECT_UPDATE
+  SHOP_DROP
+  VIDEO
+  STORY
+  ANNOUNCEMENT
+}
+
+enum CreatorTier {
+  SEED
+  RISING
+  PRO
+  PARTNER
+  ENTERPRISE
+}
+
+enum CollaborationStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+  COMPLETED
+}
+
 // =====================
 // Shared Address Book
 // =====================
@@ -185,6 +208,116 @@ model Post {
 }
 
 // =====================
+// Creator & Feed Layer
+// =====================
+model CreatorProfile {
+  id          String      @id @default(cuid())
+  userId      String      @unique
+  handle      String      @unique
+  displayName String
+  bio         String?
+  tagline     String?
+  avatarUrl   String?
+  coverUrl    String?
+  website     String?
+  socialLinks String[]    @default([])
+  skills      String[]    @default([])
+  focusAreas  String[]    @default([])
+  tier        CreatorTier @default(SEED)
+  verified    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user             User            @relation(fields: [userId], references: [id])
+  followers        CreatorFollow[] @relation("CreatorFollowers")
+  following        CreatorFollow[] @relation("CreatorFollowing")
+  feedPosts        FeedPost[]
+  earnings         CreatorEarning? @relation(fields: [creatorEarningId], references: [id])
+  creatorEarningId String?
+}
+
+model CreatorFollow {
+  id          Int      @id @default(autoincrement())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  CreatorProfile @relation("CreatorFollowing", fields: [followerId], references: [id])
+  following CreatorProfile @relation("CreatorFollowers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
+model CreatorEarning {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  totalCents     Int       @default(0)
+  availableCents Int       @default(0)
+  lockedCents    Int       @default(0)
+  lastPayoutAt   DateTime?
+
+  user           User             @relation(fields: [userId], references: [id])
+  CreatorProfile CreatorProfile[]
+}
+
+model FeedPost {
+  id          String       @id @default(cuid())
+  creatorId   String
+  projectId   Int?
+  shopItemId  Int?
+  orderId     Int?
+  type        FeedPostType @default(PROJECT_UPDATE)
+  title       String?
+  caption     String?
+  tags        String[]     @default([])
+  coverImage  String?
+  isPinned    Boolean      @default(false)
+  visibility  String       @default("PUBLIC")
+  publishedAt DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  creator          CreatorProfile     @relation(fields: [creatorId], references: [id])
+  project          Project?           @relation(fields: [projectId], references: [id])
+  shopItem         ShopItem?          @relation(fields: [shopItemId], references: [id])
+  order            Order?             @relation(fields: [orderId], references: [id])
+  media            FeedMedia[]
+  reactions        FeedReaction[]
+  AdminReviewQueue AdminReviewQueue[]
+
+  @@index([creatorId])
+  @@index([projectId])
+  @@index([shopItemId])
+}
+
+model FeedMedia {
+  id        String   @id @default(cuid())
+  postId    String
+  url       String
+  type      String   @default("IMAGE")
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  post FeedPost @relation(fields: [postId], references: [id])
+
+  @@index([postId])
+}
+
+model FeedReaction {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  type      String   @default("LIKE")
+  createdAt DateTime @default(now())
+
+  post FeedPost @relation(fields: [postId], references: [id])
+  user User     @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId, type])
+  @@index([userId])
+}
+
+// =====================
 // Core Domain Models
 // =====================
 model Project {
@@ -198,32 +331,54 @@ model Project {
   createdBy   User   @relation("ProjectCreatedBy", fields: [createdById], references: [id])
 
   type          String
-  price         Int      @default(0)
+  category      String?               @default("General")
+  tags          String[]              @default([])
+  visibility    String                @default("PUBLIC")
+  featured      Boolean               @default(false)
+  heroVideo     String?
+  price         Int                   @default(0)
   description   String
-  image         String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-  count         Int      @default(autoincrement())
+  image         String                @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+  count         Int                   @default(autoincrement())
   link          String
   links         String[]
   // Contributors (M-N) explicitly named
-  contributors  User[]   @relation("ProjectContributors")
+  contributors  User[]                @relation("ProjectContributors")
   api           String
-  openSource    Boolean  @default(true)
-  privacy       Boolean  @default(false)
-  completed     Boolean  @default(false)
-  status        String   @default("Initialized")
-  contactNumber Int      @default(00000000000)
-  cost          Int      @default(0)
-  rating        Int      @default(5)
+  openSource    Boolean               @default(true)
+  privacy       Boolean               @default(false)
+  completed     Boolean               @default(false)
+  status        String                @default("Initialized")
+  contactNumber Int                   @default(00000000000)
+  cost          Int                   @default(0)
+  rating        Int                   @default(5)
   bids          ProjectBid[]
   tasks         ProjectTask[]
   payments      ProjectPayment[]
+  followers     ProjectFollower[]
+  invites       CollaborationInvite[]
+  feedPosts     FeedPost[]
 
   // Social
-  comments Comment[] @relation("ProjectComments")
-  likes    Like[]    @relation("ProjectLikes")
-  upvotes  Upvote[]  @relation("ProjectUpvotes")
+  comments         Comment[]          @relation("ProjectComments")
+  likes            Like[]             @relation("ProjectLikes")
+  upvotes          Upvote[]           @relation("ProjectUpvotes")
+  AdminReviewQueue AdminReviewQueue[]
 
   @@index([name])
+}
+
+model ProjectFollower {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  userId    String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+  @@index([userId])
 }
 
 model ShopItem {
@@ -255,9 +410,11 @@ model ShopItem {
   orders Order[] @relation("ShopItemOrders")
 
   // Social
-  comments Comment[] @relation("ShopItemComments")
-  likes    Like[]    @relation("ShopItemLikes")
-  upvotes  Upvote[]  @relation("ShopItemUpvotes")
+  comments         Comment[]          @relation("ShopItemComments")
+  likes            Like[]             @relation("ShopItemLikes")
+  upvotes          Upvote[]           @relation("ShopItemUpvotes")
+  feedPosts        FeedPost[]
+  AdminReviewQueue AdminReviewQueue[]
 
   @@index([name])
 }
@@ -323,6 +480,7 @@ model Order {
   payouts       SupplierPayout[]
   auditLogs     AuditLog[]
   SupplierQuote SupplierQuote[]
+  feedPosts     FeedPost[]
 
   customerLocationLat      Float?
   customerLocationLng      Float?
@@ -369,6 +527,10 @@ model ProjectPayment {
   providerRef String?
   receiptUrl  String?
   purpose     String        @default("DEPOSIT")
+  label       String?       @default("Milestone")
+  sequence    Int?
+  dueAt       DateTime?
+  releasedAt  DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -519,11 +681,14 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  role       Role      @default(CUSTOMER)
-  supplierId String?
-  supplier   Supplier? @relation(fields: [supplierId], references: [id])
-  driverId   String?
-  driver     Driver?   @relation(fields: [driverId], references: [id])
+  role           Role            @default(CUSTOMER)
+  isCreator      Boolean         @default(false)
+  supplierId     String?
+  supplier       Supplier?       @relation(fields: [supplierId], references: [id])
+  driverId       String?
+  driver         Driver?         @relation(fields: [driverId], references: [id])
+  creatorProfile CreatorProfile?
+  creatorEarning CreatorEarning?
 
   // Back-rels for created entities (explicit names to avoid clashes with M-N)
   projectsCreated  Project[]  @relation("ProjectCreatedBy")
@@ -532,21 +697,27 @@ model User {
   caretakerOrders  Order[]    @relation("OrderCaretaker")
 
   // M-N contributor relations
-  projectContributions  Project[]  @relation("ProjectContributors")
-  shopItemContributions ShopItem[] @relation("ShopItemContributors")
-  projectBids          ProjectBid[]
-  projectTasksAssigned ProjectTask[]        @relation("ProjectTaskAssigned")
-  projectTaskPayouts   ProjectTaskPayoutRequest[]
+  projectContributions         Project[]                  @relation("ProjectContributors")
+  shopItemContributions        ShopItem[]                 @relation("ShopItemContributors")
+  projectBids                  ProjectBid[]
+  projectTasksAssigned         ProjectTask[]              @relation("ProjectTaskAssigned")
+  projectTaskPayouts           ProjectTaskPayoutRequest[]
+  projectFollowing             ProjectFollower[]
+  feedReactions                FeedReaction[]
+  collaborationInvitesSent     CollaborationInvite[]      @relation("CollaborationInviter")
+  collaborationInvitesReceived CollaborationInvite[]      @relation("CollaborationInvitee")
 
   // Careers
   jobPosts        Job[]            @relation("JobCreatedBy")
   jobApplications JobApplication[] @relation("JobApplicationUser")
 
   // Addresses
-  addresses UserAddress[]
+  addresses         UserAddress[]
   // back-rel for posts authored by this user
-  posts     Post[]        @relation("PostCreatedBy")
-  notifications Notification[]
+  posts             Post[]              @relation("PostCreatedBy")
+  notifications     Notification[]
+  AdminAnnouncement AdminAnnouncement[]
+  AdminReviewQueue  AdminReviewQueue[]
 }
 
 model VerificationToken {
@@ -561,25 +732,25 @@ model VerificationToken {
 // Fulfilment Layer
 // =====================
 model Supplier {
-  id         String          @id @default(cuid())
-  name       String
-  phone      String
+  id           String          @id @default(cuid())
+  name         String
+  phone        String
   addressLine1 String?
-  email      String?
-  suburb     String?
-  city       String?
-  pricePerKg Int? // cents, for laundry
-  isActive   Boolean         @default(true)
-  rating     Float? // 1..5
-  notes      String?
-  quotes     SupplierQuote[]
-  orders     Order[]         @relation("SupplierOrders")
-  createdAt  DateTime        @default(now())
+  email        String?
+  suburb       String?
+  city         String?
+  pricePerKg   Int? // cents, for laundry
+  isActive     Boolean         @default(true)
+  rating       Float? // 1..5
+  notes        String?
+  quotes       SupplierQuote[]
+  orders       Order[]         @relation("SupplierOrders")
+  createdAt    DateTime        @default(now())
 
-  addresses      SupplierAddress[]
-  SupplierPayout SupplierPayout[]
-  User           User[]
-  shopItems      ShopItem[]
+  addresses            SupplierAddress[]
+  SupplierPayout       SupplierPayout[]
+  User                 User[]
+  shopItems            ShopItem[]
   lastLocationLat      Float?
   lastLocationLng      Float?
   lastLocationAccuracy Float?
@@ -587,21 +758,34 @@ model Supplier {
 }
 
 model ProjectBid {
-  id         Int               @id @default(autoincrement())
-  projectId  Int
-  userId     String
-  amount     Int
-  message    String?
-  status     ProjectBidStatus  @default(PENDING)
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  id        Int              @id @default(autoincrement())
+  projectId Int
+  userId    String
+  amount    Int
+  message   String?
+  status    ProjectBidStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
-  project    Project           @relation(fields: [projectId], references: [id])
-  user       User              @relation(fields: [userId], references: [id])
+  project Project          @relation(fields: [projectId], references: [id])
+  user    User             @relation(fields: [userId], references: [id])
+  tasks   ProjectBidTask[]
 
+  @@unique([projectId, userId], map: "project_bid_unique_user")
   @@index([projectId])
   @@index([userId])
-  @@unique([projectId, userId], map: "project_bid_unique_user")
+}
+
+model ProjectBidTask {
+  id     Int @id @default(autoincrement())
+  bidId  Int
+  taskId Int
+
+  bid  ProjectBid  @relation(fields: [bidId], references: [id])
+  task ProjectTask @relation(fields: [taskId], references: [id])
+
+  @@unique([bidId, taskId])
+  @@index([taskId])
 }
 
 model ProjectTask {
@@ -617,41 +801,65 @@ model ProjectTask {
   approvedAt     DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
+  skills         String[]          @default([])
+  media          String[]          @default([])
 
-  project        Project           @relation(fields: [projectId], references: [id])
-  assignedTo     User?             @relation("ProjectTaskAssigned", fields: [assignedToId], references: [id])
+  project        Project                    @relation(fields: [projectId], references: [id])
+  assignedTo     User?                      @relation("ProjectTaskAssigned", fields: [assignedToId], references: [id])
   payoutRequests ProjectTaskPayoutRequest[]
+  bidSelections  ProjectBidTask[]
+  invites        CollaborationInvite[]
 
   @@index([projectId])
   @@index([assignedToId])
 }
 
 model ProjectTaskPayoutRequest {
-  id          Int                       @id @default(autoincrement())
+  id          Int                     @id @default(autoincrement())
   taskId      Int
   userId      String
   amountCents Int
   type        ProjectTaskPayoutType
-  status      ProjectTaskPayoutStatus  @default(PENDING)
-  createdAt   DateTime                 @default(now())
+  status      ProjectTaskPayoutStatus @default(PENDING)
+  createdAt   DateTime                @default(now())
   resolvedAt  DateTime?
 
-  task        ProjectTask              @relation(fields: [taskId], references: [id])
-  user        User                     @relation(fields: [userId], references: [id])
+  task ProjectTask @relation(fields: [taskId], references: [id])
+  user User        @relation(fields: [userId], references: [id])
 
   @@index([taskId])
   @@index([userId])
 }
 
+model CollaborationInvite {
+  id          String              @id @default(cuid())
+  projectId   Int
+  taskId      Int?
+  inviterId   String
+  inviteeId   String
+  status      CollaborationStatus @default(INVITED)
+  message     String?
+  createdAt   DateTime            @default(now())
+  respondedAt DateTime?
+
+  project Project      @relation(fields: [projectId], references: [id])
+  task    ProjectTask? @relation(fields: [taskId], references: [id])
+  inviter User         @relation("CollaborationInviter", fields: [inviterId], references: [id])
+  invitee User         @relation("CollaborationInvitee", fields: [inviteeId], references: [id])
+
+  @@index([projectId])
+  @@index([inviteeId])
+}
+
 model Notification {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   type      String
   title     String
   body      String
   data      Json?
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -659,18 +867,51 @@ model Notification {
   @@index([userId, createdAt])
 }
 
+model AdminAnnouncement {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  link        String?
+  audience    String   @default("ALL")
+  publishedAt DateTime @default(now())
+  createdById String?
+
+  createdBy User? @relation(fields: [createdById], references: [id])
+}
+
+model AdminReviewQueue {
+  id         String    @id @default(cuid())
+  feedPostId String?
+  projectId  Int?
+  shopItemId Int?
+  status     String    @default("PENDING")
+  reason     String?
+  reviewerId String?
+  createdAt  DateTime  @default(now())
+  reviewedAt DateTime?
+
+  feedPost FeedPost? @relation(fields: [feedPostId], references: [id])
+  project  Project?  @relation(fields: [projectId], references: [id])
+  shopItem ShopItem? @relation(fields: [shopItemId], references: [id])
+  reviewer User?     @relation(fields: [reviewerId], references: [id])
+
+  @@index([status])
+  @@index([feedPostId])
+  @@index([projectId])
+}
+
 model Driver {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  email     String?
-  suburb    String?
-  city      String?
-  vehicle   String?
-  isActive  Boolean  @default(true)
-  rating    Float?
-  notes     String?
-  createdAt DateTime @default(now())
+  id                   String    @id @default(cuid())
+  name                 String
+  phone                String
+  email                String?
+  suburb               String?
+  city                 String?
+  vehicle              String?
+  isActive             Boolean   @default(true)
+  rating               Float?
+  notes                String?
+  createdAt            DateTime  @default(now())
   lastLocationLat      Float?
   lastLocationLng      Float?
   lastLocationAccuracy Float?

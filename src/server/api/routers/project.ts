@@ -88,7 +88,7 @@ const updatableFields = z
 
 const bidInput = z.object({
   projectId: z.number().int().positive(),
-  amount: z.number().int().positive(),
+  taskIds: z.array(z.number().int().positive()).min(1),
   message: z.string().max(1000).optional(),
 });
 
@@ -415,13 +415,36 @@ export const projectRouter = createTRPCRouter({
           message: "You already have a pending bid for this project.",
         });
       }
+      const tasks = await ctx.db.projectTask.findMany({
+        where: {
+          id: { in: input.taskIds },
+          projectId: project.id,
+        },
+        select: { id: true, budgetCents: true },
+      });
+      if (tasks.length !== input.taskIds.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One or more selected tasks are invalid for this project.",
+        });
+      }
+      const totalBudget = tasks.reduce((sum: number, task) => sum + (task.budgetCents ?? 0), 0);
+      if (totalBudget <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Selected tasks must have a budget assigned.",
+        });
+      }
       return ctx.db.projectBid.create({
         data: {
           projectId: project.id,
           userId: ctx.session.user.id,
-          amount: Math.max(1, Math.round(input.amount)),
+          amount: Math.max(1, totalBudget),
           message: input.message ?? null,
           status: ProjectBidStatus.PENDING,
+          tasks: {
+            create: tasks.map((task) => ({ taskId: task.id })),
+          },
         },
       });
     }),
@@ -446,6 +469,11 @@ export const projectRouter = createTRPCRouter({
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { id: true, name: true, email: true } },
+          tasks: {
+            include: {
+              task: { select: { id: true, title: true, budgetCents: true, status: true } },
+            },
+          },
         },
       });
     }),

@@ -487,7 +487,7 @@ export default function LatestProject() {
     }
     createBid.mutate({
       projectId: parsedId,
-      amount: totalCents,
+      taskIds: selectedBidTaskIds,
       message: bidMessage.trim() || undefined,
     });
   };

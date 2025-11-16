@@ -10,6 +10,9 @@ import { careersRouter } from "./routers/careers";
 import { driverRouter } from "./routers/driver";
 import { notificationRouter } from "./routers/notification";
 import { assistantRouter } from "./routers/assistant";
+import { creatorRouter } from "./routers/creator";
+import { feedRouter } from "./routers/feed";
+import { platformRouter } from "./routers/platform";
 
 
 /**
@@ -29,6 +32,9 @@ export const appRouter = createTRPCRouter({
   driver: driverRouter,
   notification: notificationRouter,
   assistant: assistantRouter,
+  creator: creatorRouter,
+  feed: feedRouter,
+  platform: platformRouter,
 });
 
 // export type definition of API

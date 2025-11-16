@@ -30,11 +30,16 @@ import LaundryDetails from "./_components/laundryDetails";
 import { AssistantSearchBar } from "./_components/AssistantSearchBar";
 import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
+import type { RouterOutputs } from "~/trpc/react";
 
 const navigation = [
   { name: "Dashboard", href: "/" },
-  { name: "Shop", href: "/shop" },
+  { name: "Feed", href: "/feed" },
   { name: "Projects", href: "/projects" },
+  { name: "Shop", href: "/shop" },
+  { name: "Suppliers", href: "/suppliers/dashboard" },
+  { name: "Drivers", href: "/drivers/dashboard" },
+  { name: "Creators", href: "/creators/dashboard" },
   { name: "Team", href: "/team" },
   { name: "Calendar", href: "/calendar" },
   { name: "Careers", href: "/careers" },
@@ -49,6 +54,9 @@ const tabs = [
   { name: "Food", key: "food" },
 ];
 
+type FeaturedCreator = RouterOutputs["creator"]["featured"][number];
+type Announcement = RouterOutputs["platform"]["announcements"][number];
+
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
@@ -56,9 +64,13 @@ function classNames(...classes: string[]) {
 export default function DashboardShell({
   user,
   session,
+  featuredCreators,
+  announcements,
 }: {
   user: { name: string; image: string; email: string };
   session: boolean;
+  featuredCreators: FeaturedCreator[];
+  announcements: Announcement[];
 }) {
   const [activeTab, setActiveTab] = useState<string>("All");
   const notificationsQuery = api.notification.list.useQuery(undefined, {
@@ -370,6 +382,8 @@ export default function DashboardShell({
               </div>
             </div>
 
+            <CreatorSpotlight creators={featuredCreators} announcements={announcements} />
+
             {/* Content switch */}
             <ContentSwitch activeTab={activeTab} />
 
@@ -378,6 +392,97 @@ export default function DashboardShell({
         </div>
       </div>
     </div>
+  );
+}
+
+function CreatorSpotlight({
+  creators,
+  announcements,
+}: {
+  creators: FeaturedCreator[];
+  announcements: Announcement[];
+}) {
+  if (creators.length === 0 && announcements.length === 0) {
+    return null;
+  }
+  return (
+    <section className="mt-6 grid gap-4 rounded-3xl border border-blue-100 bg-white/80 p-4 shadow-sm lg:grid-cols-[2fr,1fr]">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Creator spotlight</p>
+            <h3 className="text-base font-semibold text-gray-900">Top collaborators</h3>
+          </div>
+          <Link href="/feed" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+            View feed →
+          </Link>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {creators.slice(0, 4).map((creator) => (
+            <article
+              key={creator.id}
+              className="rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700"
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={
+                    creator.avatarUrl ??
+                    creator.user?.image ??
+                    "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
+                  }
+                  alt={creator.displayName}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <div>
+                  <p className="font-semibold text-gray-900">{creator.displayName}</p>
+                  <p className="text-xs text-gray-500">@{creator.handle}</p>
+                </div>
+              </div>
+              {creator.tagline && (
+                <p className="mt-2 text-xs text-gray-600 line-clamp-2">{creator.tagline}</p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-1 text-[10px] uppercase text-blue-700">
+                {creator.skills.slice(0, 2).map((skill) => (
+                  <span key={skill} className="rounded-full bg-white px-2 py-0.5">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+          {creators.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-blue-200 p-3 text-sm text-gray-500">
+              No creator stories yet. Head to the{" "}
+              <Link href="/feed" className="text-blue-600 underline">
+                feed
+              </Link>{" "}
+              to share one.
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="space-y-3 rounded-2xl border border-dashed border-gray-200 p-3">
+        <p className="text-xs uppercase tracking-wide text-gray-500">Announcements</p>
+        {announcements.length === 0 ? (
+          <p className="text-sm text-gray-500">Nothing new right now.</p>
+        ) : (
+          announcements.slice(0, 3).map((announcement) => (
+            <div key={announcement.id} className="rounded-xl bg-gray-50 p-3">
+              <p className="text-sm font-semibold text-gray-900">{announcement.title}</p>
+              <p className="text-xs text-gray-600">{announcement.body}</p>
+              {announcement.link && (
+                <Link
+                  href={announcement.link}
+                  className="mt-1 inline-flex text-xs font-semibold text-blue-600"
+                >
+                  Details →
+                </Link>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </section>
   );
 }
 

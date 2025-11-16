@@ -20,6 +20,11 @@ export default async function Page(props: any) {
     await api.post.getLatest.prefetch();
   }
 
+  const [featuredCreators, announcements] = await Promise.all([
+    api.creator.featured(),
+    api.platform.announcements({ limit: 3 }),
+  ]);
+
   const toastKey = (props?.searchParams?.toast as string) ?? null;
 
   return (
@@ -27,7 +32,12 @@ export default async function Page(props: any) {
       {toastKey === "login_required" && (
         <ToastBanner variant="warning" message="You need to log in to see your profile." />
       )}
-      <DashboardShell user={user} session={!!session} />
+      <DashboardShell
+        user={user}
+        session={!!session}
+        featuredCreators={featuredCreators}
+        announcements={announcements}
+      />
     </HydrateClient>
   );
 }
