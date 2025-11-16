@@ -814,7 +814,7 @@ export const projectRouter = createTRPCRouter({
         .join("\n\n");
       const contactName = `${input.contact.firstName} ${input.contact.lastName}`.trim();
       const phoneNumber = cleanPhoneToNumber(input.contact.phone);
-      const result = await ctx.db.$transaction(async (tx: typeof ctx.db) => {
+      const result = await ctx.db.$transaction(async (tx) => {
         const project = await tx.project.create({
           data: {
             name: input.idea.title,
