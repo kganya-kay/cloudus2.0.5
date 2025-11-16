@@ -141,6 +141,71 @@ const payoutRespondInput = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
 });
 
+const launchConfiguratorInput = z.object({
+  idea: z.object({
+    title: z.string().min(3),
+    goal: z.string().min(10),
+    audience: z.string().min(3),
+    success: z.string().min(3),
+    launchType: z.string().min(2),
+    timeline: z.string().min(3),
+    aiSummary: z.string().optional(),
+  }),
+  contact: z.object({
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    email: z.string().email(),
+    phone: z.string().min(5),
+    company: z.string().min(1),
+    website: z.string().url().optional(),
+  }),
+  budget: z.object({
+    totalZar: z.number().positive(),
+    currency: z.string().min(2).max(5).default("ZAR"),
+    depositPercent: z.number().min(10).max(90).default(50),
+  }),
+  notes: z.string().max(2000).optional(),
+});
+
+const cleanPhoneToNumber = (value: string) => {
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) return 0;
+  const asNumber = Number(digits);
+  return Number.isNaN(asNumber) ? 0 : asNumber;
+};
+
+const resolveLeadOwnerUserId = async (
+  ctx: { session?: { user?: { id: string } } | null; db: any },
+  contact: { firstName: string; lastName: string; email: string },
+) => {
+  if (ctx.session?.user?.id) {
+    return ctx.session.user.id;
+  }
+  const existing = await ctx.db.user.findUnique({
+    where: { email: contact.email },
+    select: { id: true },
+  });
+  if (existing?.id) {
+    return existing.id;
+  }
+  const fullName = `${contact.firstName} ${contact.lastName}`.trim() || contact.email;
+  const created = await ctx.db.user.create({
+    data: {
+      email: contact.email,
+      name: fullName,
+      role: Role.CUSTOMER,
+    },
+    select: { id: true },
+  });
+  if (!created?.id) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Unable to create project owner for configurator submission.",
+    });
+  }
+  return created.id;
+};
+
 export const projectRouter = createTRPCRouter({
   hello: publicProcedure
     .input(z.object({ text: z.string() }))
@@ -712,6 +777,91 @@ export const projectRouter = createTRPCRouter({
           resolvedAt: new Date(),
         },
       });
+    }),
+
+  launchConfigurator: publicProcedure
+    .input(launchConfiguratorInput)
+    .mutation(async ({ ctx, input }) => {
+      const ownerId = await resolveLeadOwnerUserId(ctx, input.contact);
+      const totalBudgetCents = Math.round(input.budget.totalZar * 100);
+      if (totalBudgetCents <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Budget must be greater than zero.",
+        });
+      }
+      const depositPercent = input.budget.depositPercent ?? 50;
+      const depositAmountCents = Math.max(
+        100,
+        Math.round(totalBudgetCents * (depositPercent / 100)),
+      );
+      const highlightLinks = [
+        `Goal: ${input.idea.goal}`,
+        `Audience: ${input.idea.audience}`,
+        `Success: ${input.idea.success}`,
+        `Timeline: ${input.idea.timeline}`,
+        input.notes ? `Notes: ${input.notes}` : null,
+      ].filter((item): item is string => Boolean(item));
+      const summary = [
+        input.idea.goal,
+        `Primary audience: ${input.idea.audience}`,
+        `Success looks like: ${input.idea.success}`,
+        `Desired launch timeline: ${input.idea.timeline}`,
+        input.notes,
+        input.idea.aiSummary,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+      const contactName = `${input.contact.firstName} ${input.contact.lastName}`.trim();
+      const phoneNumber = cleanPhoneToNumber(input.contact.phone);
+      const result = await ctx.db.$transaction(async (tx: typeof ctx.db) => {
+        const project = await tx.project.create({
+          data: {
+            name: input.idea.title,
+            description: summary,
+            createdBy: { connect: { id: ownerId } },
+            type: input.idea.launchType,
+            price: totalBudgetCents,
+            link: "/projects",
+            api: "projects.launch-configurator",
+            contactNumber: phoneNumber,
+            links: highlightLinks.slice(0, 5),
+            status: "Pending 50% deposit",
+            image: "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
+          },
+        });
+        const projectLink = `/projects/${project.id}`;
+        await tx.project.update({
+          where: { id: project.id },
+          data: { link: projectLink },
+        });
+        const order = await tx.order.create({
+          data: {
+            name: `Deposit for ${project.name}`,
+            createdById: ownerId,
+            price: depositAmountCents,
+            description: `50% deposit to activate project "${project.name}"`,
+            link: projectLink,
+            api: "projects.launch-configurator-deposit",
+            links: [`project:${project.id}`],
+            image: project.image,
+            customerId: ownerId,
+            customerName: contactName,
+            customerPhone: input.contact.phone,
+            customerEmail: input.contact.email,
+            currency: input.budget.currency,
+          },
+        });
+        return { projectId: project.id, orderId: order.id };
+      });
+      return {
+        projectId: result.projectId,
+        projectStatus: "Pending 50% deposit" as const,
+        depositOrderId: result.orderId,
+        depositAmountCents,
+        depositPercent,
+        paymentPath: `/shop/orders/${result.orderId}`,
+      };
     }),
 
   getSecretMessage: protectedProcedure.query(() => {
