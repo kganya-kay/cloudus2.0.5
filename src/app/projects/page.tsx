@@ -16,8 +16,12 @@ import AllProjects from "~/app/_components/allProjects";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
-  { name: "Shop", href: "/shop", current: false },
+  { name: "Feed", href: "/feed", current: false },
   { name: "Projects", href: "/projects", current: true },
+  { name: "Shop", href: "/shop", current: false },
+  { name: "Suppliers", href: "/suppliers/dashboard", current: false },
+  { name: "Drivers", href: "/drivers/dashboard", current: false },
+  { name: "Creators", href: "/creators/dashboard", current: false },
   { name: "Team", href: "/team", current: false },
   { name: "Calendar", href: "/calendar", current: false },
   { name: "Careers", href: "/careers", current: false },
