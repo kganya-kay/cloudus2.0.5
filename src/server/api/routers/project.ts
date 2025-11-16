@@ -909,6 +909,7 @@ export const projectRouter = createTRPCRouter({
         projectStatus: "Pending 50% deposit" as const,
         depositAmountCents,
         depositPercent,
+        depositCurrency: input.budget.currency,
         projectPaymentId: result.projectPaymentId,
         paymentPath: `/projects/${result.projectId}/payment?paymentId=${result.projectPaymentId}`,
       };

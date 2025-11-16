@@ -67,6 +67,7 @@ type SubmissionResult = {
   projectPaymentId: string;
   depositAmountCents: number;
   depositPercent: number;
+  depositCurrency: string;
   paymentPath: string;
 };
 
@@ -99,6 +100,8 @@ export default function NewProductFlow() {
   const [error, setError] = useState<string | null>(null);
   const [submission, setSubmission] = useState<SubmissionResult | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const assistant = api.assistant.ask.useMutation({
     onSuccess: (data) => setAiCoaching(data.answer),
@@ -149,6 +152,8 @@ export default function NewProductFlow() {
     setAiCoaching(null);
     setError(null);
     setSubmission(null);
+    setPaymentError(null);
+    setPaymentLoading(false);
   };
 
   const handleOpen = () => {
@@ -242,6 +247,29 @@ export default function NewProductFlow() {
       },
       notes: notes.trim() || undefined,
     });
+  };
+
+  const startDepositCheckout = async () => {
+    if (!submission?.projectPaymentId || paymentLoading) return;
+    try {
+      setPaymentError(null);
+      setPaymentLoading(true);
+      const response = await fetch("/api/projects/payments/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: submission.projectPaymentId }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { checkoutUrl?: string; error?: string }
+        | null;
+      if (!response.ok || !data?.checkoutUrl) {
+        throw new Error(data?.error ?? "Unable to start payment. Please try again.");
+      }
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : "Unable to start deposit payment.");
+      setPaymentLoading(false);
+    }
   };
 
   const askNavigator = () => {
@@ -566,12 +594,20 @@ export default function NewProductFlow() {
                   Deposit required now ({submission.depositPercent}%)
                 </p>
                 <p className="mt-2 text-3xl font-semibold text-emerald-700">
-                  {money(submission.depositAmountCents, budget.currency)}
+                  {money(submission.depositAmountCents, submission.depositCurrency)}
                 </p>
                 <p className="mt-1 text-sm text-gray-600">
                   Paying the deposit activates your tasks, supplier sourcing, and driver routing.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
+                  <Button
+                    onClick={startDepositCheckout}
+                    disabled={paymentLoading}
+                    variant="contained"
+                    className="!rounded-full !bg-blue-600 !px-5"
+                  >
+                    {paymentLoading ? "Launching checkout..." : "Pay deposit now"}
+                  </Button>
                   <Button
                     component={Link}
                     href={submission.paymentPath}
@@ -594,6 +630,39 @@ export default function NewProductFlow() {
                 <p className="mt-3 text-xs text-gray-500">
                   Payment reference: {submission.projectPaymentId}
                 </p>
+                {paymentError && (
+                  <p className="mt-2 text-xs text-red-600">{paymentError}</p>
+                )}
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-left text-sm text-gray-700">
+                <p className="text-xs font-semibold uppercase text-gray-500">Project summary</p>
+                <p className="mt-2 text-lg font-semibold text-gray-900">{idea.title}</p>
+                <p className="mt-1 text-gray-700">{idea.goal}</p>
+                <dl className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-gray-500">Audience</dt>
+                    <dd className="text-sm text-gray-800">{idea.audience}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-gray-500">Success metric</dt>
+                    <dd className="text-sm text-gray-800">{idea.success}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-gray-500">Timeline</dt>
+                    <dd className="text-sm text-gray-800">{idea.timeline}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-gray-500">Budget</dt>
+                    <dd className="text-sm font-semibold text-gray-900">
+                      {money(totalBudgetCents, budget.currency)}
+                    </dd>
+                  </div>
+                </dl>
+                {notes && (
+                  <p className="mt-3 text-xs text-gray-500">
+                    Notes: <span className="text-gray-800">{notes}</span>
+                  </p>
+                )}
               </div>
               <p className="text-xs text-gray-500">
                 Need assistance? WhatsApp{" "}
