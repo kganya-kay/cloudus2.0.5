@@ -12,12 +12,16 @@ import {
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import AllShopItems from "../_components/allShopItems";
+import { MarketplaceTasksPanel } from "../_components/MarketplaceTasksPanel";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
   { name: "Shop", href: "/shop", current: true },
+  { name: "Feed", href: "/feed", current: false },
   { name: "Projects", href: "/projects", current: false },
-  { name: "Team", href: "/team", current: false },
+  { name: "Suppliers", href: "/suppliers/dashboard", current: false },
+  { name: "Drivers", href: "/drivers/dashboard", current: false },
+  { name: "Creators", href: "/creators/dashboard", current: false },
   { name: "Calendar", href: "/calendar", current: false },
   { name: "Careers", href: "/careers", current: false },
 ];
@@ -29,6 +33,10 @@ function classNames(...classes: string[]) {
 export default async function Home() {
   await api.post.hello({ text: "from Cloudus" });
   const session = await auth();
+  const [announcements, featuredCreators] = await Promise.all([
+    api.platform.announcements({ limit: 3 }),
+    api.creator.featured(),
+  ]);
 
   const user = {
     name: session?.user.name ?? "Guest",
@@ -174,18 +182,102 @@ export default async function Home() {
           </DisclosurePanel>
         </Disclosure>
 
-        {/* Page header */}
-        <header className="bg-white shadow">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-800">Shop</h1>
+        <header className="bg-gradient-to-br from-white via-blue-50 to-white shadow">
+          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-wide text-blue-600">Cloudus shop</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Curated services, powered by the creator marketplace.
+              </h1>
+              <p className="text-sm text-gray-600">
+                Book packaged services and tap into the creator feed to keep your launch, supplier,
+                and driver collaborators in sync.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/feed"
+                  className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  View creator feed
+                </Link>
+                <Link
+                  href="/projects/create"
+                  className="rounded-full border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700"
+                >
+                  Launch a project
+                </Link>
+              </div>
+            </div>
+            <div className="rounded-3xl border border-blue-100 bg-white/80 p-4 text-sm">
+              <p className="text-xs uppercase tracking-wide text-gray-500">ANNOUNCEMENTS</p>
+              <ul className="mt-2 space-y-2">
+                {(announcements ?? []).map((announcement) => (
+                  <li key={announcement.id}>
+                    <p className="font-semibold text-gray-900">{announcement.title}</p>
+                    <p className="text-xs text-gray-600">{announcement.body}</p>
+                  </li>
+                ))}
+                {(announcements ?? []).length === 0 && (
+                  <li className="text-xs text-gray-500">No announcements right now.</li>
+                )}
+              </ul>
+            </div>
           </div>
         </header>
 
         {/* Main content */}
         <main className="min-h-screen bg-gray-100">
           <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-xl shadow-md p-4">
-              <AllShopItems />
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="space-y-6">
+                <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-4">
+                  <AllShopItems />
+                </div>
+              </div>
+              <div className="space-y-6">
+                <section className="rounded-3xl border border-gray-100 bg-white/80 p-4 shadow-sm">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Creator spotlight</p>
+                  <div className="mt-3 space-y-3">
+                    {(featuredCreators ?? []).slice(0, 3).map((creator) => (
+                      <article key={creator.id} className="rounded-2xl border border-blue-50 p-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              creator.avatarUrl ??
+                              creator.user?.image ??
+                              "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
+                            }
+                            alt={creator.displayName}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {creator.displayName}
+                            </p>
+                            <p className="text-xs text-gray-500">@{creator.handle}</p>
+                          </div>
+                        </div>
+                        {creator.tagline && (
+                          <p className="mt-2 text-xs text-gray-600 line-clamp-2">
+                            {creator.tagline}
+                          </p>
+                        )}
+                      </article>
+                    ))}
+                    {(featuredCreators ?? []).length === 0 && (
+                      <p className="text-xs text-gray-500">
+                        No creator stories yet. Visit{" "}
+                        <Link href="/feed" className="text-blue-600 underline">
+                          the feed
+                        </Link>{" "}
+                        to meet the community.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <MarketplaceTasksPanel role="CREATOR" limit={4} title="Tasks matching shop orders" />
+              </div>
             </div>
           </div>
         </main>
