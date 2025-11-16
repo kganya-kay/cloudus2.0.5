@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowDownTrayIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
+import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 
 type CreatorMe = RouterOutputs["creator"]["me"];
 type FeedItem = RouterOutputs["feed"]["list"]["items"][number];
+type ContributorOverview = RouterOutputs["project"]["contributorOverview"];
 
 const formatCurrency = (value?: number | null) => {
   if (!value || Number.isNaN(value)) return "R 0";
@@ -26,9 +28,11 @@ const formatCurrency = (value?: number | null) => {
 export default function CreatorDashboardClient({
   initialProfile,
   recentFeed,
+  workSummary,
 }: {
   initialProfile: CreatorMe;
   recentFeed: FeedItem[];
+  workSummary?: ContributorOverview | null;
 }) {
   const utils = api.useUtils();
   const profile = initialProfile.profile;
@@ -47,6 +51,15 @@ export default function CreatorDashboardClient({
       await utils.creator.me.invalidate();
     },
   });
+
+  const overviewQuery = api.project.contributorOverview.useQuery(undefined, {
+    initialData: workSummary ?? undefined,
+    refetchInterval: 90_000,
+  });
+  const contributorOverview = overviewQuery.data;
+  const activeTasks = contributorOverview?.activeTasks ?? [];
+  const payoutRequests = contributorOverview?.payoutRequests ?? [];
+  const notifications = contributorOverview?.notifications ?? [];
 
   const creatorStats = useMemo(() => {
     const followerCount = profile?._count?.followers ?? 0;
@@ -231,6 +244,136 @@ export default function CreatorDashboardClient({
           ))}
         </div>
       </section>
+
+      <section className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">Active tasks</p>
+                <h2 className="text-lg font-semibold text-gray-900">Keep work moving</h2>
+              </div>
+              <span className="text-xs font-semibold text-gray-500">
+                {overviewQuery.isLoading ? "Updating..." : `${activeTasks.length} tasks`}
+              </span>
+            </div>
+            {activeTasks.length === 0 ? (
+              <p className="mt-3 text-sm text-gray-500">
+                No tasks assigned. Claim briefs from the marketplace to get started.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {activeTasks.map((task) => (
+                  <li
+                    key={task.id}
+                    className="rounded-2xl border border-blue-100 px-4 py-3 text-sm text-gray-700"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-gray-900">{task.title}</p>
+                        <p className="text-xs text-gray-500">{task.project.name}</p>
+                      </div>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-700">
+                        {task.status.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {formatCurrency(task.budgetCents)} budget
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Link
+                        href={`/projects/${task.project.id}#tasks`}
+                        className="inline-flex items-center rounded-full border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700"
+                      >
+                        Update progress
+                      </Link>
+                      {task.status === "BACKLOG" && (
+                        <Link
+                          href={`/projects/${task.project.id}#tasks`}
+                          className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700"
+                        >
+                          Claim task
+                        </Link>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="rounded-3xl border border-emerald-100 bg-emerald-50/60 p-5 text-sm text-gray-700">
+            <p className="text-xs uppercase tracking-wide text-emerald-700">Payouts & requests</p>
+            {payoutRequests.length === 0 ? (
+              <p className="mt-2 text-sm text-gray-600">
+                No payout requests in review. Submit from a task once you deliver work.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {payoutRequests.map((request) => (
+                  <li key={request.id} className="rounded-2xl bg-white/80 p-3 shadow-sm">
+                    <p className="text-sm font-semibold text-gray-900">{request.task.title}</p>
+                    <p className="text-xs text-gray-500">{request.task.project.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {formatCurrency(request.amountCents)} · {request.status.toLowerCase()}
+                    </p>
+                    <Link
+                      href={`/projects/${request.task.project.id}#tasks`}
+                      className="mt-2 inline-flex text-xs font-semibold text-emerald-700"
+                    >
+                      View task
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-dashed border-gray-200 bg-white/80 p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Notifications</p>
+            <h2 className="text-lg font-semibold text-gray-900">Next steps</h2>
+          </div>
+          <span className="text-xs font-semibold text-gray-500">
+            {notifications.length} alerts
+          </span>
+        </div>
+        {notifications.length === 0 ? (
+          <p className="mt-3 text-sm text-gray-500">
+            No alerts right now. You&apos;ll see approvals, payout updates, and concierge notes
+            here.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3 text-sm">
+            {notifications.map((notification) => (
+              <li
+                key={notification.id}
+                className="rounded-2xl border border-gray-100 bg-white/80 p-3 shadow-sm"
+              >
+                <p className="font-semibold text-gray-900">{notification.title}</p>
+                <p className="text-xs text-gray-500">{notification.body}</p>
+                {notification.link && (
+                  <Link
+                    href={notification.link}
+                    className="mt-1 inline-flex text-xs font-semibold text-blue-700"
+                  >
+                    View details
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <MarketplaceTasksPanel
+        role="CREATOR"
+        limit={4}
+        title="Marketplace reminders"
+        subtitle="Claim new briefs while you wait for approvals."
+      />
 
       <section className="rounded-3xl border border-dashed border-gray-200 bg-white/80 p-6 text-sm text-gray-600 shadow-sm">
         <p>

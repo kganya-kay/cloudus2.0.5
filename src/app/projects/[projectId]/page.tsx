@@ -161,6 +161,20 @@ const formatCurrency = (value?: number) => {
   }
 };
 
+const shareLinkHref = (value: string) =>
+  /^https?:\/\//i.test(value) || value.startsWith("/") ? value : undefined;
+
+const shareLinkLabel = (value: string) => {
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      return new URL(value).hostname.replace("www.", "");
+    } catch {
+      return value;
+    }
+  }
+  return value.length > 32 ? `${value.slice(0, 32)}…` : value;
+};
+
 const OWNER_ROUTE_SHORTCUTS = [
   {
     title: "Supplier dashboard",
@@ -542,6 +556,41 @@ export default function LatestProject() {
   });
 
   const p = selectedProject.data;
+  const followerAvatars =
+    (p?.followers ?? [])
+      .map((follow) => follow.user)
+      .filter(
+        (user): user is { id: string; name: string | null; image: string | null } =>
+          Boolean(user),
+      )
+      .slice(0, 5);
+  const followerCount = p?._count?.followers ?? 0;
+  const contributorCount = p?._count?.contributors ?? 0;
+  const bidsCount = p?._count?.bids ?? 0;
+  const shareableLinks = (p?.links ?? []).filter(Boolean).slice(0, 3);
+  const openTaskCount = tasks.filter((task) => task.status === "BACKLOG").length;
+  const assignedTaskCount = tasks.filter((task) => Boolean(task.assignedToId)).length;
+  const contributorStats = useMemo(() => {
+    const totalBudgetCents = tasks.reduce((sum, task) => sum + (task.budgetCents ?? 0), 0);
+    const completedBudgetCents = tasks
+      .filter((task) => ["APPROVED", "COMPLETED"].includes(task.status))
+      .reduce((sum, task) => sum + (task.budgetCents ?? 0), 0);
+    const payoutRequests = tasks.flatMap((task) => task.payoutRequests ?? []);
+    const paidOutCents = payoutRequests
+      .filter((request) => request.status === "APPROVED")
+      .reduce((sum, request) => sum + request.amountCents, 0);
+    const pendingPayoutCents = payoutRequests
+      .filter((request) => request.status === "PENDING")
+      .reduce((sum, request) => sum + request.amountCents, 0);
+    return { totalBudgetCents, completedBudgetCents, paidOutCents, pendingPayoutCents };
+  }, [tasks]);
+  const {
+    totalBudgetCents: taskBudgetCents,
+    completedBudgetCents,
+    paidOutCents: taskPaidOutCents,
+    pendingPayoutCents,
+  } = contributorStats;
+
   const paymentSummary = paymentPortal.data;
   const totalBudgetCents =
     typeof (paymentSummary?.project?.price ?? p?.price) === "number"
@@ -705,11 +754,109 @@ export default function LatestProject() {
                   onSave={(val) => updateProject.mutate({ id: p.id, data: { contactNumber: val } })}
                 />
               </div>
-            </div>
           </div>
+        </div>
 
-          {/* Status Bar with inline edits */}
-          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+        <section className="mt-6 grid gap-4 lg:grid-cols-[1.3fr,0.7fr]">
+          <div className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-gray-500">Community & reach</p>
+            <dl className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-3">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-gray-500">Followers</dt>
+                <dd className="text-2xl font-semibold text-gray-900">{followerCount}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-gray-500">Contributors</dt>
+                <dd className="text-2xl font-semibold text-gray-900">{contributorCount}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-gray-500">Open tasks</dt>
+                <dd className="text-2xl font-semibold text-gray-900">{openTaskCount}</dd>
+              </div>
+            </dl>
+            {followerAvatars.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Latest followers</p>
+                <div className="mt-2 flex -space-x-3">
+                  {followerAvatars.map((user) => (
+                    <img
+                      key={user.id}
+                      src={user.image ?? "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"}
+                      alt={user.name ?? "Follower"}
+                      className="h-8 w-8 rounded-full border-2 border-white object-cover shadow-sm"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            {shareableLinks.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Shareable links</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {shareableLinks.map((link) => {
+                    const href = shareLinkHref(link);
+                    const label = shareLinkLabel(link);
+                    const className =
+                      "inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700";
+                    return href ? (
+                      <a
+                        key={`${p?.id}-link-${label}`}
+                        href={href}
+                        target={href.startsWith("http") ? "_blank" : undefined}
+                        rel={href.startsWith("http") ? "noreferrer" : undefined}
+                        className={className}
+                      >
+                        {label}
+                      </a>
+                    ) : (
+                      <span key={`${p?.id}-link-${label}`} className={className}>
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <p className="mt-4 text-xs text-gray-500">
+              {bidsCount} bids submitted · {assignedTaskCount} tasks assigned
+            </p>
+          </div>
+          <div className="rounded-3xl border border-emerald-100 bg-white/80 p-5 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-emerald-600">Contributor earnings</p>
+            <dl className="mt-4 space-y-3 text-sm text-gray-600">
+              <div className="flex items-center justify-between">
+                <dt>Total task budget</dt>
+                <dd className="text-base font-semibold text-gray-900">
+                  {formatCurrency(taskBudgetCents)}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt>Approved work</dt>
+                <dd className="text-base font-semibold text-gray-900">
+                  {formatCurrency(completedBudgetCents)}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt>Paid out</dt>
+                <dd className="text-base font-semibold text-emerald-700">
+                  {formatCurrency(taskPaidOutCents)}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt>Pending payouts</dt>
+                <dd className="text-base font-semibold text-amber-700">
+                  {formatCurrency(pendingPayoutCents)}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-xs text-gray-500">
+              Keep tasks updated so contributors can request payouts as they submit work.
+            </p>
+          </div>
+        </section>
+
+        {/* Status Bar with inline edits */}
+        <div className="flex flex-col sm:flex-row gap-2 mt-4">
             <div className="flex-1 bg-orange-300 text-center text-sm py-2 rounded-lg">
               Status:{" "}
               <InlineEditText

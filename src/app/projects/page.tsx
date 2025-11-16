@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+
 import {
   Disclosure,
   DisclosureButton,
@@ -11,8 +10,10 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon } from "@heroicons/react/24/outline";
-import { Button } from "@mui/material";
-import AllProjects from "~/app/_components/allProjects";
+
+import { MarketplaceTasksPanel } from "../_components/MarketplaceTasksPanel";
+import { auth } from "~/server/auth";
+import { HydrateClient, api } from "~/trpc/server";
 
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
@@ -22,7 +23,6 @@ const navigation = [
   { name: "Suppliers", href: "/suppliers/dashboard", current: false },
   { name: "Drivers", href: "/drivers/dashboard", current: false },
   { name: "Creators", href: "/creators/dashboard", current: false },
-  { name: "Team", href: "/team", current: false },
   { name: "Calendar", href: "/calendar", current: false },
   { name: "Careers", href: "/careers", current: false },
 ];
@@ -31,9 +31,26 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default async function Home() {
+const formatCurrency = (value?: number | null) => {
+  if (!value || Number.isNaN(value)) return "R 0";
+  try {
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+      maximumFractionDigits: 0,
+    }).format(Math.round(value / 100));
+  } catch {
+    return `R ${((value ?? 0) / 100).toFixed(0)}`;
+  }
+};
+
+export default async function ProjectsPage() {
   await api.post.hello({ text: "from Cloudus" });
   const session = await auth();
+  const [marketplace, announcements] = await Promise.all([
+    api.project.marketplace({ limit: 24 }),
+    api.platform.announcements({ limit: 3 }),
+  ]);
 
   const user = {
     name: session?.user.name ?? "Guest",
@@ -52,18 +69,14 @@ export default async function Home() {
     },
   ];
 
-  if (session?.user) {
-    void api.post.getLatest.prefetch();
-  }
+  const projects = marketplace ?? [];
 
   return (
     <HydrateClient>
       <div className="min-h-full bg-gray-100">
-        {/* Navbar */}
         <Disclosure as="nav" className="sticky top-0 z-50 bg-white shadow">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
-              {/* Logo & Nav */}
               <div className="flex items-center">
                 <Link href="./">
                   <img
@@ -93,7 +106,6 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Right side */}
               <div className="hidden md:flex items-center gap-4">
                 <button
                   type="button"
@@ -102,8 +114,6 @@ export default async function Home() {
                   <span className="sr-only">View notifications</span>
                   <BellIcon className="h-6 w-6" />
                 </button>
-
-                {/* Profile dropdown */}
                 <Menu as="div" className="relative">
                   <MenuButton className="flex items-center rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     <img alt="" src={user.image} className="h-8 w-8 rounded-full" />
@@ -123,7 +133,6 @@ export default async function Home() {
                 </Menu>
               </div>
 
-              {/* Mobile menu button */}
               <div className="flex md:hidden">
                 <DisclosureButton className="rounded-md bg-gray-100 p-2 text-gray-600 hover:bg-blue-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
                   <Bars3Icon className="h-6 w-6" />
@@ -132,7 +141,6 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Mobile Nav */}
           <DisclosurePanel className="md:hidden bg-white shadow">
             <div className="space-y-1 px-2 pb-3 pt-2">
               {navigation.map((item) => (
@@ -175,41 +183,289 @@ export default async function Home() {
           </DisclosurePanel>
         </Disclosure>
 
-        {/* Page header */}
-        <header className="bg-white shadow">
-          <div className="mx-auto flex max-w-7xl justify-between items-center px-4 py-6 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-800">Projects</h1>
-            <Button
-              variant="contained"
-              href={session ? "./projects/create" : "./api/auth/signin"}
-              className="rounded-full bg-blue-500 text-white hover:bg-blue-600 transition"
-            >
-              {session ? "Add Project" : "Sign In"}
-            </Button>
+        <section className="relative isolate overflow-hidden bg-gradient-to-br from-indigo-700 via-blue-600 to-sky-500 text-white">
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle,_rgba(255,255,255,0.35),_transparent_70%)]" />
           </div>
-        </header>
-
-        {/* Main content */}
-        <main className="min-h-screen bg-gray-100">
-          <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              {session?.user ? (
-                <AllProjects />
-              ) : (
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold text-gray-700">
-                    Sign in to view projects
-                  </h2>
-                  <Button
-                    href="/api/auth/signin"
-                    variant="contained"
-                    className="mt-4 rounded-full bg-blue-500 text-white hover:bg-blue-600"
-                  >
-                    Sign In
-                  </Button>
-                </div>
-              )}
+          <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-6 py-12 md:flex-row md:items-center md:justify-between lg:px-8">
+            <div className="space-y-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Cloudus marketplace</p>
+              <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+                Claim world-class briefs, contribute to launches, and earn like a top creator.
+              </h1>
+              <p className="text-sm text-white/80">
+                Browse public projects from Cloudus customers, see open tasks, and apply with one click.
+                Creators, suppliers, and drivers can collaborate on the same platform.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/projects/create"
+                  className="rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/30"
+                >
+                  Launch your project
+                </Link>
+                <Link
+                  href="/creators/dashboard"
+                  className="rounded-full border border-white/60 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10"
+                >
+                  Creator dashboard
+                </Link>
+                <Link
+                  href="/feed"
+                  className="rounded-full bg-indigo-900/50 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-900/70"
+                >
+                  View feed
+                </Link>
+              </div>
             </div>
+            <div className="rounded-3xl border border-white/20 bg-white/10 p-5 text-sm backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/70">Live stats</p>
+              <dl className="mt-4 space-y-2 text-sm text-white/80">
+                <div className="flex items-center justify-between">
+                  <dt>Public projects</dt>
+                  <dd className="text-lg font-semibold text-white">{projects.length}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt>Average open tasks</dt>
+                  <dd className="text-lg font-semibold text-white">
+                    {projects.length === 0
+                      ? 0
+                      : Math.round(
+                          projects.reduce((sum, project) => sum + (project.openTaskCount ?? 0), 0) /
+                            projects.length,
+                        )}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt>Creators active this week</dt>
+                  <dd className="text-lg font-semibold text-white">
+                    {Math.max(
+                      4,
+                      Math.min(
+                        999,
+                        projects.reduce(
+                          (sum, project) => sum + (project._count?.contributors ?? 0),
+                          0,
+                        ),
+                      ),
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        <main className="bg-gray-100 pb-16">
+          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:px-8">
+            <section className="space-y-6">
+              {projects.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-gray-300 bg-white/80 p-8 text-center shadow-sm">
+                  <h2 className="text-lg font-semibold text-gray-900">No marketplace projects yet</h2>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Launch yours from{" "}
+                    <Link href="/projects/create" className="text-blue-600 underline">
+                      /projects/create
+                    </Link>{" "}
+                    or check back after the next drop.
+                  </p>
+                </div>
+              ) : (
+                projects.map((project) => {
+                  const openTasks = (project.tasks ?? []).slice(0, 3);
+                  const shareLinks = (project.links ?? []).slice(0, 2);
+                  const followerCount = project._count?.followers ?? 0;
+                  const contributorCount = project._count?.contributors ?? 0;
+                  const openTaskCount = project.openTaskCount ?? openTasks.length;
+                  const availableBudgetLabel = formatCurrency(project.availableBudgetCents ?? 0);
+                  return (
+                    <article
+                      key={project.id}
+                      className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-md"
+                    >
+                      <div className="flex flex-col gap-4 lg:flex-row">
+                        <div className="relative h-48 w-full overflow-hidden rounded-2xl lg:w-2/5">
+                          <img
+                            src={project.image}
+                            alt={project.name}
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute inset-x-3 top-3 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
+                            <span className="rounded-full bg-white/90 px-2 py-1 text-gray-800">
+                              {project.type}
+                            </span>
+                            <span className="rounded-full bg-blue-600/80 px-2 py-1 text-white">
+                              {project.status}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-1 space-y-4">
+                          <div className="space-y-1">
+                            <p className="text-xs uppercase tracking-wide text-gray-500">
+                              {project.tags?.slice(0, 2).join(" · ") || "Marketplace brief"}
+                            </p>
+                            <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
+                            <p className="text-sm text-gray-600">{project.description}</p>
+                          </div>
+                          <dl className="grid gap-3 text-xs uppercase text-gray-500 sm:grid-cols-3">
+                            <div>
+                              <dt>Open tasks</dt>
+                              <dd className="text-base font-semibold text-gray-900">{openTaskCount}</dd>
+                            </div>
+                            <div>
+                              <dt>Community</dt>
+                              <dd className="text-base font-semibold text-gray-900">
+                                {followerCount} followers · {contributorCount} contributors
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Budget</dt>
+                              <dd className="text-base font-semibold text-gray-900">
+                                {availableBudgetLabel}
+                              </dd>
+                            </div>
+                          </dl>
+                          {openTasks.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold uppercase text-gray-500">
+                                Top open tasks
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {openTasks.map((task) => (
+                                  <span
+                                    key={task.id}
+                                    className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
+                                  >
+                                    {task.title} · {formatCurrency(task.budgetCents)}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {shareLinks.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold uppercase text-gray-500">
+                                Shareable links
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                          {shareLinks.map((link) => {
+                            const isAbsolute = /^https?:\/\//i.test(link);
+                            const isRelative = !isAbsolute && link.startsWith("/");
+                            const href = isAbsolute || isRelative ? link : undefined;
+                            let label = link.slice(0, 32) || "Link";
+                            if (href && isAbsolute) {
+                              try {
+                                label = new URL(link).hostname.replace("www.", "");
+                              } catch {
+                                label = link;
+                              }
+                            }
+                            const className =
+                              "inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700";
+                            return href ? (
+                              <a
+                                key={`${project.id}-${link}`}
+                                href={href}
+                                target={isAbsolute ? "_blank" : undefined}
+                                rel={isAbsolute ? "noreferrer" : undefined}
+                                className={className}
+                              >
+                                {label}
+                              </a>
+                            ) : (
+                              <span key={`${project.id}-${link}`} className={className}>
+                                {label}
+                              </span>
+                            );
+                          })}
+                          </div>
+                        </div>
+                      )}
+                          <div className="flex flex-wrap gap-3 pt-2">
+                            <Link
+                              href={`/projects/${project.id}`}
+                              className="inline-flex rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                            >
+                              View project
+                            </Link>
+                            <Link
+                              href={`/projects/${project.id}#tasks`}
+                              className="inline-flex rounded-full border border-blue-600 px-5 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+                            >
+                              Claim / apply
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })
+              )}
+            </section>
+
+            <aside className="space-y-6">
+              <section className="rounded-3xl border border-blue-100 bg-white/80 p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-blue-600">
+                      Marketplace alerts
+                    </p>
+                    <p className="text-sm text-gray-600">Announcements from Cloudus HQ</p>
+                  </div>
+                  <Link href="/admin" className="text-xs font-semibold text-blue-700">
+                    Admin
+                  </Link>
+                </div>
+                {announcements.length === 0 ? (
+                  <p className="mt-3 text-sm text-gray-500">No announcements right now.</p>
+                ) : (
+                  <div className="mt-3 space-y-3 text-sm">
+                    {announcements.map((announcement) => (
+                      <article
+                        key={announcement.id}
+                        className="rounded-2xl border border-blue-50 bg-blue-50/60 p-3"
+                      >
+                        <p className="text-xs uppercase text-blue-700">{announcement.title}</p>
+                        <p className="text-gray-600">{announcement.body}</p>
+                        {announcement.link && (
+                          <Link
+                            href={announcement.link}
+                            className="mt-1 inline-flex text-xs font-semibold text-blue-700"
+                          >
+                            Details
+                          </Link>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Need help?</p>
+                <ul className="mt-3 space-y-3 text-sm text-gray-700">
+                  <li className="rounded-2xl border border-gray-100 px-4 py-3">
+                    <p className="font-semibold text-gray-900">Guide: How to bid</p>
+                    <p className="text-xs text-gray-500">
+                      Share your handle, pick tasks, and confirm payout terms.
+                    </p>
+                  </li>
+                  <li className="rounded-2xl border border-gray-100 px-4 py-3">
+                    <p className="font-semibold text-gray-900">Share marketplace</p>
+                    <p className="text-xs text-gray-500">
+                      Send creators to cloudusdigital.com/projects for new briefs.
+                    </p>
+                  </li>
+                </ul>
+              </section>
+
+              <MarketplaceTasksPanel
+                role="CREATOR"
+                limit={6}
+                title="Tasks to claim"
+                subtitle="Jump into active briefs without waiting on invites."
+              />
+            </aside>
           </div>
         </main>
       </div>

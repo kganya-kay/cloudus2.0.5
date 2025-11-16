@@ -9,9 +9,10 @@ export default async function CreatorDashboardPage() {
   if (!session) {
     redirect("/auth/login?callbackUrl=/creators/dashboard");
   }
-  const [profile, feedPreview] = await Promise.all([
+  const [profile, feedPreview, workSummary] = await Promise.all([
     api.creator.me(),
     api.feed.list({ limit: 4 }),
+    api.project.contributorOverview(),
   ]);
 
   return (
@@ -25,7 +26,11 @@ export default async function CreatorDashboardPage() {
             to the main feed.
           </p>
         </header>
-        <CreatorDashboardClient initialProfile={profile} recentFeed={feedPreview.items} />
+        <CreatorDashboardClient
+          initialProfile={profile}
+          recentFeed={feedPreview.items}
+          workSummary={workSummary}
+        />
       </div>
     </HydrateClient>
   );

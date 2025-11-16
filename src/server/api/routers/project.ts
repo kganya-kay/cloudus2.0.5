@@ -180,6 +180,12 @@ const marketplaceTasksInput = z
   })
   .optional();
 
+const marketplaceListInput = z
+  .object({
+    limit: z.number().int().min(1).max(60).optional(),
+  })
+  .optional();
+
 const cleanPhoneToNumber = (value: string) => {
   const digits = value.replace(/[^\d]/g, "");
   if (!digits) return 0;
@@ -277,8 +283,16 @@ export const projectRouter = createTRPCRouter({
       const project = await ctx.db.project.findUnique({
         where: { id: input.id },
         include: {
-          createdBy: { select: { id: true, name: true, email: true } },
-          contributors: { select: { id: true, name: true, email: true } },
+          createdBy: { select: { id: true, name: true, email: true, image: true } },
+          contributors: { select: { id: true, name: true, email: true, image: true } },
+          followers: {
+            take: 8,
+            orderBy: { createdAt: "desc" },
+            include: {
+              user: { select: { id: true, name: true, image: true } },
+            },
+          },
+          _count: { select: { followers: true, contributors: true, bids: true } },
         },
       });
 
@@ -329,6 +343,49 @@ export const projectRouter = createTRPCRouter({
 
     return projects ?? null;
   }),
+
+  marketplace: publicProcedure
+    .input(marketplaceListInput)
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 30;
+      const projects = await ctx.db.project.findMany({
+        where: { visibility: "PUBLIC" },
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+        take: limit,
+        include: {
+          createdBy: { select: { id: true, name: true, image: true } },
+          tasks: {
+            where: { status: ProjectTaskStatus.BACKLOG },
+            orderBy: { createdAt: "asc" },
+            take: 6,
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              budgetCents: true,
+              status: true,
+              assignedToId: true,
+              skills: true,
+            },
+          },
+          _count: { select: { followers: true, contributors: true, bids: true } },
+        },
+      });
+
+      return projects.map((project) => {
+        const openTasks = project.tasks.filter((task) => !task.assignedToId);
+        const availableBudgetCents = openTasks.reduce(
+          (sum, task) => sum + (task.budgetCents ?? 0),
+          0,
+        );
+        return {
+          ...project,
+          tasks: openTasks,
+          openTaskCount: openTasks.length,
+          availableBudgetCents,
+        };
+      });
+    }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
@@ -950,6 +1007,84 @@ export const projectRouter = createTRPCRouter({
         paymentPath: `/projects/${result.projectId}/payment?paymentId=${result.projectPaymentId}`,
       };
     }),
+
+  contributorOverview: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    const [activeTasks, completedTasks, payoutRequests] = await Promise.all([
+      ctx.db.projectTask.findMany({
+        where: {
+          assignedToId: userId,
+          status: {
+            in: [
+              ProjectTaskStatus.BACKLOG,
+              ProjectTaskStatus.IN_PROGRESS,
+              ProjectTaskStatus.SUBMITTED,
+            ],
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+        include: {
+          project: { select: { id: true, name: true, image: true } },
+        },
+      }),
+      ctx.db.projectTask.findMany({
+        where: {
+          assignedToId: userId,
+          status: { in: [ProjectTaskStatus.APPROVED, ProjectTaskStatus.COMPLETED] },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+        include: {
+          project: { select: { id: true, name: true } },
+        },
+      }),
+      ctx.db.projectTaskPayoutRequest.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: {
+          task: {
+            select: {
+              id: true,
+              title: true,
+              budgetCents: true,
+              project: { select: { id: true, name: true } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const notifications = [
+      ...activeTasks
+        .filter((task) => task.status === ProjectTaskStatus.SUBMITTED)
+        .map((task) => ({
+          id: `task-${task.id}`,
+          title: `${task.title} awaiting approval`,
+          body: task.project.name,
+          link: `/projects/${task.project.id}#tasks`,
+          severity: "info" as const,
+        })),
+      ...payoutRequests
+        .filter((request) => request.status === ProjectTaskPayoutStatus.PENDING)
+        .map((request) => ({
+          id: `payout-${request.id}`,
+          title: "Payout request pending",
+          body: `${request.task.title} · ${request.task.project.name}`,
+          link: `/projects/${request.task.project.id}#tasks`,
+          severity: "warning" as const,
+          amountCents: request.amountCents,
+        })),
+    ];
+
+    return {
+      activeTasks,
+      completedTasks,
+      payoutRequests,
+      notifications,
+    };
+  }),
 
   marketplaceTasks: publicProcedure
     .input(marketplaceTasksInput)
