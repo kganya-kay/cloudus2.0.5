@@ -6,8 +6,8 @@ import { api } from "~/trpc/server";
 import { ProjectPaymentClient } from "./payment-client";
 
 type PageProps = {
-  params: { projectId: string } | Promise<{ projectId: string }>;
-  searchParams?: { paymentId?: string } | Promise<{ paymentId?: string }>;
+  params: Promise<{ projectId: string }>;
+  searchParams?: Promise<{ paymentId?: string }>;
 };
 
 export default async function ProjectPaymentPage({ params, searchParams }: PageProps) {
