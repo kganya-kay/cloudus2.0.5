@@ -233,7 +233,7 @@ export const driverRouter = createTRPCRouter({
       });
 
       if (!driver) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Driver not found" });
+        throw new TRPCError({ code: "NOT_FOUND", message: "Driver not found!" });
       }
 
       const MAX_ITEMS = 100;
