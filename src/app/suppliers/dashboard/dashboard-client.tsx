@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { RouterInputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
+import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
 
 const money = (value?: number, currency = "ZAR") => {
   const cents = typeof value === "number" ? value : 0;
@@ -77,6 +79,9 @@ export function SupplierDashboardClient({
       setGeoError(err.message ?? "Unable to save location.");
     },
   });
+
+  const announcementsQuery = api.platform.announcements.useQuery({ limit: 2 });
+  const feedPreviewQuery = api.feed.list.useQuery({ limit: 3 });
 
   const supplierName =
     dashboardQuery.data?.supplier.name ??
@@ -213,6 +218,88 @@ export function SupplierDashboardClient({
           </div>
         </div>
       )}
+
+      <section className="grid gap-4 rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm lg:grid-cols-[2fr,1fr]">
+        <div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-gray-500">Creator feed</p>
+              <h2 className="text-lg font-semibold text-gray-900">Laundry & supplier stories</h2>
+            </div>
+            <Link
+              href="/feed"
+              className="rounded-full border border-blue-200 px-4 py-1.5 text-xs font-semibold text-blue-700"
+            >
+              View feed
+            </Link>
+          </div>
+          {feedPreviewQuery.isLoading ? (
+            <p className="mt-3 text-sm text-gray-500">Loading content...</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {(feedPreviewQuery.data?.items ?? []).slice(0, 3).map((post) => (
+                <article
+                  key={post.id}
+                  className="rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700"
+                >
+                  <p className="text-xs uppercase text-gray-500">
+                    {post.type.replaceAll("_", " ")}
+                  </p>
+                  <p className="font-semibold text-gray-900">
+                    {post.title ?? post.project?.name ?? "Creator update"}
+                  </p>
+                  {post.caption && (
+                    <p className="text-xs text-gray-600 line-clamp-2">{post.caption}</p>
+                  )}
+                  {post.project?.id && (
+                    <Link
+                      href={`/projects/${post.project.id}`}
+                      className="mt-1 inline-flex text-xs font-semibold text-blue-700"
+                    >
+                      View project →
+                    </Link>
+                  )}
+                </article>
+              ))}
+              {(feedPreviewQuery.data?.items?.length ?? 0) === 0 && (
+                <p className="text-sm text-gray-500">
+                  No stories yet. Share your first drop from{" "}
+                  <Link href="/feed" className="text-blue-600 underline">
+                    the feed
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-dashed border-gray-200 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-500">Announcements</p>
+            {announcementsQuery.isLoading ? (
+              <p className="mt-2 text-sm text-gray-500">Loading...</p>
+            ) : (announcementsQuery.data ?? []).length === 0 ? (
+              <p className="mt-2 text-sm text-gray-500">No new updates.</p>
+            ) : (
+              (announcementsQuery.data ?? []).map((announcement) => (
+                <div key={announcement.id} className="mt-2 rounded-xl bg-blue-50/60 p-3 text-xs">
+                  <p className="font-semibold text-gray-900">{announcement.title}</p>
+                  <p className="text-gray-600">{announcement.body}</p>
+                  {announcement.link && (
+                    <Link
+                      href={announcement.link}
+                      className="inline-flex text-blue-700 underline"
+                    >
+                      Details
+                    </Link>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          <MarketplaceTasksPanel role="SUPPLIER" limit={4} title="Available supplier tasks" />
+        </div>
+      </section>
 
       {canImpersonate && !supplierId ? (
         <div className="rounded-xl border border-dashed bg-white p-6 text-center text-sm text-gray-500">

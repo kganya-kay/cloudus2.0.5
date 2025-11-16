@@ -172,6 +172,14 @@ const projectPaymentPortalInput = z.object({
   projectId: z.number().int().positive(),
 });
 
+const marketplaceTasksInput = z
+  .object({
+    limit: z.number().int().positive().max(50).optional(),
+    tag: z.string().optional(),
+    role: z.enum(["SUPPLIER", "DRIVER", "CREATOR"]).optional(),
+  })
+  .optional();
+
 const cleanPhoneToNumber = (value: string) => {
   const digits = value.replace(/[^\d]/g, "");
   if (!digits) return 0;
@@ -941,6 +949,44 @@ export const projectRouter = createTRPCRouter({
         projectPaymentId: result.projectPaymentId,
         paymentPath: `/projects/${result.projectId}/payment?paymentId=${result.projectPaymentId}`,
       };
+    }),
+
+  marketplaceTasks: publicProcedure
+    .input(marketplaceTasksInput)
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 12;
+      const inferredTag =
+        input?.tag ??
+        (input?.role === "SUPPLIER"
+          ? "supplier"
+          : input?.role === "DRIVER"
+            ? "driver"
+            : undefined);
+      const tasks = await ctx.db.projectTask.findMany({
+        where: {
+          status: ProjectTaskStatus.BACKLOG,
+          assignedToId: null,
+          project: {
+            visibility: "PUBLIC",
+            ...(inferredTag ? { tags: { has: inferredTag } } : {}),
+          },
+        },
+        include: {
+          project: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              tags: true,
+              type: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+      });
+      return tasks;
     }),
 
   getSecretMessage: protectedProcedure.query(() => {

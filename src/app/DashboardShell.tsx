@@ -30,6 +30,7 @@ import LaundryDetails from "./_components/laundryDetails";
 import { AssistantSearchBar } from "./_components/AssistantSearchBar";
 import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
+import { MarketplaceTasksPanel } from "./_components/MarketplaceTasksPanel";
 import type { RouterOutputs } from "~/trpc/react";
 
 const navigation = [
@@ -544,6 +545,8 @@ function ContentSwitch({ activeTab }: { activeTab: string }) {
           <div className="rounded-2xl border bg-white p-4 shadow-sm">
             <AllPublicProjects />
           </div>
+
+          <MarketplaceTasksPanel role="CREATOR" title="Marketplace tasks" />
 
           <div className="rounded-2xl border bg-white p-4 shadow-sm">
             <NewLead />

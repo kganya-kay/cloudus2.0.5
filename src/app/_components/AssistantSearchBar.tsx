@@ -6,7 +6,7 @@ import { SparklesIcon } from "@heroicons/react/24/outline";
 import { api } from "~/trpc/react";
 
 const DEFAULT_PLACEHOLDER =
-  "Ask Cloudus Navigator where to manage suppliers, launch projects, track laundry, etc.";
+  "Ask Cloudus where to find feed stories, claim tasks, manage suppliers, or launch projects.";
 
 export function AssistantSearchBar() {
   const pathname = usePathname();
