@@ -15,6 +15,7 @@ type PaymentRecord = {
   providerRef: string | null;
   receiptUrl: string | null;
   purpose: string;
+  label?: string | null;
   createdAt: string | Date;
   updatedAt: string | Date;
   dueAt?: string | Date | null;
