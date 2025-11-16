@@ -9,8 +9,12 @@ import {
   PaymentStatus,
 } from "@prisma/client";
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
-
-
+import {
+  notifyProjectBidDecision,
+  notifyProjectCollaboration,
+  notifyProjectPayoutRequest,
+  notifyProjectPayoutUpdate,
+} from "../notification-service";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -186,6 +190,19 @@ const marketplaceListInput = z
   })
   .optional();
 
+const paymentPreferenceUpdateInput = z.object({
+  projectId: z.number().int().positive(),
+  autopayEnabled: z.boolean().optional(),
+  autopayThresholdPercent: z.number().int().min(10).max(100).optional(),
+  tipPercent: z.number().int().min(0).max(100).optional(),
+});
+
+const tipPaymentInput = z.object({
+  projectId: z.number().int().positive(),
+  amountCents: z.number().int().min(500),
+  message: z.string().max(240).optional(),
+});
+
 const cleanPhoneToNumber = (value: string) => {
   const digits = value.replace(/[^\d]/g, "");
   if (!digits) return 0;
@@ -223,6 +240,18 @@ const resolveLeadOwnerUserId = async (
     });
   }
   return created.id;
+};
+
+const getOrCreatePaymentPreference = async (ctx: { db: any }, projectId: number) => {
+  const existing = await ctx.db.projectPaymentPreference.findUnique({
+    where: { projectId },
+  });
+  if (existing) return existing;
+  return ctx.db.projectPaymentPreference.create({
+    data: {
+      projectId,
+    },
+  });
 };
 
 export const projectRouter = createTRPCRouter({
@@ -554,6 +583,11 @@ export const projectRouter = createTRPCRouter({
           userId: true,
           projectId: true,
           project: { select: { createdById: true } },
+          tasks: {
+            include: {
+              task: { select: { id: true, title: true, budgetCents: true } },
+            },
+          },
         },
       });
       if (!bid) {
@@ -587,6 +621,18 @@ export const projectRouter = createTRPCRouter({
           });
         }
       });
+
+      if (bid.userId) {
+        const totalBid =
+          bid.tasks?.reduce((sum, link) => sum + (link.task?.budgetCents ?? 0), 0) ?? 0;
+        void notifyProjectBidDecision(ctx, {
+          projectId: bid.projectId,
+          userId: bid.userId,
+          status: nextStatus,
+          taskCount: bid.tasks?.length ?? 0,
+          amountCents: totalBid,
+        });
+      }
 
       return { status: nextStatus };
     }),
@@ -702,7 +748,14 @@ export const projectRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const task = await ctx.db.projectTask.findUnique({
         where: { id: input.taskId },
-        select: { id: true, projectId: true, assignedToId: true, status: true },
+        select: {
+          id: true,
+          title: true,
+          projectId: true,
+          assignedToId: true,
+          status: true,
+          project: { select: { createdById: true } },
+        },
       });
       if (!task) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
@@ -714,7 +767,7 @@ export const projectRouter = createTRPCRouter({
           message: "Task is already assigned to another contributor.",
         });
       }
-      return ctx.db.projectTask.update({
+      const updated = await ctx.db.projectTask.update({
         where: { id: task.id },
         data: {
           assignedToId: ctx.session.user.id,
@@ -724,6 +777,15 @@ export const projectRouter = createTRPCRouter({
               : task.status,
         },
       });
+      if (task.project?.createdById) {
+        void notifyProjectCollaboration(ctx, {
+          projectId: task.projectId,
+          ownerId: task.project.createdById,
+          collaboratorId: ctx.session.user.id,
+          taskTitle: task.title,
+        });
+      }
+      return updated;
     }),
 
   progressTask: protectedProcedure
@@ -794,9 +856,11 @@ export const projectRouter = createTRPCRouter({
       const task = await ctx.db.projectTask.findUnique({
         where: { id: input.taskId },
         select: {
+          title: true,
           projectId: true,
           budgetCents: true,
           assignedToId: true,
+          project: { select: { createdById: true } },
           payoutRequests: {
             where: { status: ProjectTaskPayoutStatus.PENDING },
             select: { id: true },
@@ -832,7 +896,7 @@ export const projectRouter = createTRPCRouter({
           message: "Invalid payout amount.",
         });
       }
-      return ctx.db.projectTaskPayoutRequest.create({
+      const request = await ctx.db.projectTaskPayoutRequest.create({
         data: {
           taskId: input.taskId,
           userId: ctx.session.user.id,
@@ -841,6 +905,15 @@ export const projectRouter = createTRPCRouter({
           status: ProjectTaskPayoutStatus.PENDING,
         },
       });
+      if (task.project?.createdById) {
+        void notifyProjectPayoutRequest(ctx, {
+          projectId: task.projectId,
+          ownerId: task.project.createdById,
+          taskTitle: task.title,
+          amountCents: amount,
+        });
+      }
+      return request;
     }),
 
   respondTaskPayout: protectedProcedure
@@ -851,7 +924,9 @@ export const projectRouter = createTRPCRouter({
         select: {
           id: true,
           status: true,
-          task: { select: { projectId: true } },
+          amountCents: true,
+          userId: true,
+          task: { select: { projectId: true, title: true } },
         },
       });
       if (!request) {
@@ -868,13 +943,23 @@ export const projectRouter = createTRPCRouter({
         input.action === "APPROVE"
           ? ProjectTaskPayoutStatus.APPROVED
           : ProjectTaskPayoutStatus.REJECTED;
-      return ctx.db.projectTaskPayoutRequest.update({
+      const updated = await ctx.db.projectTaskPayoutRequest.update({
         where: { id: request.id },
         data: {
           status: nextStatus,
           resolvedAt: new Date(),
         },
       });
+      if (request.userId) {
+        void notifyProjectPayoutUpdate(ctx, {
+          projectId: request.task.projectId,
+          contributorId: request.userId,
+          taskTitle: request.task.title ?? "Task",
+          amountCents: request.amountCents,
+          status: nextStatus,
+        });
+      }
+      return updated;
     }),
 
   paymentPortal: protectedProcedure
@@ -892,6 +977,7 @@ export const projectRouter = createTRPCRouter({
           price: true,
           status: true,
           createdAt: true,
+          paymentPreference: true,
           payments: {
             orderBy: { createdAt: "desc" },
             select: {
@@ -912,6 +998,8 @@ export const projectRouter = createTRPCRouter({
       if (!project) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
       }
+      const preference =
+        project.paymentPreference ?? (await getOrCreatePaymentPreference(ctx, project.id));
       const pendingPayment =
         project.payments.find((payment) => payment.status === PaymentStatus.PENDING) ?? null;
       const paidCents = project.payments
@@ -928,7 +1016,50 @@ export const projectRouter = createTRPCRouter({
         payments: project.payments,
         pendingPayment,
         paidCents,
+        preferences: preference,
       };
+    }),
+
+  updatePaymentPreferences: protectedProcedure
+    .input(paymentPreferenceUpdateInput)
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectOwner(ctx, input.projectId);
+      const preference = await getOrCreatePaymentPreference(ctx, project.id);
+      const next = await ctx.db.projectPaymentPreference.update({
+        where: { id: preference.id },
+        data: {
+          ...(input.autopayEnabled !== undefined ? { autopayEnabled: input.autopayEnabled } : {}),
+          ...(input.autopayThresholdPercent !== undefined
+            ? { autopayThresholdPercent: input.autopayThresholdPercent }
+            : {}),
+          ...(input.tipPercent !== undefined ? { tipPercent: input.tipPercent } : {}),
+        },
+      });
+      return next;
+    }),
+
+  createTipPayment: protectedProcedure
+    .input(tipPaymentInput)
+    .mutation(async ({ ctx, input }) => {
+      const project = await ensureProjectOwner(ctx, input.projectId);
+      const preference = await getOrCreatePaymentPreference(ctx, project.id);
+      const payment = await ctx.db.projectPayment.create({
+        data: {
+          projectId: project.id,
+          amountCents: input.amountCents,
+          currency: "ZAR",
+          status: PaymentStatus.PENDING,
+          provider: "STRIPE",
+          purpose: "TIP",
+          label: input.message ?? "Creator tip",
+          sequence: (await ctx.db.projectPayment.count({ where: { projectId: project.id } })) + 1,
+        },
+      });
+      await ctx.db.projectPaymentPreference.update({
+        where: { id: preference.id },
+        data: { tipJarCents: { increment: input.amountCents } },
+      });
+      return { paymentId: payment.id, payment };
     }),
 
   launchConfigurator: publicProcedure

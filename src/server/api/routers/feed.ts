@@ -1,4 +1,4 @@
-import { FeedPostType } from "@prisma/client";
+import { FeedPostType, PaymentStatus, ProjectTaskPayoutStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
@@ -106,7 +106,67 @@ export const feedRouter = createTRPCRouter({
       const nextPost = posts.pop();
       nextCursor = nextPost?.id;
     }
-    return { items: posts, nextCursor };
+    const projectIds = Array.from(
+      new Set(posts.map((post) => post.projectId).filter((id): id is number => Boolean(id))),
+    );
+    const payoutSummary = new Map<
+      number,
+      { paidCents: number; pendingCents: number; tipCents: number; contributorPayouts: number }
+    >();
+    if (projectIds.length > 0) {
+      const paymentGroups = await ctx.db.projectPayment.groupBy({
+        by: ["projectId", "status", "purpose"],
+        where: { projectId: { in: projectIds } },
+        _sum: { amountCents: true },
+      });
+      paymentGroups.forEach((group) => {
+        const entry =
+          payoutSummary.get(group.projectId) ?? {
+            paidCents: 0,
+            pendingCents: 0,
+            tipCents: 0,
+            contributorPayouts: 0,
+          };
+        const total = group._sum.amountCents ?? 0;
+        if (group.status === PaymentStatus.PAID) {
+          entry.paidCents += total;
+          if (group.purpose === "TIP") entry.tipCents += total;
+        } else if (group.status === PaymentStatus.PENDING) {
+          entry.pendingCents += total;
+        }
+        payoutSummary.set(group.projectId, entry);
+      });
+      const contributorRows = await ctx.db.projectTaskPayoutRequest.findMany({
+        where: {
+          status: ProjectTaskPayoutStatus.APPROVED,
+          task: { projectId: { in: projectIds } },
+        },
+        select: {
+          amountCents: true,
+          task: { select: { projectId: true } },
+        },
+      });
+      contributorRows.forEach((row) => {
+        const projectId = row.task.projectId;
+        if (!projectId) return;
+        const entry =
+          payoutSummary.get(projectId) ?? {
+            paidCents: 0,
+            pendingCents: 0,
+            tipCents: 0,
+            contributorPayouts: 0,
+          };
+        entry.contributorPayouts += 1;
+        entry.tipCents += 0;
+        payoutSummary.set(projectId, entry);
+      });
+    }
+    const items = posts.map((post) =>
+      post.projectId
+        ? { ...post, payoutSummary: payoutSummary.get(post.projectId) ?? null }
+        : { ...post, payoutSummary: null },
+    );
+    return { items, nextCursor };
   }),
 
   react: protectedProcedure

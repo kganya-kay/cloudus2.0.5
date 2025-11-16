@@ -6,16 +6,12 @@ import { api } from "~/trpc/server";
 import { ProjectPaymentClient } from "./payment-client";
 
 type PageProps = {
-  params: Promise<{ projectId: string }>;
-  searchParams?: Promise<{ paymentId?: string }>;
+  params: { projectId: string };
+  searchParams?: { paymentId?: string };
 };
 
 export default async function ProjectPaymentPage({ params, searchParams }: PageProps) {
-  const resolvedParams = await Promise.resolve(params);
-  const resolvedSearchParams =
-    searchParams !== undefined ? await Promise.resolve(searchParams) : undefined;
-
-  const projectId = Number(resolvedParams.projectId);
+  const projectId = Number(params.projectId);
   if (!Number.isFinite(projectId)) {
     notFound();
   }
@@ -27,9 +23,7 @@ export default async function ProjectPaymentPage({ params, searchParams }: PageP
 
   const paymentData = await api.project.paymentPortal({ projectId });
   const highlightPaymentId =
-    typeof resolvedSearchParams?.paymentId === "string"
-      ? resolvedSearchParams.paymentId
-      : undefined;
+    typeof searchParams?.paymentId === "string" ? searchParams.paymentId : undefined;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6">
@@ -52,6 +46,7 @@ export default async function ProjectPaymentPage({ params, searchParams }: PageP
         pendingPayment={paymentData.pendingPayment}
         payments={paymentData.payments}
         paidCents={paymentData.paidCents}
+        preferences={paymentData.preferences}
         highlightPaymentId={highlightPaymentId}
       />
     </div>

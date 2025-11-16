@@ -355,6 +355,7 @@ model Project {
   bids          ProjectBid[]
   tasks         ProjectTask[]
   payments      ProjectPayment[]
+  paymentPreference ProjectPaymentPreference?
   followers     ProjectFollower[]
   invites       CollaborationInvite[]
   feedPosts     FeedPost[]
@@ -515,6 +516,19 @@ model Payment {
 
   @@index([orderId])
   @@index([status])
+}
+
+model ProjectPaymentPreference {
+  id                     String   @id @default(cuid())
+  projectId              Int      @unique
+  autopayEnabled         Boolean  @default(false)
+  autopayThresholdPercent Int     @default(100)
+  tipPercent             Int      @default(0)
+  tipJarCents            Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id])
 }
 
 model ProjectPayment {

@@ -165,18 +165,26 @@ function FeedCard({
         {(hasProject || hasShopItem) && (
           <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/60 p-4 text-sm text-gray-700">
             {hasProject && (
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-xs uppercase text-gray-500">Featured project</p>
-                  <p className="font-semibold text-gray-900">{post.project?.name}</p>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs uppercase text-gray-500">Featured project</p>
+                    <p className="font-semibold text-gray-900">{post.project?.name}</p>
+                  </div>
+                  {projectLink && (
+                    <Link
+                      href={projectLink}
+                      className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white"
+                    >
+                      View
+                    </Link>
+                  )}
                 </div>
-                {projectLink && (
-                  <Link
-                    href={projectLink}
-                    className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white"
-                  >
-                    View
-                  </Link>
+                {post.payoutSummary && (
+                  <p className="text-xs text-gray-500">
+                    {formatCurrency(post.payoutSummary.paidCents)} funded ·{" "}
+                    {post.payoutSummary.contributorPayouts} contributor payouts
+                  </p>
                 )}
               </div>
             )}

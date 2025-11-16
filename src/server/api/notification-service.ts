@@ -298,3 +298,113 @@ export async function notifyPayoutUpdate(
     })),
   ]);
 }
+
+export async function notifyProjectBidDecision(
+  ctx: Ctx,
+  params: {
+    projectId: number;
+    userId: string;
+    status: "APPROVED" | "REJECTED";
+    taskCount: number;
+    amountCents: number;
+  },
+) {
+  const project = await ctx.db.project.findUnique({
+    where: { id: params.projectId },
+    select: { name: true },
+  });
+  if (!project) return;
+  const approved = params.status === "APPROVED";
+  await createNotifications(ctx, [
+    {
+      userId: params.userId,
+      type: "project:bid",
+      title: approved
+        ? `Bid approved on ${project.name}`
+        : `Bid update for ${project.name}`,
+      body: approved
+        ? `You're cleared to collaborate on ${params.taskCount} tasks. Estimated payout ${toMoney(params.amountCents)}.`
+        : `Your bid was not approved this round. Keep an eye on new drops.`,
+      data: { projectId: params.projectId, status: params.status },
+    },
+  ]);
+}
+
+export async function notifyProjectPayoutRequest(
+  ctx: Ctx,
+  params: {
+    projectId: number;
+    ownerId: string;
+    taskTitle: string;
+    amountCents: number;
+  },
+) {
+  const project = await ctx.db.project.findUnique({
+    where: { id: params.projectId },
+    select: { name: true },
+  });
+  if (!project) return;
+  await createNotifications(ctx, [
+    {
+      userId: params.ownerId,
+      type: "project:payout_request",
+      title: `Payout requested · ${project.name}`,
+      body: `${params.taskTitle} submitted ${toMoney(params.amountCents)} for approval.`,
+      data: { projectId: params.projectId },
+    },
+  ]);
+}
+
+export async function notifyProjectPayoutUpdate(
+  ctx: Ctx,
+  params: {
+    projectId: number;
+    contributorId: string;
+    taskTitle: string;
+    amountCents: number;
+    status: "APPROVED" | "REJECTED";
+  },
+) {
+  const project = await ctx.db.project.findUnique({
+    where: { id: params.projectId },
+    select: { name: true },
+  });
+  if (!project) return;
+  await createNotifications(ctx, [
+    {
+      userId: params.contributorId,
+      type: "project:payout",
+      title: `Payout ${params.status.toLowerCase()} for ${project.name}`,
+      body:
+        params.status === "APPROVED"
+          ? `We're releasing ${toMoney(params.amountCents)} for ${params.taskTitle}.`
+          : `Payout for ${params.taskTitle} needs edits. Check the project for notes.`,
+      data: { projectId: params.projectId, status: params.status },
+    },
+  ]);
+}
+
+export async function notifyProjectCollaboration(
+  ctx: Ctx,
+  params: {
+    projectId: number;
+    ownerId: string;
+    collaboratorId: string;
+    taskTitle: string;
+  },
+) {
+  const [project, collaborator] = await Promise.all([
+    ctx.db.project.findUnique({ where: { id: params.projectId }, select: { name: true } }),
+    ctx.db.user.findUnique({ where: { id: params.collaboratorId }, select: { name: true } }),
+  ]);
+  if (!project || !collaborator) return;
+  await createNotifications(ctx, [
+    {
+      userId: params.ownerId,
+      type: "project:collaboration",
+      title: `${collaborator.name ?? "Contributor"} joined ${project.name}`,
+      body: `${collaborator.name ?? "Contributor"} is now working on ${params.taskTitle}.`,
+      data: { projectId: params.projectId },
+    },
+  ]);
+}
