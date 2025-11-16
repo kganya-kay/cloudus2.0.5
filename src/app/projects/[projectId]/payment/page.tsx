@@ -6,12 +6,16 @@ import { api } from "~/trpc/server";
 import { ProjectPaymentClient } from "./payment-client";
 
 type PageProps = {
-  params: { projectId: string };
-  searchParams?: { paymentId?: string };
+  params: { projectId: string } | Promise<{ projectId: string }>;
+  searchParams?: { paymentId?: string } | Promise<{ paymentId?: string }>;
 };
 
 export default async function ProjectPaymentPage({ params, searchParams }: PageProps) {
-  const projectId = Number(params.projectId);
+  const resolvedParams = await Promise.resolve(params);
+  const resolvedSearchParams =
+    searchParams !== undefined ? await Promise.resolve(searchParams) : undefined;
+
+  const projectId = Number(resolvedParams.projectId);
   if (!Number.isFinite(projectId)) {
     notFound();
   }
@@ -23,7 +27,9 @@ export default async function ProjectPaymentPage({ params, searchParams }: PageP
 
   const paymentData = await api.project.paymentPortal({ projectId });
   const highlightPaymentId =
-    typeof searchParams?.paymentId === "string" ? searchParams.paymentId : undefined;
+    typeof resolvedSearchParams?.paymentId === "string"
+      ? resolvedSearchParams.paymentId
+      : undefined;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6">
@@ -32,7 +38,7 @@ export default async function ProjectPaymentPage({ params, searchParams }: PageP
           href={`/projects/${projectId}`}
           className="text-sm font-semibold text-blue-600 hover:underline"
         >
-          ← Back to project
+          &larr; Back to project
         </Link>
         <h1 className="text-3xl font-semibold text-gray-900">Project payments</h1>
         <p className="text-sm text-gray-600">
