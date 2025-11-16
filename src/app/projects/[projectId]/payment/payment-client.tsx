@@ -17,6 +17,7 @@ type PaymentRecord = {
   purpose: string;
   createdAt: string | Date;
   updatedAt: string | Date;
+  dueAt?: string | Date | null;
 };
 
 type ProjectInfo = {
