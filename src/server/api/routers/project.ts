@@ -6,6 +6,7 @@ import {
   ProjectTaskStatus,
   ProjectTaskPayoutType,
   ProjectTaskPayoutStatus,
+  PaymentStatus,
 } from "@prisma/client";
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
 
@@ -165,6 +166,10 @@ const launchConfiguratorInput = z.object({
     depositPercent: z.number().min(10).max(90).default(50),
   }),
   notes: z.string().max(2000).optional(),
+});
+
+const projectPaymentPortalInput = z.object({
+  projectId: z.number().int().positive(),
 });
 
 const cleanPhoneToNumber = (value: string) => {
@@ -779,6 +784,60 @@ export const projectRouter = createTRPCRouter({
       });
     }),
 
+  paymentPortal: protectedProcedure
+    .input(projectPaymentPortalInput)
+    .query(async ({ ctx, input }) => {
+      await ensureProjectOwner(
+        { db: ctx.db, session: ctx.session } as Parameters<typeof ensureProjectOwner>[0],
+        input.projectId,
+      );
+      const project = await ctx.db.project.findUnique({
+        where: { id: input.projectId },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          status: true,
+          createdAt: true,
+          payments: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              amountCents: true,
+              currency: true,
+              status: true,
+              provider: true,
+              providerRef: true,
+              receiptUrl: true,
+              purpose: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      });
+      if (!project) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+      }
+      const pendingPayment =
+        project.payments.find((payment) => payment.status === PaymentStatus.PENDING) ?? null;
+      const paidCents = project.payments
+        .filter((payment) => payment.status === PaymentStatus.PAID)
+        .reduce((sum, payment) => sum + payment.amountCents, 0);
+      return {
+        project: {
+          id: project.id,
+          name: project.name,
+          price: project.price,
+          status: project.status,
+          createdAt: project.createdAt,
+        },
+        payments: project.payments,
+        pendingPayment,
+        paidCents,
+      };
+    }),
+
   launchConfigurator: publicProcedure
     .input(launchConfiguratorInput)
     .mutation(async ({ ctx, input }) => {
@@ -835,32 +894,23 @@ export const projectRouter = createTRPCRouter({
           where: { id: project.id },
           data: { link: projectLink },
         });
-        const order = await tx.order.create({
+        const depositPayment = await tx.projectPayment.create({
           data: {
-            name: `Deposit for ${project.name}`,
-            createdById: ownerId,
-            price: depositAmountCents,
-            description: `50% deposit to activate project "${project.name}"`,
-            link: projectLink,
-            api: "projects.launch-configurator-deposit",
-            links: [`project:${project.id}`],
-            image: project.image,
-            customerId: ownerId,
-            customerName: contactName,
-            customerPhone: input.contact.phone,
-            customerEmail: input.contact.email,
+            projectId: project.id,
+            amountCents: depositAmountCents,
             currency: input.budget.currency,
+            purpose: "DEPOSIT",
           },
         });
-        return { projectId: project.id, orderId: order.id };
+        return { projectId: project.id, projectPaymentId: depositPayment.id };
       });
       return {
         projectId: result.projectId,
         projectStatus: "Pending 50% deposit" as const,
-        depositOrderId: result.orderId,
         depositAmountCents,
         depositPercent,
-        paymentPath: `/shop/orders/${result.orderId}`,
+        projectPaymentId: result.projectPaymentId,
+        paymentPath: `/projects/${result.projectId}/payment?paymentId=${result.projectPaymentId}`,
       };
     }),
 

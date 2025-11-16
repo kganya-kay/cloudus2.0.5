@@ -216,6 +216,7 @@ model Project {
   rating        Int      @default(5)
   bids          ProjectBid[]
   tasks         ProjectTask[]
+  payments      ProjectPayment[]
 
   // Social
   comments Comment[] @relation("ProjectComments")
@@ -355,6 +356,25 @@ model Payment {
   order Order @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
+  @@index([status])
+}
+
+model ProjectPayment {
+  id          String        @id @default(cuid())
+  projectId   Int
+  amountCents Int
+  currency    String        @default("ZAR")
+  status      PaymentStatus @default(PENDING)
+  provider    String        @default("STRIPE")
+  providerRef String?
+  receiptUrl  String?
+  purpose     String        @default("DEPOSIT")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
   @@index([status])
 }
 

@@ -17,7 +17,7 @@ const bodySchema = z.object({
 const defaultOrigin = () => env.AUTH_URL ?? "http://localhost:3000";
 
 export async function POST(request: Request) {
-  const json = await request.json().catch(() => null);
+  const json = (await request.json().catch(() => null)) as unknown;
   if (!json) {
     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
@@ -82,9 +82,10 @@ export async function POST(request: Request) {
     }));
 
   const headerStore = await headers();
-  const origin = successUrl
-    ? null
-    : headerStore.get("origin") || headerStore.get("referer") || defaultOrigin();
+  const origin =
+    successUrl !== undefined
+      ? null
+      : headerStore.get("origin") ?? headerStore.get("referer") ?? defaultOrigin();
   const resolvedSuccessUrl =
     successUrl ??
     `${origin}/shop/orders/${order.id}/payment/success?session_id={CHECKOUT_SESSION_ID}`;

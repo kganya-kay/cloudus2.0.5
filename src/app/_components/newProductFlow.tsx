@@ -64,7 +64,7 @@ const money = (value?: number, currency = "ZAR") => {
 type SubmissionResult = {
   projectId: number;
   projectStatus: string;
-  depositOrderId: number;
+  projectPaymentId: string;
   depositAmountCents: number;
   depositPercent: number;
   paymentPath: string;
@@ -541,8 +541,8 @@ export default function NewProductFlow() {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-xs text-gray-600">
               <p>
-                We route your deposit to /shop/orders so you can pay via card or EFT. Deposits are
-                refundable before production starts.
+                We route your deposit to the dedicated project payment portal so you can pay via card or
+                EFT. Deposits are refundable before production starts.
               </p>
             </div>
           </div>
@@ -591,6 +591,9 @@ export default function NewProductFlow() {
                     View project brief
                   </Button>
                 </div>
+                <p className="mt-3 text-xs text-gray-500">
+                  Payment reference: {submission.projectPaymentId}
+                </p>
               </div>
               <p className="text-xs text-gray-500">
                 Need assistance? WhatsApp{" "}
@@ -661,7 +664,7 @@ export default function NewProductFlow() {
                 </div>
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                We create a Stripe-ready /shop order linked to your project for the deposit.
+                We create a Stripe-ready project payment entry linked to your workspace for the deposit.
               </p>
             </div>
             {error && (
@@ -708,7 +711,7 @@ export default function NewProductFlow() {
             <li>Share your idea + timeline. Navigator suggests next steps across the site map.</li>
             <li>Confirm contact details so Salesforce + Cloudus stay in sync.</li>
             <li>Set the total budget. A deposit order (50% minimum) is generated automatically.</li>
-            <li>Review, submit, and head to /shop/orders/{`{id}`} to pay and activate tasks.</li>
+            <li>Review, submit, and head to /projects/{`{id}`}/payment to pay and activate tasks.</li>
           </ol>
           <p className="text-xs text-gray-600">
             Prefer a concierge experience? Email{" "}

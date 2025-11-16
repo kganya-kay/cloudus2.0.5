@@ -50,6 +50,26 @@ async function updatePaymentStatus(params: {
   }
 }
 
+async function updateProjectPaymentStatus(params: {
+  paymentId: string;
+  providerRef?: string | null;
+  receiptUrl?: string | null;
+  status: PaymentStatus;
+}) {
+  try {
+    await db.projectPayment.update({
+      where: { id: params.paymentId },
+      data: {
+        status: params.status,
+        providerRef: params.providerRef ?? undefined,
+        receiptUrl: params.receiptUrl ?? undefined,
+      },
+    });
+  } catch (error) {
+    console.error(`Failed to update project payment ${params.paymentId}`, error);
+  }
+}
+
 export async function POST(request: Request) {
   if (!env.STRIPE_WEBHOOK_SECRET) {
     return NextResponse.json(
@@ -80,9 +100,10 @@ export async function POST(request: Request) {
   const dataObject = event.data.object as Stripe.Checkout.Session | Stripe.PaymentIntent;
   const metadata = (dataObject.metadata ?? {}) as Stripe.Metadata;
   const paymentId = metadata.paymentId;
+  const projectPaymentId = metadata.projectPaymentId;
 
-  if (!paymentId) {
-    console.warn(`Stripe webhook ${event.id} missing paymentId metadata.`);
+  if (!paymentId && !projectPaymentId) {
+    console.warn(`Stripe webhook ${event.id} missing payment references.`);
     return NextResponse.json({ received: true });
   }
 
@@ -101,19 +122,39 @@ export async function POST(request: Request) {
       : undefined;
 
   if (successEvents.has(event.type)) {
-    await updatePaymentStatus({
-      paymentId,
-      status: PaymentStatus.PAID,
-      providerRef,
-      receiptUrl,
-    });
+    if (paymentId) {
+      await updatePaymentStatus({
+        paymentId,
+        status: PaymentStatus.PAID,
+        providerRef,
+        receiptUrl,
+      });
+    }
+    if (projectPaymentId) {
+      await updateProjectPaymentStatus({
+        paymentId: projectPaymentId,
+        status: PaymentStatus.PAID,
+        providerRef,
+        receiptUrl,
+      });
+    }
   } else if (failureEvents.has(event.type)) {
-    await updatePaymentStatus({
-      paymentId,
-      status: PaymentStatus.FAILED,
-      providerRef,
-      receiptUrl,
-    });
+    if (paymentId) {
+      await updatePaymentStatus({
+        paymentId,
+        status: PaymentStatus.FAILED,
+        providerRef,
+        receiptUrl,
+      });
+    }
+    if (projectPaymentId) {
+      await updateProjectPaymentStatus({
+        paymentId: projectPaymentId,
+        status: PaymentStatus.FAILED,
+        providerRef,
+        receiptUrl,
+      });
+    }
   }
 
   return NextResponse.json({ received: true });
