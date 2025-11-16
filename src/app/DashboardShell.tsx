@@ -15,7 +15,6 @@ import {
 import {
   Bars3Icon,
   BellIcon,
-  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 
 import GetWebApplication from "./_components/getWebApplication";
@@ -28,6 +27,7 @@ import NewLead from "./_components/newLead";
 import AllShopItems from "./_components/allShopItems";
 import OpenProjectsCard from "./_components/openProjectsCard";
 import LaundryDetails from "./_components/laundryDetails";
+import { AssistantSearchBar } from "./_components/AssistantSearchBar";
 import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 
@@ -131,21 +131,7 @@ export default function DashboardShell({
 
             {/* Center: Search (dominant) */}
             <div className="mx-auto w-full max-w-3xl flex-1">
-              <form action="/search" className="flex items-stretch">
-                <input
-                  type="search"
-                  name="q"
-                  placeholder="Search Cloudus"
-                  className="w-full rounded-l-full border border-gray-300 bg-white px-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="rounded-r-full border border-l-0 border-gray-300 px-4 text-gray-700 hover:bg-gray-50"
-                  aria-label="Search"
-                >
-                  <MagnifyingGlassIcon className="h-5 w-5" />
-                </button>
-              </form>
+              <AssistantSearchBar />
             </div>
 
             {/* Right: Notifications + Avatar */}

@@ -31,6 +31,10 @@ export const env = createEnv({
     OZOW_API_KEY: z.string().optional(),
     OZOW_PRIVATE_KEY: z.string().optional(),
     OZOW_MODE: z.enum(["test", "live"]).default("test"),
+    OPENAI_API_KEY:
+      process.env.NODE_ENV === "production"
+        ? z.string()
+        : z.string().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -62,6 +66,7 @@ export const env = createEnv({
     OZOW_API_KEY: process.env.OZOW_API_KEY,
     OZOW_PRIVATE_KEY: process.env.OZOW_PRIVATE_KEY,
     OZOW_MODE: process.env.OZOW_MODE,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**
