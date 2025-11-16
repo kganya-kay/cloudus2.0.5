@@ -13,8 +13,8 @@ type PaymentRecord = {
   providerRef: string | null;
   receiptUrl: string | null;
   purpose: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 };
 
 type ProjectInfo = {
@@ -22,7 +22,7 @@ type ProjectInfo = {
   name: string;
   price: number;
   status: string;
-  createdAt: string;
+  createdAt: string | Date;
 };
 
 const money = (value?: number, currency = "ZAR") => {
@@ -38,14 +38,15 @@ const money = (value?: number, currency = "ZAR") => {
   }
 };
 
-const formatDate = (value: string) => {
+const formatDate = (value: string | Date) => {
   try {
+    const date = typeof value === "string" ? new Date(value) : value;
     return new Intl.DateTimeFormat("en-ZA", {
       dateStyle: "medium",
       timeStyle: "short",
-    }).format(new Date(value));
+    }).format(date);
   } catch {
-    return value;
+    return typeof value === "string" ? value : value.toISOString();
   }
 };
 
