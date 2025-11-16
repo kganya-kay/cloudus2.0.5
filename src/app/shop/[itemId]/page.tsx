@@ -1,167 +1,358 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { ChevronDownIcon } from '@heroicons/react/16/solid'
-import { Field, Label, Switch } from '@headlessui/react'
+import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useMemo } from "react";
 
-export default function Example() {
-  const [agreed, setAgreed] = useState(false)
+import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
+import { api } from "~/trpc/react";
+
+function formatZAR(cents?: number | null) {
+  if (cents == null) return "R 0";
+  try {
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+      maximumFractionDigits: 0,
+    }).format(Math.round(cents / 100));
+  } catch {
+    return `R ${Math.round(cents / 100)}`;
+  }
+}
+
+function useItemId(): number | null {
+  const params = useParams<{ itemId?: string | string[] }>();
+  const raw = Array.isArray(params?.itemId) ? params?.itemId?.[0] : params?.itemId;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export default function ShopItemDetailPage() {
+  const itemId = useItemId();
+  const announcementsQuery = api.platform.announcements.useQuery({ limit: 3 });
+  const feedPreviewQuery = api.feed.list.useQuery({ limit: 3 });
+  const itemQuery = api.shopItem.getById.useQuery(
+    { id: itemId ?? -1 },
+    { enabled: itemId != null },
+  );
+
+  const item = itemQuery.data;
+  const supplier = item?.supplier;
+  const feedItems = feedPreviewQuery.data?.items ?? [];
+  const announcements = announcementsQuery.data ?? [];
+
+  const quickLinks = useMemo(
+    () => [
+      {
+        title: "Place an order",
+        href: `/shop/orders/${itemId ?? ""}`,
+        description: "Launch a secure checkout and track fulfilment.",
+      },
+      {
+        title: "Concierge assist",
+        href: `/shop/orders/${itemId ?? ""}/create`,
+        description: "Let a caretaker capture the request for you.",
+      },
+      {
+        title: "Driver assignments",
+        href: "/drivers/dashboard",
+        description: "Manage pickup logistics and live tracking.",
+      },
+      {
+        title: "Creator marketplace",
+        href: "/projects",
+        description: "Invite contributors for marketing, content, and more.",
+      },
+    ],
+    [itemId],
+  );
+
+  if (itemId == null) {
+    return (
+      <div className="mx-auto max-w-3xl p-6">
+        <p className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+          Invalid item id in the URL.
+        </p>
+        <div className="mt-4">
+          <Link
+            href="/shop"
+            className="rounded-full bg-gray-700 px-6 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+          >
+            Back to Shop
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-[-10rem] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[-20rem]"
-      >
-        <div
-          style={{
-            clipPath:
-              'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-          }}
-          className="relative left-1/2 -z-10 aspect-[1155/678] w-[36.125rem] max-w-none -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-40rem)] sm:w-[72.1875rem]"
-        />
-      </div>
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">Contact sales</h2>
-        <p className="mt-2 text-lg/8 text-gray-600">Aute magna irure deserunt veniam aliqua magna enim voluptate.</p>
-      </div>
-      <form action="#" method="POST" className="mx-auto mt-16 max-w-xl sm:mt-20">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="first-name" className="block text-sm/6 font-semibold text-gray-900">
-              First name
-            </label>
-            <div className="mt-2.5">
-              <input
-                id="first-name"
-                name="first-name"
-                type="text"
-                autoComplete="given-name"
-                className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="last-name" className="block text-sm/6 font-semibold text-gray-900">
-              Last name
-            </label>
-            <div className="mt-2.5">
-              <input
-                id="last-name"
-                name="last-name"
-                type="text"
-                autoComplete="family-name"
-                className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-              />
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="company" className="block text-sm/6 font-semibold text-gray-900">
-              Company
-            </label>
-            <div className="mt-2.5">
-              <input
-                id="company"
-                name="company"
-                type="text"
-                autoComplete="organization"
-                className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-              />
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="email" className="block text-sm/6 font-semibold text-gray-900">
-              Email
-            </label>
-            <div className="mt-2.5">
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-              />
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="phone-number" className="block text-sm/6 font-semibold text-gray-900">
-              Phone number
-            </label>
-            <div className="mt-2.5">
-              <div className="flex rounded-md bg-white outline outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2 has-[input:focus-within]:outline-indigo-600">
-                <div className="grid shrink-0 grid-cols-1 focus-within:relative">
-                  <select
-                    id="country"
-                    name="country"
-                    autoComplete="country"
-                    aria-label="Country"
-                    className="col-start-1 row-start-1 w-full appearance-none rounded-md py-2 pl-3.5 pr-7 text-base text-gray-500 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                  >
-                    <option>US</option>
-                    <option>CA</option>
-                    <option>EU</option>
-                  </select>
-                  <ChevronDownIcon
-                    aria-hidden="true"
-                    className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
-                  />
-                </div>
-                <input
-                  id="phone-number"
-                  name="phone-number"
-                  type="text"
-                  placeholder="123-456-7890"
-                  className="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-0 sm:text-sm/6"
-                />
+    <div className="min-h-screen bg-slate-50">
+      <section className="relative isolate overflow-hidden bg-gradient-to-br from-emerald-600 via-blue-700 to-indigo-700 text-white">
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle,_rgba(255,255,255,0.35),_transparent_70%)]" />
+        </div>
+        <div className="relative mx-auto max-w-6xl px-6 py-12 lg:px-8">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/70">Cloudus shop</p>
+          <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4">
+              <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+                {item ? item.name : "Loading experience..."}
+              </h1>
+              <p className="text-sm text-white/80">
+                Services built for creators, suppliers, and operators. Reserve the package,
+                collaborate with contributors, and convert sales on the same platform.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href={`/shop/orders/${itemId}`}
+                  className="rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/30"
+                >
+                  Launch order
+                </Link>
+                <Link
+                  href="/feed"
+                  className="rounded-full border border-white/60 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10"
+                >
+                  View feed
+                </Link>
+                <Link
+                  href="/projects"
+                  className="rounded-full bg-indigo-900/40 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-900/60"
+                >
+                  Explore tasks
+                </Link>
               </div>
             </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="message" className="block text-sm/6 font-semibold text-gray-900">
-              Message
-            </label>
-            <div className="mt-2.5">
-              <textarea
-                id="message"
-                name="message"
-                rows={4}
-                className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-                defaultValue={''}
-              />
+            <div className="rounded-3xl border border-white/20 bg-white/10 p-5 text-sm backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/80">Starting from</p>
+              <p className="text-3xl font-semibold">{formatZAR(item?.price)}</p>
+              <p className="mt-1 text-white/70">
+                Includes Cloudus caretakers, logistics coordination, and supplier payouts.
+              </p>
             </div>
           </div>
-          <Field className="flex gap-x-4 sm:col-span-2">
-            <div className="flex h-6 items-center">
-              <Switch
-                checked={agreed}
-                onChange={setAgreed}
-                className="group flex w-8 flex-none cursor-pointer rounded-full bg-gray-200 p-px ring-1 ring-inset ring-gray-900/5 transition-colors duration-200 ease-in-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 data-[checked]:bg-indigo-600"
-              >
-                <span className="sr-only">Agree to policies</span>
-                <span
-                  aria-hidden="true"
-                  className="size-4 transform rounded-full bg-white shadow-sm ring-1 ring-gray-900/5 transition duration-200 ease-in-out group-data-[checked]:translate-x-3.5"
-                />
-              </Switch>
-            </div>
-            <Label className="text-sm/6 text-gray-600">
-              By selecting this, you agree to our{' '}
-              <a href="#" className="font-semibold text-indigo-600">
-                privacy&nbsp;policy
-              </a>
-              .
-            </Label>
-          </Field>
         </div>
-        <div className="mt-10">
-          <button
-            type="submit"
-            className="block w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Submit Order
-          </button>
+      </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
+          <div className="space-y-6">
+            <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+              {itemQuery.isLoading ? (
+                <p className="text-sm text-gray-500">Loading package…</p>
+              ) : item ? (
+                <>
+                  <div className="flex flex-col gap-5 md:flex-row">
+                    <div className="relative h-48 w-full overflow-hidden rounded-3xl md:w-1/2">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    </div>
+                    <div className="space-y-4 md:w-1/2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">
+                        About this experience
+                      </p>
+                      <p className="text-sm text-gray-600">{item.description}</p>
+                      <div className="grid gap-3 text-sm text-gray-600">
+                        <div className="rounded-2xl border border-dashed px-4 py-3">
+                          <p className="text-xs uppercase text-gray-500">Category</p>
+                          <p className="font-semibold text-gray-900">{item.type}</p>
+                        </div>
+                        <div className="rounded-2xl border border-dashed px-4 py-3">
+                          <p className="text-xs uppercase text-gray-500">Supplier</p>
+                          <p className="font-semibold text-gray-900">
+                            {supplier?.name ?? "Cloudus Ops"}
+                          </p>
+                          {(supplier?.suburb || supplier?.city) && (
+                            <p className="text-xs text-gray-500">
+                              {supplier?.suburb}, {supplier?.city}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <Link
+                          href={`/shop/orders/${itemId}`}
+                          className="rounded-full bg-blue-600 px-6 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                        >
+                          Book now
+                        </Link>
+                        <Link
+                          href={`/shop/orders/${itemId}/create`}
+                          className="rounded-full border border-blue-600 px-6 py-2 text-xs font-semibold text-blue-700"
+                        >
+                          Request via caretaker
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">Item not found.</p>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+              <header className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Recent fulfilment</p>
+                  <h3 className="text-lg font-semibold text-gray-900">Orders</h3>
+                </div>
+                <Link href="/shop" className="text-xs font-semibold text-blue-700">
+                  Back to shop
+                </Link>
+              </header>
+              {item?.orders && item.orders.length > 0 ? (
+                <ul className="mt-4 space-y-3">
+                  {item.orders.slice(0, 6).map((order) => (
+                    <li
+                      key={order.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed px-4 py-3 text-sm text-gray-600"
+                    >
+                      <div>
+                        <p className="font-semibold text-gray-900">Order #{order.id}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(order.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs uppercase text-gray-500">{order.status}</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {formatZAR(order.price)}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-sm text-gray-500">
+                  Once this experience gets booked we will show fulfilment data here.
+                </p>
+              )}
+            </section>
+          </div>
+
+          <aside className="space-y-6">
+            <section className="rounded-3xl border border-blue-100 bg-white/80 p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-blue-600">
+                    Announcements
+                  </p>
+                  <p className="text-sm text-gray-600">Ops + strategy notes</p>
+                </div>
+                <Link href="/feed" className="text-xs font-semibold text-blue-700">
+                  Feed
+                </Link>
+              </div>
+              {announcementsQuery.isLoading ? (
+                <p className="mt-3 text-sm text-gray-500">Loading updates...</p>
+              ) : announcements.length === 0 ? (
+                <p className="mt-3 text-sm text-gray-500">No new announcements.</p>
+              ) : (
+                <div className="mt-3 space-y-3 text-sm">
+                  {announcements.map((announcement) => (
+                    <article
+                      key={announcement.id}
+                      className="rounded-2xl border border-blue-50 bg-blue-50/60 p-3"
+                    >
+                      <p className="text-xs uppercase text-blue-700">{announcement.title}</p>
+                      <p className="text-gray-600">{announcement.body}</p>
+                      {announcement.link && (
+                        <Link
+                          href={announcement.link}
+                          className="mt-1 inline-flex text-xs font-semibold text-blue-700"
+                        >
+                          Details
+                        </Link>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-purple-100 bg-white/80 p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-purple-600">Feed stories</p>
+                  <p className="text-sm text-gray-600">Creators shipping work</p>
+                </div>
+                <Link href="/projects" className="text-xs font-semibold text-purple-700">
+                  Projects
+                </Link>
+              </div>
+              {feedPreviewQuery.isLoading ? (
+                <p className="mt-3 text-sm text-gray-500">Loading stories...</p>
+              ) : feedItems.length === 0 ? (
+                <p className="mt-3 text-sm text-gray-500">
+                  Nothing new yet. Visit{" "}
+                  <Link href="/feed" className="text-blue-600 underline">
+                    the feed
+                  </Link>{" "}
+                  to publish.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {feedItems.slice(0, 3).map((post) => (
+                    <article
+                      key={post.id}
+                      className="rounded-2xl border border-purple-50 bg-purple-50/40 p-3 text-sm"
+                    >
+                      <p className="text-xs uppercase text-purple-600">
+                        {post.type.replaceAll("_", " ")}
+                      </p>
+                      <p className="font-semibold text-gray-900">
+                        {post.title ?? post.project?.name ?? "Update"}
+                      </p>
+                      {post.caption && (
+                        <p className="text-xs text-gray-600 line-clamp-2">{post.caption}</p>
+                      )}
+                      {post.project?.id && (
+                        <Link
+                          href={`/projects/${post.project.id}`}
+                          className="mt-1 inline-flex text-xs font-semibold text-purple-700"
+                        >
+                          View project →
+                        </Link>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Quick links</p>
+              <ul className="mt-3 space-y-3">
+                {quickLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="flex flex-col rounded-2xl border border-gray-100 px-4 py-3 transition hover:border-blue-200"
+                    >
+                      <span className="text-sm font-semibold text-gray-900">{link.title}</span>
+                      <span className="text-xs text-gray-600">{link.description}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <MarketplaceTasksPanel
+              role="CREATOR"
+              limit={4}
+              title="Need talent?"
+              subtitle="Invite Cloudus contributors to scale this service."
+            />
+          </aside>
         </div>
-      </form>
+      </div>
     </div>
-  )
+  );
 }
