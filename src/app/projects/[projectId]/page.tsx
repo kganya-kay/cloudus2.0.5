@@ -161,6 +161,34 @@ const formatCurrency = (value?: number) => {
   }
 };
 
+const OWNER_ROUTE_SHORTCUTS = [
+  {
+    title: "Supplier dashboard",
+    description: "Approve catalog items, emit payouts, and sync fulfilment.",
+    href: "/suppliers/dashboard",
+  },
+  {
+    title: "Driver hub",
+    description: "Assign pickups, capture GPS updates, and monitor delivery SLAs.",
+    href: "/drivers/dashboard",
+  },
+  {
+    title: "Laundry flow",
+    description: "Route customer laundry requests straight into Cloudus ops.",
+    href: "/laundry",
+  },
+  {
+    title: "Calendar",
+    description: "Book design reviews, dev standups, and go-live checkpoints.",
+    href: "/calendar",
+  },
+  {
+    title: "Shop",
+    description: "Bundle digital services and trigger instant payments.",
+    href: "/shop",
+  },
+];
+
 function InlineEditToggle({
   value,
   onSave,
@@ -302,6 +330,12 @@ export default function LatestProject() {
   const tasks = tasksQuery.data ?? [];
 
   const selectedProject = api.project.select.useQuery({ id: parsedId });
+  const paymentPortal = api.project.paymentPortal.useQuery(
+    { projectId: parsedId },
+    { enabled: Boolean(selectedProject.data?.viewerContext?.isOwner) },
+  );
+  const [paymentCheckoutError, setPaymentCheckoutError] = useState<string | null>(null);
+  const [paymentCheckoutLoading, setPaymentCheckoutLoading] = useState(false);
 
   // Update + Delete mutations
   const updateProject = api.project.update.useMutation({
@@ -334,6 +368,35 @@ export default function LatestProject() {
     const ok = confirm(`Delete "${p.name}"? This cannot be undone.`);
     if (!ok) return;
     deleteProject.mutate({ id: p.id });
+  };
+
+  const handleLaunchDepositCheckout = async () => {
+    const pendingPaymentId = paymentPortal.data?.pendingPayment?.id;
+    if (!pendingPaymentId) {
+      setPaymentCheckoutError("No pending deposit to pay right now.");
+      return;
+    }
+    try {
+      setPaymentCheckoutError(null);
+      setPaymentCheckoutLoading(true);
+      const response = await fetch("/api/projects/payments/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: pendingPaymentId }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { checkoutUrl?: string; error?: string }
+        | null;
+      if (!response.ok || !data?.checkoutUrl) {
+        throw new Error(data?.error ?? "Unable to start checkout. Please try again.");
+      }
+      window.location.href = data.checkoutUrl;
+    } catch (error) {
+      setPaymentCheckoutError(
+        error instanceof Error ? error.message : "Unable to launch Stripe checkout.",
+      );
+      setPaymentCheckoutLoading(false);
+    }
   };
 
   const handleCreateTask = (event: React.FormEvent<HTMLFormElement>) => {
@@ -471,6 +534,15 @@ export default function LatestProject() {
   });
 
   const p = selectedProject.data;
+  const paymentSummary = paymentPortal.data;
+  const totalBudgetCents =
+    typeof (paymentSummary?.project?.price ?? p?.price) === "number"
+      ? (paymentSummary?.project?.price ?? p?.price ?? 0)
+      : 0;
+  const paidCents =
+    typeof paymentSummary?.paidCents === "number" ? paymentSummary.paidCents : 0;
+  const outstandingCents = Math.max(totalBudgetCents - paidCents, 0);
+  const pendingPayment = paymentSummary?.pendingPayment ?? null;
   const refreshTasks = useCallback(async () => {
     await utils.project.tasks.invalidate({ projectId: parsedId });
   }, [parsedId, utils]);
@@ -743,6 +815,73 @@ export default function LatestProject() {
               )}
             </div>
           </div>
+
+          {viewer?.isOwner && (
+            <section className="mt-6 grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+              <div className="rounded-3xl border border-emerald-200 bg-white/80 p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-emerald-700">
+                  Funding summary
+                </p>
+                {paymentPortal.isLoading ? (
+                  <p className="mt-2 text-sm text-gray-500">Loading payment data...</p>
+                ) : (
+                  <>
+                    <h3 className="mt-1 text-2xl font-semibold text-gray-900">
+                      {formatCurrency(outstandingCents)} outstanding of{" "}
+                      {formatCurrency(totalBudgetCents)}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Paid to date:{" "}
+                      <span className="font-semibold text-emerald-700">
+                        {formatCurrency(paidCents)}
+                      </span>
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Button
+                        onClick={handleLaunchDepositCheckout}
+                        disabled={paymentCheckoutLoading || !pendingPayment}
+                        variant="contained"
+                        className="!rounded-full !bg-blue-600"
+                      >
+                        {paymentCheckoutLoading ? "Launching checkout..." : "Pay deposit now"}
+                      </Button>
+                      <Button
+                        component={Link}
+                        href={`/projects/${p.id}/payment${
+                          pendingPayment ? `?paymentId=${pendingPayment.id}` : ""
+                        }`}
+                        variant="outlined"
+                        className="!rounded-full"
+                      >
+                        Open payment portal
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Payment reference: {pendingPayment?.id ?? "No pending deposit"}
+                    </p>
+                    {paymentCheckoutError && (
+                      <p className="mt-1 text-xs text-red-600">{paymentCheckoutError}</p>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="rounded-3xl border border-dashed border-blue-200 bg-blue-50/70 p-5 text-sm text-gray-700">
+                <p className="text-xs font-semibold uppercase text-blue-600">
+                  Route shortcuts
+                </p>
+                <ul className="mt-3 space-y-3">
+                  {OWNER_ROUTE_SHORTCUTS.map((route) => (
+                    <li key={route.href} className="rounded-2xl bg-white/70 p-3 shadow-sm">
+                      <Link href={route.href} className="font-semibold text-blue-700">
+                        {route.title}
+                      </Link>
+                      <p className="text-xs text-gray-600">{route.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
 
           {/* Cost Breakdown (read-only except if you track cost) */}
           <div className="flex flex-col sm:flex-row gap-2 mt-6">
