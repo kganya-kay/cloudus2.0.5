@@ -1,3 +1,42 @@
+:root {
+  color-scheme: light;
+  --cloudus-bg: #f8fafc;
+  --cloudus-foreground: #0f172a;
+  --cloudus-card: #ffffff;
+  --cloudus-border: #e2e8f0;
+  --cloudus-accent: #2563eb;
+  --cloudus-gradient-from: #dbeafe;
+  --cloudus-gradient-to: #eff6ff;
+}
+
+.dark {
+  color-scheme: dark;
+  --cloudus-bg: #020617;
+  --cloudus-foreground: #e2e8f0;
+  --cloudus-card: #0f172a;
+  --cloudus-border: #1e293b;
+  --cloudus-accent: #60a5fa;
+  --cloudus-gradient-from: #0f172a;
+  --cloudus-gradient-to: #1e293b;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[var(--cloudus-bg)] text-[var(--cloudus-foreground)];
+  }
+}
+
+@layer components {
+  .skeleton {
+    @apply animate-pulse bg-gradient-to-r from-slate-200/80 via-slate-100 to-slate-200/80 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800;
+  }
+
+  .panel-gradient {
+    background-image: radial-gradient(circle at top left, var(--cloudus-gradient-from), transparent 55%),
+      radial-gradient(circle at bottom right, var(--cloudus-gradient-to), transparent 55%);
+  }
+}

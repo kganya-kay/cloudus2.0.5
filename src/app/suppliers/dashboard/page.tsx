@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 import { SupplierDashboardClient } from "./dashboard-client";
+import { AssistantOverlay } from "~/app/_components/AssistantOverlay";
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
 
 export default async function SupplierDashboardPage(props: {
@@ -61,13 +62,16 @@ export default async function SupplierDashboardPage(props: {
   }
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 p-6">
-      <SupplierDashboardClient
-        initialSupplierId={supplierId}
-        initialSupplierName={profile?.supplier?.name ?? null}
-        viewerRole={role}
-      />
-    </main>
+    <>
+      <main className="mx-auto max-w-6xl space-y-6 p-6">
+        <SupplierDashboardClient
+          initialSupplierId={supplierId}
+          initialSupplierName={profile?.supplier?.name ?? null}
+          viewerRole={role}
+        />
+      </main>
+      <AssistantOverlay />
+    </>
   );
 }
 

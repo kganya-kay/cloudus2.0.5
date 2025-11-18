@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
+import { FeedSnippetsPanel } from "~/app/_components/FeedSnippetsPanel";
+import { AssistantOverlay } from "~/app/_components/AssistantOverlay";
 import { api } from "~/trpc/react";
 
 function formatZAR(cents?: number | null) {
@@ -31,7 +33,6 @@ function useItemId(): number | null {
 export default function ShopItemDetailPage() {
   const itemId = useItemId();
   const announcementsQuery = api.platform.announcements.useQuery({ limit: 3 });
-  const feedPreviewQuery = api.feed.list.useQuery({ limit: 3 });
   const itemQuery = api.shopItem.getById.useQuery(
     { id: itemId ?? -1 },
     { enabled: itemId != null },
@@ -39,7 +40,6 @@ export default function ShopItemDetailPage() {
 
   const item = itemQuery.data;
   const supplier = item?.supplier;
-  const feedItems = feedPreviewQuery.data?.items ?? [];
   const announcements = announcementsQuery.data ?? [];
 
   const quickLinks = useMemo(
@@ -86,7 +86,8 @@ export default function ShopItemDetailPage() {
     );
   }
 
-  return (
+return (
+  <>
     <div className="min-h-screen bg-slate-50">
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-emerald-600 via-blue-700 to-indigo-700 text-white">
         <div className="absolute inset-0 opacity-30">
@@ -277,55 +278,11 @@ export default function ShopItemDetailPage() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-purple-100 bg-white/80 p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-purple-600">Feed stories</p>
-                  <p className="text-sm text-gray-600">Creators shipping work</p>
-                </div>
-                <Link href="/projects" className="text-xs font-semibold text-purple-700">
-                  Projects
-                </Link>
-              </div>
-              {feedPreviewQuery.isLoading ? (
-                <p className="mt-3 text-sm text-gray-500">Loading stories...</p>
-              ) : feedItems.length === 0 ? (
-                <p className="mt-3 text-sm text-gray-500">
-                  Nothing new yet. Visit{" "}
-                  <Link href="/feed" className="text-blue-600 underline">
-                    the feed
-                  </Link>{" "}
-                  to publish.
-                </p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {feedItems.slice(0, 3).map((post) => (
-                    <article
-                      key={post.id}
-                      className="rounded-2xl border border-purple-50 bg-purple-50/40 p-3 text-sm"
-                    >
-                      <p className="text-xs uppercase text-purple-600">
-                        {post.type.replaceAll("_", " ")}
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        {post.title ?? post.project?.name ?? "Update"}
-                      </p>
-                      {post.caption && (
-                        <p className="text-xs text-gray-600 line-clamp-2">{post.caption}</p>
-                      )}
-                      {post.project?.id && (
-                        <Link
-                          href={`/projects/${post.project.id}`}
-                          className="mt-1 inline-flex text-xs font-semibold text-purple-700"
-                        >
-                          View project →
-                        </Link>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
+            <FeedSnippetsPanel
+              title="Feed stories"
+              subtitle="Creators shipping work"
+              className="border-purple-100"
+            />
 
             <section className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
               <p className="text-xs uppercase tracking-wide text-gray-500">Quick links</p>
@@ -354,5 +311,13 @@ export default function ShopItemDetailPage() {
         </div>
       </div>
     </div>
-  );
+    <AssistantOverlay
+  taxonomy={[
+    { label: "Shop feed", description: "Featured shop drops & orders.", href: "/feed" },
+    { label: "Projects", description: "Convert bespoke projects into services.", href: "/projects" },
+    { label: "Suppliers", description: "Manage fulfilment partners.", href: "/suppliers/dashboard" },
+  ]}
+/>
+  </>
+);
 }
