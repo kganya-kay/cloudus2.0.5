@@ -11,6 +11,7 @@ import {
 
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
+import { UploadButton } from "~/utils/uploadthing";
 
 type FeedItem = RouterOutputs["feed"]["list"]["items"][number];
 
@@ -26,6 +27,19 @@ const formatCurrency = (value?: number | null) => {
     return `R ${(value / 100).toFixed(0)}`;
   }
 };
+
+// Helper to extract URL from UploadThing response
+function getUploadedUrl(files: unknown): string | undefined {
+  if (!Array.isArray(files) || files.length === 0) return undefined;
+  const f = files[0] as Record<string, unknown>;
+  const pick = (v: unknown) => (typeof v === "string" && v.trim().length > 0 ? v : undefined);
+  return (
+    pick(f.url) ??
+    pick(f.ufsUrl) ??
+    pick((f.serverData as Record<string, unknown> | undefined)?.url) ??
+    (pick(f.key) ? `https://utfs.io/f/${String(f.key)}` : undefined)
+  );
+}
 
 export function FeedClient() {
   const feedQuery = api.feed.list.useInfiniteQuery(
@@ -49,17 +63,37 @@ export function FeedClient() {
     },
   });
 
+  const ownedProjects = api.project.getAll.useQuery();
+  const contributorOverview = api.project.contributorOverview.useQuery();
+
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [cover, setCover] = useState("");
   const [tagsInput, setTagsInput] = useState("");
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState<number | undefined>(undefined);
 
   const posts = feedQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const isLoading = feedQuery.isLoading && posts.length === 0;
   const canLoadMore = Boolean(feedQuery.hasNextPage);
 
   const emptyState = !isLoading && posts.length === 0;
+
+  const projectOptions = useMemo(() => {
+    const options: { id: number; name: string; badge: string }[] = [];
+    ownedProjects.data?.forEach((p) => {
+      options.push({ id: p.id, name: p.name, badge: "Owned" });
+    });
+    contributorOverview.data?.activeTasks.forEach((task) => {
+      if (task.project?.id && !options.some((o) => o.id === task.project?.id)) {
+        options.push({
+          id: task.project.id,
+          name: task.project.name ?? `Project #${task.project.id}`,
+          badge: "Assigned",
+        });
+      }
+    });
+    return options;
+  }, [ownedProjects.data, contributorOverview.data]);
 
   return (
     <div className="space-y-4">
@@ -78,18 +112,38 @@ export function FeedClient() {
                 placeholder="Title (optional)"
                 className="rounded-xl border px-3 py-2 text-sm"
               />
-              <input
-                value={cover}
-                onChange={(e) => setCover(e.target.value)}
-                placeholder="Cover image URL (optional)"
-                className="rounded-xl border px-3 py-2 text-sm"
-              />
-              <input
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                placeholder="Project ID (optional)"
-                className="rounded-xl border px-3 py-2 text-sm"
-              />
+              <div className="rounded-xl border px-3 py-2">
+                <p className="text-xs text-gray-500">Cover image (optional)</p>
+                <UploadButton
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(res) => {
+                    const url = getUploadedUrl(res);
+                    if (url) setCover(url);
+                  }}
+                  onUploadError={(error: Error) => alert(`Upload error: ${error.message}`)}
+                />
+                {cover && (
+                  <img src={cover} alt="Cover preview" className="mt-2 h-16 w-16 rounded-lg object-cover" />
+                )}
+              </div>
+              <div className="rounded-xl border px-3 py-2">
+                <p className="text-xs text-gray-500">Project / Task (optional)</p>
+                <select
+                  value={projectId ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setProjectId(val ? Number(val) : undefined);
+                  }}
+                  className="mt-1 w-full rounded-lg border px-2 py-1 text-sm text-gray-700"
+                >
+                  <option value="">No link</option>
+                  {projectOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name} ({opt.badge})
+                    </option>
+                  ))}
+                </select>
+              </div>
               <input
                 value={tagsInput}
                 onChange={(e) => setTagsInput(e.target.value)}
@@ -115,13 +169,12 @@ export function FeedClient() {
                     .split(",")
                     .map((t) => t.trim())
                     .filter(Boolean);
-                  const projectIdNum = Number(projectId);
                   publishMutation.mutate({
                     title: title.trim() || undefined,
                     caption: caption.trim() || undefined,
-                    coverImage: cover.trim() || undefined,
+                    coverImage: cover || undefined,
                     tags,
-                    projectId: Number.isFinite(projectIdNum) && projectIdNum > 0 ? projectIdNum : undefined,
+                    projectId,
                     type: "PROJECT_UPDATE",
                   });
                 }}
