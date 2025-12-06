@@ -28,6 +28,7 @@ export const env = createEnv({
         ? z.string()
         : z.string().optional(),
     OZOW_SITE_CODE: z.string().optional(),
+    OZOW_API_URL: z.string().url().optional(),
     OZOW_API_KEY: z.string().optional(),
     OZOW_PRIVATE_KEY: z.string().optional(),
     OZOW_MODE: z.enum(["test", "live"]).default("test"),
@@ -63,6 +64,7 @@ export const env = createEnv({
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     OZOW_SITE_CODE: process.env.OZOW_SITE_CODE,
+    OZOW_API_URL: process.env.OZOW_API_URL,
     OZOW_API_KEY: process.env.OZOW_API_KEY,
     OZOW_PRIVATE_KEY: process.env.OZOW_PRIVATE_KEY,
     OZOW_MODE: process.env.OZOW_MODE,

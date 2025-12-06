@@ -167,9 +167,34 @@ export function ProjectPaymentClient({
     }
   };
 
+  const launchOzowCheckout = async (paymentId: string) => {
+    try {
+      setCheckoutError(null);
+      setLoading(true);
+      const response = await fetch("/api/projects/payments/ozow/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId }),
+      });
+      const data = (await response.json().catch(() => null)) as { checkoutUrl?: string; error?: string } | null;
+      if (!response.ok || !data?.checkoutUrl) {
+        throw new Error(data?.error ?? "Unable to start Ozow checkout.");
+      }
+      window.location.href = data.checkoutUrl;
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Unable to launch Ozow checkout.");
+      setLoading(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!pendingPayment) return;
     await launchCheckout(pendingPayment.id);
+  };
+
+  const handleOzowCheckout = async () => {
+    if (!pendingPayment) return;
+    await launchOzowCheckout(pendingPayment.id);
   };
 
   return (
@@ -263,6 +288,14 @@ export function ProjectPaymentClient({
               className="!rounded-full !bg-amber-600 hover:!bg-amber-700"
             >
               {loading ? "Launching checkout..." : "Pay with Stripe"}
+            </Button>
+            <Button
+              onClick={handleOzowCheckout}
+              disabled={loading}
+              variant="outlined"
+              className="!rounded-full"
+            >
+              {loading ? "Launching..." : "Pay with Ozow"}
             </Button>
             <Button
               component={Link}
