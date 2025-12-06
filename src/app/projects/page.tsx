@@ -341,62 +341,31 @@ export default async function ProjectsPage() {
                         </div>
                       </div>
 
-                      <div
-                        className="relative overflow-hidden p-5 text-white"
-                        style={{
-                          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.45)), url(${project.image})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/40" />
-                        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
-                            <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-white/10 ring-2 ring-white/20">
-                              <img src={project.image} alt={project.name} className="h-full w-full object-cover" />
-                            </div>
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wide text-white/70">
-                                <span className="rounded-full bg-white/15 px-2 py-1 font-semibold">
-                                  {project.status}
-                                </span>
-                                <span className="rounded-full bg-white/10 px-2 py-1 font-semibold">
-                                  {project.tags?.slice(0, 2).join(' ? ') || 'Marketplace'}
-                                </span>
-                              </div>
-                              <h3 className="mt-1 text-xl font-semibold text-white">{project.name}</h3>
-                              <p className="text-sm text-white/80 line-clamp-2">{project.description}</p>
-                            </div>
+                      <div className="bg-gray-50 px-5 py-4">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                          <div className="rounded-2xl border border-gray-100 bg-white p-3">
+                            <p className="text-[10px] uppercase text-gray-500">Available budget</p>
+                            <p className="text-lg font-semibold text-gray-900">{availableBudgetLabel}</p>
                           </div>
-                          <div className="w-full max-w-sm space-y-2 rounded-2xl bg-white/10 p-3 text-xs text-white/80 backdrop-blur">
-                            <div className="flex items-center justify-between">
-                              <span>Open tasks</span>
-                              <span className="font-semibold text-white">{openTaskCount}</span>
+                          <div className="rounded-2xl border border-gray-100 bg-white p-3">
+                            <p className="text-[10px] uppercase text-gray-500">Open tasks</p>
+                            <p className="text-lg font-semibold text-gray-900">{openTaskCount}</p>
+                          </div>
+                          <div className="rounded-2xl border border-gray-100 bg-white p-3">
+                            <p className="text-[10px] uppercase text-gray-500">Community</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {followerCount} followers • {contributorCount} contributors
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border border-gray-100 bg-white p-3">
+                            <p className="text-[10px] uppercase text-gray-500">Usage</p>
+                            <div className="mt-1 h-2 rounded-full bg-gray-200">
+                              <div
+                                className="h-2 rounded-full bg-blue-500"
+                                style={{ width: `${budgetUsedPercent}%` }}
+                              />
                             </div>
-                            <div className="flex items-center justify-between">
-                              <span>Community</span>
-                              <span className="font-semibold text-white">
-                                {followerCount} followers ? {contributorCount} contributors
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span>Available budget</span>
-                              <span className="font-semibold text-white">{availableBudgetLabel}</span>
-                            </div>
-                            {project.price ? (
-                              <div>
-                                <div className="flex items-center justify-between">
-                                  <span>Usage</span>
-                                  <span className="font-semibold text-white">{budgetUsedPercent}%</span>
-                                </div>
-                                <div className="mt-1 h-2 rounded-full bg-white/15">
-                                  <div
-                                    className="h-2 rounded-full bg-emerald-300"
-                                    style={{ width: `${budgetUsedPercent}%` }}
-                                  />
-                                </div>
-                              </div>
-                            ) : null}
+                            <p className="mt-1 text-sm font-semibold text-gray-900">{budgetUsedPercent}%</p>
                           </div>
                         </div>
                       </div>
