@@ -484,6 +484,10 @@ export default function LatestProject() {
     respondTaskPayoutMutation.mutate({ requestId, action });
   };
 
+  const handleOwnerPayout = (taskId: number) => {
+    ownerPayoutTaskMutation.mutate({ taskId });
+  };
+
   const handleBidSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (selectedBidTaskIds.length === 0) {
@@ -651,6 +655,10 @@ export default function LatestProject() {
   const respondTaskPayoutMutation = api.project.respondTaskPayout.useMutation({
     onSuccess: refreshTasks,
     onError: (error) => alert(error.message ?? "Unable to update payout."),
+  });
+  const ownerPayoutTaskMutation = api.project.ownerPayoutTask.useMutation({
+    onSuccess: refreshTasks,
+    onError: (error) => alert(error.message ?? "Unable to pay out this task."),
   });
   const viewer = p?.viewerContext;
   const canBid = !!viewer && !viewer.isOwner && !viewer.isContributor && !!viewer.userId;
@@ -1188,6 +1196,9 @@ export default function LatestProject() {
                     const pendingPayout = task.payoutRequests.find(
                       (request) => request.status === "PENDING",
                     );
+                    const approvedPayout = task.payoutRequests.find(
+                      (request) => request.status === "APPROVED",
+                    );
                     return (
                       <div key={task.id} className="rounded-2xl border bg-gray-50 p-4 shadow-sm">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1214,6 +1225,11 @@ export default function LatestProject() {
                           {pendingPayout && (
                             <span className="rounded-full bg-white px-2 py-0.5 text-amber-700">
                               Payout pending ({formatCurrency(pendingPayout.amountCents)})
+                            </span>
+                          )}
+                          {approvedPayout && (
+                            <span className="rounded-full bg-white px-2 py-0.5 text-emerald-700">
+                              Paid out ({formatCurrency(approvedPayout.amountCents)})
                             </span>
                           )}
                         </div>
@@ -1297,6 +1313,20 @@ export default function LatestProject() {
                               </button>
                             </>
                           )}
+                          {canManageBids &&
+                            task.assignedToId &&
+                            ["APPROVED", "COMPLETED"].includes(task.status) &&
+                            !pendingPayout &&
+                            !approvedPayout && (
+                              <button
+                                type="button"
+                                onClick={() => handleOwnerPayout(task.id)}
+                                disabled={ownerPayoutTaskMutation.isPending}
+                                className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                              >
+                                Pay contributor
+                              </button>
+                            )}
                           {canManageBids && (
                             <button
                               type="button"

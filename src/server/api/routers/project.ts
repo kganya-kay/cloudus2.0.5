@@ -146,6 +146,10 @@ const payoutRespondInput = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
 });
 
+const ownerPayoutInput = z.object({
+  taskId: z.number().int().positive(),
+});
+
 const launchConfiguratorInput = z.object({
   idea: z.object({
     title: z.string().min(3),
@@ -982,12 +986,21 @@ export const projectRouter = createTRPCRouter({
         input.action === "APPROVE"
           ? ProjectTaskPayoutStatus.APPROVED
           : ProjectTaskPayoutStatus.REJECTED;
-      const updated = await ctx.db.projectTaskPayoutRequest.update({
-        where: { id: request.id },
-        data: {
-          status: nextStatus,
-          resolvedAt: new Date(),
-        },
+      const updated = await ctx.db.$transaction(async (tx) => {
+        const result = await tx.projectTaskPayoutRequest.update({
+          where: { id: request.id },
+          data: {
+            status: nextStatus,
+            resolvedAt: new Date(),
+          },
+        });
+        if (nextStatus === ProjectTaskPayoutStatus.APPROVED) {
+          await tx.project.update({
+            where: { id: request.task.projectId },
+            data: { cost: { increment: request.amountCents } },
+          });
+        }
+        return result;
       });
       if (request.userId) {
         void notifyProjectPayoutUpdate(ctx, {
@@ -999,6 +1012,94 @@ export const projectRouter = createTRPCRouter({
         });
       }
       return updated;
+    }),
+
+  ownerPayoutTask: protectedProcedure
+    .input(ownerPayoutInput)
+    .mutation(async ({ ctx, input }) => {
+      const task = await ctx.db.projectTask.findUnique({
+        where: { id: input.taskId },
+        select: {
+          id: true,
+          projectId: true,
+          budgetCents: true,
+          assignedToId: true,
+          status: true,
+          project: { select: { createdById: true } },
+          payoutRequests: { select: { status: true } },
+          title: true,
+        },
+      });
+      if (!task) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+      await ensureProjectOwner(ctx, task.projectId);
+      if (!task.assignedToId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Assign the task to a contributor before paying out.",
+        });
+      }
+      if (!["APPROVED", "COMPLETED"].includes(task.status)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only approved or completed tasks can be paid out by the owner.",
+        });
+      }
+      const hasPending = task.payoutRequests.some(
+        (request) => request.status === ProjectTaskPayoutStatus.PENDING,
+      );
+      if (hasPending) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "There is already a pending payout request for this task.",
+        });
+      }
+      const hasApproved = task.payoutRequests.some(
+        (request) => request.status === ProjectTaskPayoutStatus.APPROVED,
+      );
+      if (hasApproved) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This task already has an approved payout.",
+        });
+      }
+      const amountCents = task.budgetCents ?? 0;
+      if (amountCents <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Task budget must be greater than zero to pay out.",
+        });
+      }
+      const assignedToId = task.assignedToId as string;
+
+      const payout = await ctx.db.$transaction(async (tx) => {
+        const created = await tx.projectTaskPayoutRequest.create({
+          data: {
+            taskId: task.id,
+            userId: assignedToId,
+            amountCents,
+            type: ProjectTaskPayoutType.FULL,
+            status: ProjectTaskPayoutStatus.APPROVED,
+            resolvedAt: new Date(),
+          },
+        });
+        await tx.project.update({
+          where: { id: task.projectId },
+          data: { cost: { increment: amountCents } },
+        });
+        return created;
+      });
+
+      void notifyProjectPayoutUpdate(ctx, {
+        projectId: task.projectId,
+        contributorId: assignedToId,
+        taskTitle: task.title ?? "Task",
+        amountCents,
+        status: ProjectTaskPayoutStatus.APPROVED,
+      });
+
+      return payout;
     }),
 
   paymentPortal: protectedProcedure
