@@ -55,7 +55,7 @@ export function FeedClient() {
       setCaption("");
       setCover("");
       setTagsInput("");
-      setProjectId("");
+      setProjectId(undefined);
       await feedQuery.refetch();
     },
     onError: (error) => {
