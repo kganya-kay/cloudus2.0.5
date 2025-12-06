@@ -295,16 +295,55 @@ export default async function ProjectsPage() {
                       key={project.id}
                       className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:border-blue-200 hover:shadow-md"
                     >
+                      <div className="relative h-56 w-full overflow-hidden">
+                        <img src={project.image} alt={project.name} className="h-full w-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                        <div className="absolute inset-0 flex flex-col justify-between p-4 text-white">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-wide">
+                              <span className="rounded-full bg-white/80 px-2 py-1 font-semibold text-gray-900">
+                                {project.type}
+                              </span>
+                              <span className="rounded-full bg-white/20 px-2 py-1 font-semibold">
+                                {project.status}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 rounded-full bg-black/30 px-2 py-1">
+                              {project.createdBy?.image ? (
+                                <img
+                                  src={project.createdBy.image}
+                                  alt={project.createdBy.name ?? "Owner"}
+                                  className="h-10 w-10 rounded-full ring-2 ring-white/70"
+                                />
+                              ) : (
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-xs font-semibold uppercase">
+                                  {(project.createdBy?.name ?? "O").slice(0, 2)}
+                                </div>
+                              )}
+                              <span className="text-xs font-semibold text-white">
+                                {project.createdBy?.name ?? "Owner"}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wide text-white/70">
+                              <span className="rounded-full bg-white/10 px-2 py-1 font-semibold">
+                                {project.tags?.slice(0, 2).join(" • ") || "Marketplace"}
+                              </span>
+                            </div>
+                            <h3 className="mt-2 text-xl font-semibold text-white">{project.name}</h3>
+                            <p className="text-sm text-white/80 line-clamp-2">{project.description}</p>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="relative bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 p-5 text-white">
                         <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
                         <div className="absolute -bottom-14 -right-16 h-40 w-40 rounded-full bg-blue-300/10 blur-3xl" />
                         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
-                            <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-white/10 ring-2 ring-white/20">
+                            <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-white/10 ring-2 ring-white/20">
                               <img src={project.image} alt={project.name} className="h-full w-full object-cover" />
-                              <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold uppercase text-gray-800">
-                                {project.type}
-                              </span>
                             </div>
                             <div>
                               <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wide text-white/70">
