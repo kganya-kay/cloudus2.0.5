@@ -585,7 +585,15 @@ export const projectRouter = createTRPCRouter({
           project: { select: { createdById: true } },
           tasks: {
             include: {
-              task: { select: { id: true, title: true, budgetCents: true } },
+              task: {
+                select: {
+                  id: true,
+                  title: true,
+                  budgetCents: true,
+                  assignedToId: true,
+                  status: true,
+                },
+              },
             },
           },
         },
@@ -608,6 +616,17 @@ export const projectRouter = createTRPCRouter({
         input.action === "APPROVE"
           ? ProjectBidStatus.APPROVED
           : ProjectBidStatus.REJECTED;
+      const totalTaskBudgetCents =
+        bid.tasks?.reduce((sum, link) => sum + (link.task?.budgetCents ?? 0), 0) ?? 0;
+      const conflictingTask = bid.tasks.find(
+        (link) => link.task?.assignedToId && link.task.assignedToId !== bid.userId,
+      );
+      if (conflictingTask) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One or more tasks in this bid are already assigned to another contributor.",
+        });
+      }
 
       await ctx.db.$transaction(async (tx) => {
         await tx.projectBid.update({
@@ -615,22 +634,42 @@ export const projectRouter = createTRPCRouter({
           data: { status: nextStatus },
         });
         if (nextStatus === ProjectBidStatus.APPROVED) {
+          const taskIds = bid.tasks
+            .map((link) => link.task?.id)
+            .filter((id): id is number => typeof id === "number");
+          if (taskIds.length > 0) {
+            await tx.projectTask.updateMany({
+              where: { id: { in: taskIds }, projectId: bid.projectId },
+              data: { assignedToId: bid.userId },
+            });
+            await tx.projectTask.updateMany({
+              where: {
+                id: { in: taskIds },
+                projectId: bid.projectId,
+                status: ProjectTaskStatus.BACKLOG,
+              },
+              data: { status: ProjectTaskStatus.IN_PROGRESS },
+            });
+          }
           await tx.project.update({
             where: { id: bid.projectId },
-            data: { contributors: { connect: { id: bid.userId } } },
+            data: {
+              contributors: { connect: { id: bid.userId } },
+              ...(totalTaskBudgetCents > 0
+                ? { cost: { increment: totalTaskBudgetCents } }
+                : {}),
+            },
           });
         }
       });
 
       if (bid.userId) {
-        const totalBid =
-          bid.tasks?.reduce((sum, link) => sum + (link.task?.budgetCents ?? 0), 0) ?? 0;
         void notifyProjectBidDecision(ctx, {
           projectId: bid.projectId,
           userId: bid.userId,
           status: nextStatus,
           taskCount: bid.tasks?.length ?? 0,
-          amountCents: totalBid,
+          amountCents: totalTaskBudgetCents,
         });
       }
 
