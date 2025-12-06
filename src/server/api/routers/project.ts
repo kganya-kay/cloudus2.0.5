@@ -518,12 +518,21 @@ export const projectRouter = createTRPCRouter({
           id: { in: input.taskIds },
           projectId: project.id,
         },
-        select: { id: true, budgetCents: true },
+        select: { id: true, budgetCents: true, assignedToId: true, status: true },
       });
       if (tasks.length !== input.taskIds.length) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "One or more selected tasks are invalid for this project.",
+        });
+      }
+      const blockedTask = tasks.find(
+        (task) => task.assignedToId !== null || task.status !== ProjectTaskStatus.BACKLOG,
+      );
+      if (blockedTask) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Some tasks are already claimed or not open for bids.",
         });
       }
       const totalBudget = tasks.reduce((sum: number, task) => sum + (task.budgetCents ?? 0), 0);
@@ -808,6 +817,15 @@ export const projectRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Task is already assigned to another contributor.",
+        });
+      }
+      if (task.assignedToId === ctx.session.user.id) {
+        return task;
+      }
+      if (task.status !== ProjectTaskStatus.BACKLOG) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only backlog tasks can be claimed.",
         });
       }
       const updated = await ctx.db.projectTask.update({

@@ -8,7 +8,15 @@ import { useMemo, useState, useCallback } from "react";
 import { OurFileRouter } from "~/app/api/uploadthing/core";
 import { api } from "~/trpc/react";
 import { IconButton } from "@mui/material";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import {
+  PencilSquareIcon,
+  CheckCircleIcon,
+  BanknotesIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon,
+  ClockIcon,
+  ArrowTopRightOnSquareIcon,
+} from "@heroicons/react/24/outline";
 import type { ProjectTaskPayoutType } from "@prisma/client";
 
 
@@ -611,7 +619,9 @@ export default function LatestProject() {
     typeof paymentSummary?.paidCents === "number" ? paymentSummary.paidCents : 0;
   const outstandingCents = Math.max(totalBudgetCents - paidCents, 0);
   const pendingPayment = paymentSummary?.pendingPayment ?? null;
-  const availableBidTasks = tasks.filter((task) => !task.assignedToId);
+  const availableBidTasks = tasks.filter(
+    (task) => !task.assignedToId && task.status === "BACKLOG",
+  );
   const selectedBidTotalCents = tasks.reduce((sum, task) => {
     if (!selectedBidTaskIds.includes(task.id)) return sum;
     return sum + (task.budgetCents ?? 0);
@@ -672,6 +682,157 @@ export default function LatestProject() {
 
   return (
     <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-white shadow-md rounded-xl">
+      {p && (
+        <div className="mb-6 space-y-4">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 p-6 text-white shadow-lg">
+            <div className="absolute -left-12 -top-12 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+            <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-blue-300/10 blur-3xl" />
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-5">
+                <img
+                  alt="Project"
+                  src={p.image ?? ""}
+                  className="h-20 w-20 rounded-2xl bg-white/10 object-cover ring-2 ring-white/20"
+                />
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-white/70">
+                    <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
+                      {p.status}
+                    </span>
+                    <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
+                      {p.type}
+                    </span>
+                    {p.openSource ? (
+                      <span className="rounded-full bg-emerald-400/20 px-3 py-1 font-semibold text-emerald-50">
+                        Open source
+                      </span>
+                    ) : null}
+                  </div>
+                  <InlineEditText
+                    value={p.name}
+                    onSave={(val) => updateProject.mutate({ id: p.id, data: { name: val } })}
+                    className="mt-1 text-2xl font-semibold text-white"
+                  />
+                  <p className="text-sm text-white/80">
+                    <ClockIcon className="mr-1 inline h-4 w-4" />
+                    {new Date(p.createdAt).toDateString()}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-white/80">
+                    <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
+                      #{p.id}
+                    </span>
+                    <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
+                      {p.createdBy?.name ?? "Owner"}
+                    </span>
+                    {p.link && (
+                      <Link
+                        href={p.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 font-semibold hover:bg-white/20"
+                      >
+                        <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                        Visit
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full max-w-md rounded-2xl bg-white/10 p-4 backdrop-blur">
+                <div className="flex items-center justify-between text-sm text-white/80">
+                  <span>Budget usage</span>
+                  <span className="font-semibold text-white">{budgetUsedPercent}%</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-white/15">
+                  <div
+                    className="h-2 rounded-full bg-emerald-300 transition-all"
+                    style={{ width: `${budgetUsedPercent}%` }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs text-white/80">
+                  <span>{formatCurrency(projectCostCents)} committed</span>
+                  <span>{formatCurrency(availableBudgetCents)} available</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {canManageBids && (
+                    <Button
+                      onClick={() => {
+                        const el = document.getElementById("tasks");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      variant="contained"
+                      className="!rounded-full !bg-white !text-blue-700 hover:!bg-white/90"
+                      startIcon={<CheckCircleIcon className="h-4 w-4" />}
+                    >
+                      Manage tasks
+                    </Button>
+                  )}
+                  {paymentPortal.data?.project && viewer?.isOwner && (
+                    <Button
+                      component={Link}
+                      href={`/projects/${p.id}/payment${
+                        pendingPayment ? `?paymentId=${pendingPayment.id}` : ""
+                      }`}
+                      variant="outlined"
+                      className="!rounded-full !border-white !text-white hover:!bg-white/10"
+                      startIcon={<BanknotesIcon className="h-4 w-4" />}
+                    >
+                      Payments
+                    </Button>
+                  )}
+                  <Button
+                    href="/projects/create"
+                    variant="outlined"
+                    className="!rounded-full !border-white/60 !text-white hover:!bg-white/10"
+                  >
+                    New project
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
+                <div className="rounded-xl bg-white/20 p-2">
+                  <CurrencyDollarIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-white/70">Total budget</p>
+                  <p className="text-lg font-semibold text-white">{formatCurrency(projectBudgetCents)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
+                <div className="rounded-xl bg-white/20 p-2">
+                  <BanknotesIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-white/70">Committed</p>
+                  <p className="text-lg font-semibold text-white">{formatCurrency(projectCostCents)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
+                <div className="rounded-xl bg-white/20 p-2">
+                  <CheckCircleIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-white/70">Open tasks</p>
+                  <p className="text-lg font-semibold text-white">{openTaskCount}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
+                <div className="rounded-xl bg-white/20 p-2">
+                  <UserGroupIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-white/70">Contributors</p>
+                  <p className="text-lg font-semibold text-white">{contributorCount}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Top actions */}
       <div className="mb-4 flex items-center justify-between gap-2">
         <Button
@@ -691,7 +852,7 @@ export default function LatestProject() {
           disabled={deleteProject.isPending || !p}
           className="rounded-full px-6 py-2 font-semibold"
         >
-          {deleteProject.isPending ? "Deleting…" : "Delete Project"}
+          {deleteProject.isPending ? "Deleting..." : "Delete Project"}
         </Button>
       </div>
 
