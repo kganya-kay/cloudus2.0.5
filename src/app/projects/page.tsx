@@ -341,9 +341,15 @@ export default async function ProjectsPage() {
                         </div>
                       </div>
 
-                      <div className="relative bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 p-5 text-white">
-                        <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
-                        <div className="absolute -bottom-14 -right-16 h-40 w-40 rounded-full bg-blue-300/10 blur-3xl" />
+                      <div
+                        className="relative overflow-hidden p-5 text-white"
+                        style={{
+                          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.45)), url(${project.image})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/40" />
                         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
                             <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-white/10 ring-2 ring-white/20">
