@@ -570,6 +570,13 @@ export default function LatestProject() {
   const shareableLinks = (p?.links ?? []).filter(Boolean).slice(0, 3);
   const openTaskCount = tasks.filter((task) => task.status === "BACKLOG").length;
   const assignedTaskCount = tasks.filter((task) => Boolean(task.assignedToId)).length;
+  const projectBudgetCents = p?.price ?? 0;
+  const projectCostCents = p?.cost ?? 0;
+  const availableBudgetCents = Math.max(projectBudgetCents - projectCostCents, 0);
+  const budgetUsedPercent =
+    projectBudgetCents > 0
+      ? Math.min(100, Math.max(0, Math.round((projectCostCents / projectBudgetCents) * 100)))
+      : 0;
   const contributorStats = useMemo(() => {
     const totalBudgetCents = tasks.reduce((sum, task) => sum + (task.budgetCents ?? 0), 0);
     const completedBudgetCents = tasks
@@ -1044,14 +1051,60 @@ export default function LatestProject() {
           )}
 
           {/* Cost Breakdown (read-only except if you track cost) */}
-          <div className="flex flex-col sm:flex-row gap-2 mt-6">
-            <div className="flex-1 bg-orange-300 text-center text-sm py-2 rounded-lg">
-              Cost: {p.cost ?? 0}
+          <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">Budget overview</p>
+                <h3 className="text-lg font-semibold text-gray-900">Cost, available budget, and bids</h3>
+              </div>
+              {projectBudgetCents > 0 && (
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                  {budgetUsedPercent}% used
+                </span>
+              )}
             </div>
-            <div className="flex-1 bg-green-300 text-center text-sm py-2 rounded-lg">
-              Available: {p.price - (p.cost ?? 0)}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs uppercase text-gray-500">Total budget</p>
+                <p className="mt-1 text-xl font-semibold text-gray-900">
+                  {formatCurrency(projectBudgetCents)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs uppercase text-gray-500">Committed (cost)</p>
+                <p className="mt-1 text-xl font-semibold text-amber-700">
+                  {formatCurrency(projectCostCents)}
+                </p>
+                {projectBudgetCents > 0 && (
+                  <p className="text-xs text-gray-500">{budgetUsedPercent}% of budget</p>
+                )}
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs uppercase text-gray-500">Available</p>
+                <p className="mt-1 text-xl font-semibold text-emerald-700">
+                  {formatCurrency(availableBudgetCents)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs uppercase text-gray-500">Bids</p>
+                <p className="mt-1 text-xl font-semibold text-gray-900">{bidsCount}</p>
+                <p className="text-xs text-gray-500">Total bids received</p>
+              </div>
             </div>
-            <div className="flex-1 bg-red-300 text-center text-sm py-2 rounded-lg">Bids</div>
+            {projectBudgetCents > 0 && (
+              <div className="mt-4">
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>0</span>
+                  <span>{formatCurrency(projectBudgetCents)}</span>
+                </div>
+                <div className="mt-1 h-2 rounded-full bg-gray-200">
+                  <div
+                    className="h-2 rounded-full bg-blue-500 transition-all"
+                    style={{ width: `${budgetUsedPercent}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 rounded-2xl border bg-white p-4 shadow-sm">
