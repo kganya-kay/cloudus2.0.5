@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   BoltIcon,
   PhotoIcon,
@@ -35,6 +35,25 @@ export function FeedClient() {
   const reactMutation = api.feed.react.useMutation({
     onSuccess: () => void feedQuery.refetch(),
   });
+  const publishMutation = api.feed.publish.useMutation({
+    onSuccess: async () => {
+      setTitle("");
+      setCaption("");
+      setCover("");
+      setTagsInput("");
+      setProjectId("");
+      await feedQuery.refetch();
+    },
+    onError: (error) => {
+      alert(error?.message ?? "Please sign in to post a drop.");
+    },
+  });
+
+  const [title, setTitle] = useState("");
+  const [caption, setCaption] = useState("");
+  const [cover, setCover] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
+  const [projectId, setProjectId] = useState("");
 
   const posts = feedQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const isLoading = feedQuery.isLoading && posts.length === 0;
@@ -44,6 +63,78 @@ export function FeedClient() {
 
   return (
     <div className="space-y-4">
+      <article className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <PhotoIcon className="mt-1 h-6 w-6 text-blue-500" />
+          <div className="flex-1 space-y-3">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-blue-600">Share a drop</p>
+              <p className="text-sm text-gray-600">Post a project/task update to the feed.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Title (optional)"
+                className="rounded-xl border px-3 py-2 text-sm"
+              />
+              <input
+                value={cover}
+                onChange={(e) => setCover(e.target.value)}
+                placeholder="Cover image URL (optional)"
+                className="rounded-xl border px-3 py-2 text-sm"
+              />
+              <input
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                placeholder="Project ID (optional)"
+                className="rounded-xl border px-3 py-2 text-sm"
+              />
+              <input
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+                placeholder="Tags comma separated (optional)"
+                className="rounded-xl border px-3 py-2 text-sm"
+              />
+            </div>
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="What happened? Share progress, blockers, or wins."
+              className="w-full rounded-xl border px-3 py-2 text-sm"
+              rows={3}
+            />
+            <div className="flex flex-wrap justify-between gap-3">
+              <div className="text-xs text-gray-500">
+                Drops appear in the feed for collaborators and the community.
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const tags = tagsInput
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean);
+                  const projectIdNum = Number(projectId);
+                  publishMutation.mutate({
+                    title: title.trim() || undefined,
+                    caption: caption.trim() || undefined,
+                    coverImage: cover.trim() || undefined,
+                    tags,
+                    projectId: Number.isFinite(projectIdNum) && projectIdNum > 0 ? projectIdNum : undefined,
+                    type: "PROJECT_UPDATE",
+                  });
+                }}
+                disabled={publishMutation.isPending || (!caption.trim() && !title.trim())}
+                className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {publishMutation.isPending ? "Posting..." : "Post drop"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
       {isLoading && (
         <div className="rounded-3xl border border-blue-100 bg-white/70 p-6 shadow-sm">
           <p className="text-sm text-gray-500">Loading creator updates...</p>
