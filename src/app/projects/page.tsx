@@ -274,6 +274,10 @@ export default async function ProjectsPage() {
                                 projects.map((project) => {
                   const openTasks = (project.tasks ?? []).slice(0, 3);
                   const shareLinks = (project.links ?? []).slice(0, 2);
+                  const galleryThumbs =
+                    project.links?.filter((link) =>
+                      /\.(png|jpe?g|gif|webp|avif)$/i.test(link) || link.includes("utfs.io"),
+                    ).slice(0, 3) ?? [];
                   const followerCount = project._count?.followers ?? 0;
                   const contributorCount = project._count?.contributors ?? 0;
                   const openTaskCount = project.openTaskCount ?? openTasks.length;
@@ -392,6 +396,21 @@ export default async function ProjectsPage() {
                       </div>
 
                       <div className="p-6 space-y-4">
+                        {galleryThumbs.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-semibold uppercase text-gray-500">Gallery</p>
+                            <div className="flex flex-wrap gap-2">
+                              {galleryThumbs.map((img) => (
+                                <img
+                                  key={`${project.id}-${img}`}
+                                  src={img}
+                                  alt={`${project.name} gallery`}
+                                  className="h-16 w-16 rounded-lg object-cover ring-1 ring-gray-200"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {openTasks.length > 0 && (
                           <div className="space-y-2">
                             <p className="text-xs font-semibold uppercase text-gray-500">Top open tasks</p>
