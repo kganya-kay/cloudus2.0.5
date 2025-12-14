@@ -15,18 +15,12 @@ export const env = createEnv({
     AUTH_DISCORD_ID: z.string(),
     AUTH_DISCORD_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
-    STRIPE_SECRET_KEY:
+    PAYSTACK_SECRET_KEY:
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    STRIPE_PUBLISHABLE_KEY:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
-    STRIPE_WEBHOOK_SECRET:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
+    PAYSTACK_PUBLIC_KEY: z.string().optional(),
+    PAYSTACK_API_URL: z.string().url().optional(),
     OZOW_SITE_CODE: z.string().optional(),
     OZOW_API_URL: z.string().url().optional(),
     OZOW_API_KEY: z.string().optional(),
@@ -60,9 +54,9 @@ export const env = createEnv({
     AUTH_DISCORD_ID: process.env.AUTH_DISCORD_ID,
     AUTH_DISCORD_SECRET: process.env.AUTH_DISCORD_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
-    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+    PAYSTACK_PUBLIC_KEY: process.env.PAYSTACK_PUBLIC_KEY,
+    PAYSTACK_API_URL: process.env.PAYSTACK_API_URL,
     OZOW_SITE_CODE: process.env.OZOW_SITE_CODE,
     OZOW_API_URL: process.env.OZOW_API_URL,
     OZOW_API_KEY: process.env.OZOW_API_KEY,

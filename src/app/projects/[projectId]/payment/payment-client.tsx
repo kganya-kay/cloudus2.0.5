@@ -151,7 +151,7 @@ export function ProjectPaymentClient({
     try {
       setCheckoutError(null);
       setLoading(true);
-      const response = await fetch("/api/projects/payments/stripe/checkout", {
+      const response = await fetch("/api/projects/payments/paystack/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentId }),
@@ -287,7 +287,7 @@ export function ProjectPaymentClient({
               variant="contained"
               className="!rounded-full !bg-amber-600 hover:!bg-amber-700"
             >
-              {loading ? "Launching checkout..." : "Pay with Stripe"}
+              {loading ? "Launching checkout..." : "Pay with Paystack"}
             </Button>
             <Button
               onClick={handleOzowCheckout}

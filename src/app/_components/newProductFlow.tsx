@@ -254,7 +254,7 @@ export default function NewProductFlow() {
     try {
       setPaymentError(null);
       setPaymentLoading(true);
-      const response = await fetch("/api/projects/payments/stripe/checkout", {
+      const response = await fetch("/api/projects/payments/paystack/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentId: submission.projectPaymentId }),
@@ -733,7 +733,7 @@ export default function NewProductFlow() {
                 </div>
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                We create a Stripe-ready project payment entry linked to your workspace for the deposit.
+                We create a Paystack-ready project payment entry linked to your workspace for the deposit.
               </p>
             </div>
             {error && (

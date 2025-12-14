@@ -31,12 +31,12 @@ export function LaundryOrderClient() {
 
   const utils = api.useUtils();
 
-  const startStripeCheckout = useCallback(async (orderId: number) => {
+  const startPaystackCheckout = useCallback(async (orderId: number) => {
     setDialogOpen(true);
     setRedirecting(true);
     setCheckoutError(null);
     try {
-      const response = await fetch("/api/payments/stripe/checkout", {
+      const response = await fetch("/api/payments/paystack/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId }),
@@ -51,14 +51,16 @@ export function LaundryOrderClient() {
       window.location.href = data.checkoutUrl;
     } catch (err) {
       setRedirecting(false);
-      setCheckoutError(err instanceof Error ? err.message : "Payment error. Try again.");
+      setCheckoutError(
+        err instanceof Error ? err.message : "Payment error. Please try again.",
+      );
     }
   }, []);
 
   const createOrder = api.order.createLaundry.useMutation({
     onSuccess: async (order) => {
       await utils.order.getLatest.invalidate().catch(() => undefined);
-      await startStripeCheckout(order.id);
+      await startPaystackCheckout(order.id);
     },
   });
 

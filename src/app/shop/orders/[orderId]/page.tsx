@@ -76,13 +76,13 @@ export default function OrderDetailPage() {
     setLocating(false);
   }, []);
 
-  const startStripeCheckout = useCallback(
+  const startPaystackCheckout = useCallback(
     async (orderId: number) => {
       setOpen(true);
       setCheckoutError(null);
       setIsRedirecting(true);
       try {
-        const response = await fetch("/api/payments/stripe/checkout", {
+        const response = await fetch("/api/payments/paystack/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId }),
@@ -104,7 +104,7 @@ export default function OrderDetailPage() {
         const message =
           error instanceof Error
             ? error.message
-            : "Unable to start Stripe checkout. Please try again.";
+            : "Unable to start Paystack checkout. Please try again.";
         setCheckoutError(message);
         setIsRedirecting(false);
       }
@@ -136,7 +136,7 @@ export default function OrderDetailPage() {
         await utils.shopItem.getById.invalidate({ id: itemId });
       }
       if (order?.id) {
-        await startStripeCheckout(order.id);
+        await startPaystackCheckout(order.id);
       }
     },
   });
@@ -214,7 +214,7 @@ export default function OrderDetailPage() {
                 : "Confirm your Cloudus order and secure fulfilment."}
             </h1>
             <p className="text-sm text-white/80">
-              Share delivery notes, capture your location, and launch a secure Stripe checkout.
+              Share delivery notes, capture your location, and launch a secure Paystack checkout.
               We also surface feed drops and marketplace contributors so you can keep momentum.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -608,7 +608,7 @@ export default function OrderDetailPage() {
               <p className="mt-2 text-sm text-gray-600">
                 {checkoutError
                   ? checkoutError
-                  : "Hang tight while we launch a secure Stripe payment page for you."}
+                  : "Hang tight while we launch a secure Paystack payment page for you."}
               </p>
               {checkoutError && (
                 <div className="mt-6 flex justify-center">

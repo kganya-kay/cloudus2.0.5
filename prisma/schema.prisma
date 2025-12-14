@@ -537,7 +537,7 @@ model ProjectPayment {
   amountCents Int
   currency    String        @default("ZAR")
   status      PaymentStatus @default(PENDING)
-  provider    String        @default("STRIPE")
+  provider    String        @default("PAYSTACK")
   providerRef String?
   receiptUrl  String?
   purpose     String        @default("DEPOSIT")

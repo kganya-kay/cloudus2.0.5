@@ -401,7 +401,7 @@ export default function LatestProject() {
     try {
       setPaymentCheckoutError(null);
       setPaymentCheckoutLoading(true);
-      const response = await fetch("/api/projects/payments/stripe/checkout", {
+      const response = await fetch("/api/projects/payments/paystack/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentId: pendingPaymentId }),
@@ -415,7 +415,7 @@ export default function LatestProject() {
       window.location.href = data.checkoutUrl;
     } catch (error) {
       setPaymentCheckoutError(
-        error instanceof Error ? error.message : "Unable to launch Stripe checkout.",
+        error instanceof Error ? error.message : "Unable to launch Paystack checkout.",
       );
       setPaymentCheckoutLoading(false);
     }

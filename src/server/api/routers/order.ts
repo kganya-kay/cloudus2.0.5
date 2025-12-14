@@ -101,7 +101,7 @@ const payoutInput = z.object({
 const addPaymentInput = z.object({
   orderId: z.number().int().positive(),
   amountCents: z.number().int().positive(),
-  provider: z.string().min(1), // e.g. CASH | CARD | EFT | STRIPE | OZOW
+  provider: z.string().min(1), // e.g. CASH | CARD | EFT | PAYSTACK | OZOW
   providerRef: z.string().optional(),
   receiptUrl: z.string().url().optional(),
   status: z.nativeEnum(PaymentStatus).optional().default(PaymentStatus.PENDING),

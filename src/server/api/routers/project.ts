@@ -1207,7 +1207,7 @@ export const projectRouter = createTRPCRouter({
           amountCents: input.amountCents,
           currency: "ZAR",
           status: PaymentStatus.PENDING,
-          provider: "STRIPE",
+          provider: "PAYSTACK",
           purpose: "TIP",
           label: input.message ?? "Creator tip",
           sequence: (await ctx.db.projectPayment.count({ where: { projectId: project.id } })) + 1,
