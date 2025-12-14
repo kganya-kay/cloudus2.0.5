@@ -418,11 +418,11 @@ function CreatorSpotlight({
             View feed →
           </Link>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {creators.slice(0, 4).map((creator) => (
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+          {creators.slice(0, 6).map((creator) => (
             <article
               key={creator.id}
-              className="rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700"
+              className="min-w-[220px] max-w-[260px] snap-start rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700 shadow-[0_6px_18px_rgba(59,130,246,0.08)]"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -434,13 +434,13 @@ function CreatorSpotlight({
                   alt={creator.displayName}
                   className="h-10 w-10 rounded-full object-cover"
                 />
-                <div>
-                  <p className="font-semibold text-gray-900">{creator.displayName}</p>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-gray-900">{creator.displayName}</p>
                   <p className="text-xs text-gray-500">@{creator.handle}</p>
                 </div>
               </div>
               {creator.tagline && (
-                <p className="mt-2 text-xs text-gray-600 line-clamp-2">{creator.tagline}</p>
+                <p className="mt-2 line-clamp-2 text-xs text-gray-600">{creator.tagline}</p>
               )}
               <div className="mt-2 flex flex-wrap gap-1 text-[10px] uppercase text-blue-700">
                 {creator.skills.slice(0, 2).map((skill) => (
@@ -452,7 +452,7 @@ function CreatorSpotlight({
             </article>
           ))}
           {creators.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-blue-200 p-3 text-sm text-gray-500">
+            <div className="min-w-[240px] rounded-2xl border border-dashed border-blue-200 p-3 text-sm text-gray-500">
               No creator stories yet. Head to the{" "}
               <Link href="/feed" className="text-blue-600 underline">
                 feed
