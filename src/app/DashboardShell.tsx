@@ -28,7 +28,7 @@ import AllShopItems from "./_components/allShopItems";
 import OpenProjectsCard from "./_components/openProjectsCard";
 import LaundryDetails from "./_components/laundryDetails";
 import { AssistantSearchBar } from "./_components/AssistantSearchBar";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import { MarketplaceTasksPanel } from "./_components/MarketplaceTasksPanel";
 import type { RouterOutputs } from "~/trpc/react";
@@ -406,6 +406,20 @@ function CreatorSpotlight({
   if (creators.length === 0 && announcements.length === 0) {
     return null;
   }
+
+  const slides = creators.slice(0, 6);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const id = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [slides.length]);
+
+  const goToSlide = (idx: number) => setCurrentIndex(idx);
+
   return (
     <section className="mt-6 grid gap-4 rounded-3xl border border-blue-100 bg-white/80 p-4 shadow-sm lg:grid-cols-[2fr,1fr]">
       <div className="space-y-3">
@@ -419,13 +433,18 @@ function CreatorSpotlight({
           </Link>
         </div>
         <div className="overflow-hidden">
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 no-scrollbar">
-          {creators.slice(0, 6).map((creator) => (
-            <article
-              key={creator.id}
-              className="min-w-[210px] max-w-[240px] snap-start rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700 shadow-[0_6px_18px_rgba(59,130,246,0.08)]"
-            >
-              <div className="flex items-center gap-3">
+          <div
+            className="flex transition-transform duration-500"
+            style={{
+              width: `${Math.max(slides.length, 1) * 100}%`,
+              transform: `translateX(-${currentIndex * (100 / Math.max(slides.length, 1))}%)`,
+            }}
+          >
+            {slides.map((creator) => (
+              <article
+                key={creator.id}
+                className="flex w-full min-w-0 flex-shrink-0 items-center gap-3 px-3 py-2 text-sm text-gray-700"
+              >
                 <img
                   src={
                     creator.avatarUrl ??
@@ -433,36 +452,54 @@ function CreatorSpotlight({
                     "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
                   }
                   alt={creator.displayName}
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="h-12 w-12 rounded-full object-cover"
                 />
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-gray-900">{creator.displayName}</p>
-                  <p className="text-xs text-gray-500">@{creator.handle}</p>
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {creator.displayName}
+                    </p>
+                    <span className="truncate text-[11px] text-blue-700">@{creator.handle}</span>
+                  </div>
+                  {creator.tagline && (
+                    <p className="line-clamp-2 text-xs text-gray-600">{creator.tagline}</p>
+                  )}
+                  <div className="flex flex-wrap gap-1 text-[10px] uppercase text-blue-700">
+                    {creator.skills.slice(0, 2).map((skill) => (
+                      <span key={skill} className="rounded-full bg-white px-2 py-0.5">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
+              </article>
+            ))}
+            {slides.length === 0 && (
+              <div className="flex w-full items-center justify-center px-3 py-3 text-sm text-gray-500">
+                No creator stories yet. Head to the{" "}
+                <Link href="/feed" className="text-blue-600 underline">
+                  &nbsp;feed
+                </Link>{" "}
+                to share one.
               </div>
-              {creator.tagline && (
-                <p className="mt-2 line-clamp-2 text-xs text-gray-600">{creator.tagline}</p>
-              )}
-              <div className="mt-2 flex flex-wrap gap-1 text-[10px] uppercase text-blue-700">
-                {creator.skills.slice(0, 2).map((skill) => (
-                  <span key={skill} className="rounded-full bg-white px-2 py-0.5">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </article>
-          ))}
-          {creators.length === 0 && (
-            <div className="min-w-[240px] rounded-2xl border border-dashed border-blue-200 p-3 text-sm text-gray-500">
-              No creator stories yet. Head to the{" "}
-              <Link href="/feed" className="text-blue-600 underline">
-                feed
-              </Link>{" "}
-              to share one.
-            </div>
-          )}
+            )}
           </div>
         </div>
+        {slides.length > 1 && (
+          <div className="flex justify-center gap-2 pt-1">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => goToSlide(idx)}
+                className={`h-2 w-2 rounded-full transition ${
+                  idx === currentIndex ? "bg-blue-600" : "bg-blue-200 hover:bg-blue-300"
+                }`}
+                aria-label={`Go to creator slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
       <div className="space-y-3 rounded-2xl border border-dashed border-gray-200 p-3">
         <p className="text-xs uppercase tracking-wide text-gray-500">Announcements</p>
