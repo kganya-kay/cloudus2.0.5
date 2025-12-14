@@ -418,11 +418,12 @@ function CreatorSpotlight({
             View feed →
           </Link>
         </div>
-        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+        <div className="overflow-hidden">
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 no-scrollbar">
           {creators.slice(0, 6).map((creator) => (
             <article
               key={creator.id}
-              className="min-w-[220px] max-w-[260px] snap-start rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700 shadow-[0_6px_18px_rgba(59,130,246,0.08)]"
+              className="min-w-[210px] max-w-[240px] snap-start rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700 shadow-[0_6px_18px_rgba(59,130,246,0.08)]"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -460,6 +461,7 @@ function CreatorSpotlight({
               to share one.
             </div>
           )}
+          </div>
         </div>
       </div>
       <div className="space-y-3 rounded-2xl border border-dashed border-gray-200 p-3">
