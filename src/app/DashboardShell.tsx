@@ -409,6 +409,7 @@ function CreatorSpotlight({
 
   const slides = creators.slice(0, 6);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [announcementsOpen, setAnnouncementsOpen] = useState(false);
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -429,9 +430,10 @@ function CreatorSpotlight({
             <h3 className="text-base font-semibold text-gray-900">Top collaborators</h3>
           </div>
           <Link href="/feed" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
-            View feed →
+            View feed
           </Link>
         </div>
+
         <div className="relative overflow-hidden rounded-2xl border border-blue-50 bg-blue-50/40">
           {slides.map((creator, idx) => (
             <article
@@ -473,12 +475,11 @@ function CreatorSpotlight({
             <div className="flex w-full items-center justify-center px-3 py-3 text-sm text-gray-500">
               No creator stories yet. Head to the{" "}
               <Link href="/feed" className="text-blue-600 underline">
-                &nbsp;feed
+                feed
               </Link>{" "}
               to share one.
             </div>
           )}
-          {/* Spacer to lock in height */}
           {slides[0] && (
             <div className="invisible flex items-center gap-3 px-3 py-2 text-sm">
               <span className="h-12 w-12 rounded-full bg-blue-100" />
@@ -489,6 +490,7 @@ function CreatorSpotlight({
             </div>
           )}
         </div>
+
         {slides.length > 1 && (
           <div className="flex justify-center gap-2 pt-1">
             {slides.map((_, idx) => (
@@ -505,25 +507,39 @@ function CreatorSpotlight({
           </div>
         )}
       </div>
-      <div className="space-y-3 rounded-2xl border border-dashed border-gray-200 p-3">
-        <p className="text-xs uppercase tracking-wide text-gray-500">Announcements</p>
-        {announcements.length === 0 ? (
-          <p className="text-sm text-gray-500">Nothing new right now.</p>
-        ) : (
-          announcements.slice(0, 3).map((announcement) => (
-            <div key={announcement.id} className="rounded-xl bg-gray-50 p-3">
-              <p className="text-sm font-semibold text-gray-900">{announcement.title}</p>
-              <p className="text-xs text-gray-600">{announcement.body}</p>
-              {announcement.link && (
-                <Link
-                  href={announcement.link}
-                  className="mt-1 inline-flex text-xs font-semibold text-blue-600"
-                >
-                  Details →
-                </Link>
-              )}
-            </div>
-          ))
+
+      <div className="space-y-2 rounded-2xl border border-dashed border-gray-200 p-3">
+        <button
+          type="button"
+          onClick={() => setAnnouncementsOpen((v) => !v)}
+          className="flex w-full items-center justify-between rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+        >
+          <span className="uppercase tracking-wide">Announcements</span>
+          <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] text-white">
+            {announcements.length}
+          </span>
+        </button>
+        {announcementsOpen && (
+          <div className="space-y-2">
+            {announcements.length === 0 ? (
+              <p className="text-sm text-gray-500">Nothing new right now.</p>
+            ) : (
+              announcements.slice(0, 3).map((announcement) => (
+                <div key={announcement.id} className="rounded-xl bg-gray-50 p-3">
+                  <p className="text-sm font-semibold text-gray-900">{announcement.title}</p>
+                  <p className="text-xs text-gray-600">{announcement.body}</p>
+                  {announcement.link && (
+                    <Link
+                      href={announcement.link}
+                      className="mt-1 inline-flex text-xs font-semibold text-blue-600"
+                    >
+                      Details
+                    </Link>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         )}
       </div>
     </section>
