@@ -432,58 +432,62 @@ function CreatorSpotlight({
             View feed →
           </Link>
         </div>
-        <div className="overflow-hidden">
-          <div
-            className="flex transition-transform duration-500"
-            style={{
-              width: `${Math.max(slides.length, 1) * 100}%`,
-              transform: `translateX(-${currentIndex * (100 / Math.max(slides.length, 1))}%)`,
-            }}
-          >
-            {slides.map((creator) => (
-              <article
-                key={creator.id}
-                className="flex w-full min-w-0 flex-shrink-0 items-center gap-3 px-3 py-2 text-sm text-gray-700"
-              >
-                <img
-                  src={
-                    creator.avatarUrl ??
-                    creator.user?.image ??
-                    "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
-                  }
-                  alt={creator.displayName}
-                  className="h-12 w-12 rounded-full object-cover"
-                />
-                <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-gray-900">
-                      {creator.displayName}
-                    </p>
-                    <span className="truncate text-[11px] text-blue-700">@{creator.handle}</span>
-                  </div>
-                  {creator.tagline && (
-                    <p className="line-clamp-2 text-xs text-gray-600">{creator.tagline}</p>
-                  )}
-                  <div className="flex flex-wrap gap-1 text-[10px] uppercase text-blue-700">
-                    {creator.skills.slice(0, 2).map((skill) => (
-                      <span key={skill} className="rounded-full bg-white px-2 py-0.5">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+        <div className="relative overflow-hidden rounded-2xl border border-blue-50 bg-blue-50/40">
+          {slides.map((creator, idx) => (
+            <article
+              key={creator.id}
+              className={`absolute inset-0 flex items-center gap-3 px-3 py-2 text-sm text-gray-700 transition-opacity duration-500 ${
+                idx === currentIndex ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <img
+                src={
+                  creator.avatarUrl ??
+                  creator.user?.image ??
+                  "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
+                }
+                alt={creator.displayName}
+                className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+              />
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-semibold text-gray-900">
+                    {creator.displayName}
+                  </p>
+                  <span className="truncate text-[11px] text-blue-700">@{creator.handle}</span>
                 </div>
-              </article>
-            ))}
-            {slides.length === 0 && (
-              <div className="flex w-full items-center justify-center px-3 py-3 text-sm text-gray-500">
-                No creator stories yet. Head to the{" "}
-                <Link href="/feed" className="text-blue-600 underline">
-                  &nbsp;feed
-                </Link>{" "}
-                to share one.
+                {creator.tagline && (
+                  <p className="line-clamp-2 text-xs text-gray-600">{creator.tagline}</p>
+                )}
+                <div className="flex flex-wrap gap-1 text-[10px] uppercase text-blue-700">
+                  {creator.skills.slice(0, 2).map((skill) => (
+                    <span key={skill} className="rounded-full bg-white px-2 py-0.5">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
+            </article>
+          ))}
+          {slides.length === 0 && (
+            <div className="flex w-full items-center justify-center px-3 py-3 text-sm text-gray-500">
+              No creator stories yet. Head to the{" "}
+              <Link href="/feed" className="text-blue-600 underline">
+                &nbsp;feed
+              </Link>{" "}
+              to share one.
+            </div>
+          )}
+          {/* Spacer to lock in height */}
+          {slides[0] && (
+            <div className="invisible flex items-center gap-3 px-3 py-2 text-sm">
+              <span className="h-12 w-12 rounded-full bg-blue-100" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold">.</p>
+                <p className="text-xs">.</p>
+              </div>
+            </div>
+          )}
         </div>
         {slides.length > 1 && (
           <div className="flex justify-center gap-2 pt-1">
