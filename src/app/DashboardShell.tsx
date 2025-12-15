@@ -389,6 +389,7 @@ export default function DashboardShell({
             <ContentSwitch activeTab={activeTab} />
 
             <div className="h-16" />
+            <SiteFooter />
           </main>
         </div>
       </div>
@@ -543,6 +544,68 @@ function CreatorSpotlight({
         )}
       </div>
     </section>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="mt-10 rounded-3xl border border-blue-100 bg-white p-6 text-sm text-gray-700 shadow-sm">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="max-w-sm space-y-2">
+          <div className="flex items-center gap-2">
+            <img
+              alt="Cloudus"
+              src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+              className="h-8 w-8 rounded-full object-cover"
+            />
+            <p className="text-base font-semibold text-blue-700">Cloudus</p>
+          </div>
+          <p className="text-sm text-gray-600">
+            Services marketplace for projects, suppliers, and logistics — built on Paystack.
+          </p>
+          <p className="text-xs text-gray-500">© {new Date().getFullYear()} Cloudus.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-3">
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Company</h3>
+            <div className="flex flex-col gap-1">
+              <Link href="/projects" className="hover:text-blue-700">Projects</Link>
+              <Link href="/shop" className="hover:text-blue-700">Shop</Link>
+              <Link href="/creators/dashboard" className="hover:text-blue-700">Creators</Link>
+              <Link href="/careers" className="hover:text-blue-700">Careers</Link>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Support</h3>
+            <div className="flex flex-col gap-1">
+              <Link href="/laundry" className="hover:text-blue-700">Laundry</Link>
+              <Link href="/drivers/dashboard" className="hover:text-blue-700">Drivers</Link>
+              <Link href="/suppliers/dashboard" className="hover:text-blue-700">Suppliers</Link>
+              <Link href="/specials" className="hover:text-blue-700">Specials</Link>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Policies</h3>
+            <div className="flex flex-col gap-1">
+              <Link href="/terms" className="hover:text-blue-700">Terms of Service</Link>
+              <Link href="/privacy" className="hover:text-blue-700">Privacy Policy</Link>
+              <Link href="/refunds" className="hover:text-blue-700">Refund Policy</Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Contact</h3>
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-700">Email: <a href="mailto:kganyakekana@gmail.com" className="text-blue-700 hover:underline">kganyakekana@gmail.com</a></span>
+            <span className="text-gray-700">Phone: <a href="tel:0640204765" className="text-blue-700 hover:underline">0640204765</a></span>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }
 
