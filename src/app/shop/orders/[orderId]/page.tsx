@@ -52,6 +52,7 @@ export default function OrderDetailPage() {
 
   // form state (maps to createOrder input fields)
   const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [note, setNote] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
@@ -297,6 +298,7 @@ export default function OrderDetailPage() {
                         name: `Order: ${item.name}`,
                         description: note || undefined,
                         customerName: customerName || undefined,
+                        customerEmail: customerEmail || undefined,
                         customerPhone: customerPhone || undefined,
                         addressLine1: addressLine1 || undefined,
                         suburb: suburb || undefined,
@@ -319,6 +321,14 @@ export default function OrderDetailPage() {
                         placeholder="Customer name"
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
+                        className="w-full rounded-full border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
+                        required
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email (for receipts)"
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
                         className="w-full rounded-full border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
                         required
                       />

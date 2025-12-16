@@ -15,7 +15,7 @@ const bodySchema = z.object({
 
 const defaultOrigin = () => env.AUTH_URL ?? "http://localhost:3000";
 
-const fallbackEmail = (orderId: number) => `customer+order-${orderId}@paystack.local`;
+const fallbackEmail = (orderId: number) => `kganyakekana+order-${orderId}@gmail.com`;
 
 export async function POST(request: Request) {
   const json = (await request.json().catch(() => null)) as unknown;
