@@ -42,6 +42,8 @@ export async function POST(request: Request) {
       currency: true,
       name: true,
       description: true,
+      api: true,
+      link: true,
       customerEmail: true,
       payments: {
         select: { id: true, status: true, provider: true, providerRef: true },
@@ -87,9 +89,19 @@ export async function POST(request: Request) {
     successUrl !== undefined
       ? null
       : headerStore.get("origin") ?? headerStore.get("referer") ?? defaultOrigin();
+
+  const isLaundry = order.api === "laundry" || order.link === "laundry";
+
   const resolvedSuccessUrl =
-    successUrl ?? `${origin}/shop/orders/${order.id}/payment/success`;
-  const resolvedCancelUrl = cancelUrl ?? `${origin}/shop/orders/${order.id}?payment=cancelled`;
+    successUrl ??
+    (isLaundry
+      ? `${origin}/laundry/payment/success`
+      : `${origin}/shop/orders/${order.id}/payment/success`);
+  const resolvedCancelUrl =
+    cancelUrl ??
+    (isLaundry
+      ? `${origin}/laundry?payment=cancelled`
+      : `${origin}/shop/orders/${order.id}?payment=cancelled`);
   const description = order.description?.slice(0, 250) ?? "Order payment";
   const productName = order.name || `Order ${order.id}`;
 
