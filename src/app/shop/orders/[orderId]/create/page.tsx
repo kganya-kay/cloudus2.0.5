@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckIcon } from "@heroicons/react/16/solid";
@@ -14,6 +14,7 @@ import {
 
 import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
 import { api } from "~/trpc/react";
+import { useSession } from "next-auth/react";
 
 /** ZAR formatter (cents -> rands, no decimals) */
 function formatZAR(cents: number) {
@@ -39,6 +40,7 @@ function useItemIdFromParams(): number | null {
 
 export default function CreateOrderPage() {
   const itemId = useItemIdFromParams();
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [customerLocation, setCustomerLocation] = useState<{
     lat: number;
@@ -67,6 +69,9 @@ export default function CreateOrderPage() {
   );
   const announcementsQuery = api.platform.announcements.useQuery({ limit: 3 });
   const feedPreviewQuery = api.feed.list.useQuery({ limit: 3 });
+  const latestOrderQuery = api.order.getLatest.useQuery(undefined, {
+    enabled: !!session,
+  });
 
   const createOrder = api.shopItem.createOrder.useMutation({
     onSuccess: async () => {
@@ -101,6 +106,24 @@ export default function CreateOrderPage() {
     if (!item) return 0;
     return (item.price ?? 0) * qtyNumber;
   }, [item, qtyNumber]);
+
+  useEffect(() => {
+    if (session?.user?.name && !customerName) {
+      setCustomerName(session.user.name);
+    }
+    if (session?.user?.email && !customerEmail) {
+      setCustomerEmail(session.user.email);
+    }
+  }, [session, customerName, customerEmail]);
+
+  useEffect(() => {
+    const order = latestOrderQuery.data;
+    if (!order) return;
+    if (!customerPhone && order.customerPhone) setCustomerPhone(order.customerPhone);
+    if (!addressLine1 && order.addressLine1) setAddressLine1(order.addressLine1);
+    if (!suburb && order.suburb) setSuburb(order.suburb);
+    if (!city && order.city) setCity(order.city);
+  }, [latestOrderQuery.data, customerPhone, addressLine1, suburb, city]);
 
   if (itemId == null) {
     return (
