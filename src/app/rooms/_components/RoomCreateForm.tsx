@@ -297,10 +297,10 @@ export function RoomCreateForm() {
 
       <button
         type="submit"
-        disabled={mutation.isLoading}
+        disabled={mutation.isPending}
         className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:bg-blue-200"
       >
-        {mutation.isLoading ? "Creating..." : "Create listing"}
+        {mutation.isPending ? "Creating..." : "Create listing"}
       </button>
 
       {message && <p className="text-sm text-blue-700">{message}</p>}
