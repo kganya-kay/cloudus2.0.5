@@ -139,6 +139,31 @@ enum CollaborationStatus {
   COMPLETED
 }
 
+enum RoomAdminStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RoomAvailabilityStatus {
+  AVAILABLE
+  BLOCKED
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+  REFUNDED
+  COMPLETED
+}
+
+enum RoomMediaType {
+  IMAGE
+  VIDEO
+}
+
 // =====================
 // Shared Address Book
 // =====================
@@ -161,6 +186,7 @@ model Address {
   userLinks     UserAddress[]
   supplierLinks SupplierAddress[]
   Order         Order[]
+  roomListings  RoomListing[]
 }
 
 model UserAddress {
@@ -330,35 +356,35 @@ model Project {
   createdById String
   createdBy   User   @relation("ProjectCreatedBy", fields: [createdById], references: [id])
 
-  type          String
-  category      String?               @default("General")
-  tags          String[]              @default([])
-  visibility    String                @default("PUBLIC")
-  featured      Boolean               @default(false)
-  heroVideo     String?
-  price         Int                   @default(0)
-  description   String
-  image         String                @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
-  count         Int                   @default(autoincrement())
-  link          String
-  links         String[]
+  type              String
+  category          String?                   @default("General")
+  tags              String[]                  @default([])
+  visibility        String                    @default("PUBLIC")
+  featured          Boolean                   @default(false)
+  heroVideo         String?
+  price             Int                       @default(0)
+  description       String
+  image             String                    @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+  count             Int                       @default(autoincrement())
+  link              String
+  links             String[]
   // Contributors (M-N) explicitly named
-  contributors  User[]                @relation("ProjectContributors")
-  api           String
-  openSource    Boolean               @default(true)
-  privacy       Boolean               @default(false)
-  completed     Boolean               @default(false)
-  status        String                @default("Initialized")
-  contactNumber Int                   @default(00000000000)
-  cost          Int                   @default(0)
-  rating        Int                   @default(5)
-  bids          ProjectBid[]
-  tasks         ProjectTask[]
-  payments      ProjectPayment[]
+  contributors      User[]                    @relation("ProjectContributors")
+  api               String
+  openSource        Boolean                   @default(true)
+  privacy           Boolean                   @default(false)
+  completed         Boolean                   @default(false)
+  status            String                    @default("Initialized")
+  contactNumber     Int                       @default(00000000000)
+  cost              Int                       @default(0)
+  rating            Int                       @default(5)
+  bids              ProjectBid[]
+  tasks             ProjectTask[]
+  payments          ProjectPayment[]
   paymentPreference ProjectPaymentPreference?
-  followers     ProjectFollower[]
-  invites       CollaborationInvite[]
-  feedPosts     FeedPost[]
+  followers         ProjectFollower[]
+  invites           CollaborationInvite[]
+  feedPosts         FeedPost[]
 
   // Social
   comments         Comment[]          @relation("ProjectComments")
@@ -519,14 +545,14 @@ model Payment {
 }
 
 model ProjectPaymentPreference {
-  id                     String   @id @default(cuid())
-  projectId              Int      @unique
-  autopayEnabled         Boolean  @default(false)
-  autopayThresholdPercent Int     @default(100)
-  tipPercent             Int      @default(0)
-  tipJarCents            Int      @default(0)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  projectId               Int      @unique
+  autopayEnabled          Boolean  @default(false)
+  autopayThresholdPercent Int      @default(100)
+  tipPercent              Int      @default(0)
+  tipJarCents             Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   project Project @relation(fields: [projectId], references: [id])
 }
@@ -732,6 +758,9 @@ model User {
   notifications     Notification[]
   AdminAnnouncement AdminAnnouncement[]
   AdminReviewQueue  AdminReviewQueue[]
+  roomListings      RoomListing[]
+  bookingsAsGuest   Booking[]           @relation("BookingGuest")
+  bookingsAsHost    Booking[]           @relation("BookingHost")
 }
 
 model VerificationToken {
@@ -1001,4 +1030,122 @@ model AuditLog {
 
   @@index([orderId])
   @@index([actorId])
+}
+
+// =====================
+// Room Rentals
+// =====================
+model RoomListing {
+  id               String          @id @default(cuid())
+  hostId           String
+  addressId        Int
+  title            String
+  description      String
+  nightlyRateCents Int
+  cleaningFeeCents Int?            @default(0)
+  currency         String          @default("ZAR")
+  maxGuests        Int             @default(1)
+  bedrooms         Int?            @default(0)
+  beds             Int?            @default(0)
+  bathrooms        Float?          @default(0)
+  amenities        String[]        @default([])
+  houseRules       String[]        @default([])
+  coverImage       String?
+  gallery          String[]        @default([])
+  lat              Float?
+  lng              Float?
+  isActive         Boolean         @default(true)
+  publishedAt      DateTime?
+  adminStatus      RoomAdminStatus @default(PENDING)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  host         User               @relation(fields: [hostId], references: [id])
+  address      Address            @relation(fields: [addressId], references: [id])
+  media        RoomMedia[]
+  availability RoomAvailability[]
+  bookings     Booking[]
+
+  @@index([hostId])
+  @@index([addressId])
+  @@index([adminStatus])
+  @@index([lat, lng])
+}
+
+model RoomMedia {
+  id        String        @id @default(cuid())
+  roomId    String
+  url       String
+  type      RoomMediaType @default(IMAGE)
+  position  Int?
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  room RoomListing @relation(fields: [roomId], references: [id])
+
+  @@index([roomId])
+}
+
+model RoomAvailability {
+  id        String                 @id @default(cuid())
+  roomId    String
+  startDate DateTime
+  endDate   DateTime
+  status    RoomAvailabilityStatus @default(BLOCKED)
+  reason    String?
+  createdAt DateTime               @default(now())
+
+  room RoomListing @relation(fields: [roomId], references: [id])
+
+  @@index([roomId])
+  @@index([status])
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  roomId           String
+  guestId          String
+  hostId           String
+  checkIn          DateTime
+  checkOut         DateTime
+  guests           Int           @default(1)
+  status           BookingStatus @default(PENDING)
+  totalCents       Int
+  cleaningFeeCents Int?          @default(0)
+  taxCents         Int?          @default(0)
+  currency         String        @default("ZAR")
+  code             String        @unique @default(cuid())
+  canceledReason   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  room    RoomListing     @relation(fields: [roomId], references: [id])
+  guest   User            @relation("BookingGuest", fields: [guestId], references: [id])
+  host    User            @relation("BookingHost", fields: [hostId], references: [id])
+  payment BookingPayment?
+
+  @@index([roomId])
+  @@index([guestId])
+  @@index([hostId])
+  @@index([status])
+  @@index([roomId, checkIn])
+  @@index([roomId, checkOut])
+  @@index([roomId, checkIn, checkOut])
+}
+
+model BookingPayment {
+  id          String        @id @default(cuid())
+  bookingId   String        @unique
+  amountCents Int
+  currency    String        @default("ZAR")
+  status      PaymentStatus @default(PENDING)
+  provider    String        @default("PAYSTACK")
+  providerRef String?
+  receiptUrl  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([status])
 }

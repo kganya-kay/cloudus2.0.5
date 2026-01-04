@@ -1,13 +1,12 @@
 import Link from "next/link";
 
-type PageProps = {
-  params: { orderId?: string };
-  searchParams?: Record<string, string | string[] | undefined>;
-};
-
-export default function PaymentSuccessPage({ params, searchParams }: PageProps) {
-  const orderId = params.orderId ?? "";
-  const refParam = searchParams?.reference || searchParams?.trxref;
+export default function PaymentSuccessPage(props: any) {
+  const paramsMap =
+    props?.searchParams && typeof props.searchParams?.then === "function"
+      ? undefined
+      : (props?.searchParams as Record<string, string | string[] | undefined> | undefined);
+  const orderId = props.params?.orderId ?? "";
+  const refParam = paramsMap?.reference || paramsMap?.trxref;
   const reference = Array.isArray(refParam) ? refParam[0] : refParam;
 
   return (

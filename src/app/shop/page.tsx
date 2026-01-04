@@ -17,6 +17,7 @@ import { MarketplaceTasksPanel } from "../_components/MarketplaceTasksPanel";
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
   { name: "Shop", href: "/shop", current: true },
+  { name: "Rooms", href: "/rooms", current: false },
   { name: "Feed", href: "/feed", current: false },
   { name: "Projects", href: "/projects", current: false },
   { name: "Suppliers", href: "/suppliers/dashboard", current: false },

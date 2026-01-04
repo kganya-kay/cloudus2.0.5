@@ -62,6 +62,41 @@ async function updateProjectPaymentStatus(params: {
   }
 }
 
+async function updateBookingPaymentStatus(params: {
+  paymentId: string;
+  providerRef?: string | null;
+  receiptUrl?: string | null;
+  status: PaymentStatus;
+}) {
+  try {
+    const updated = await db.bookingPayment.update({
+      where: { id: params.paymentId },
+      data: {
+        status: params.status,
+        providerRef: params.providerRef ?? undefined,
+        receiptUrl: params.receiptUrl ?? undefined,
+      },
+      select: { bookingId: true },
+    });
+
+    if (params.status === PaymentStatus.PAID && updated.bookingId) {
+      await db.booking.update({
+        where: { id: updated.bookingId },
+        data: { status: "CONFIRMED" },
+      });
+    }
+
+    if (params.status === PaymentStatus.FAILED && updated.bookingId) {
+      await db.booking.update({
+        where: { id: updated.bookingId },
+        data: { status: "CANCELED" },
+      });
+    }
+  } catch (error) {
+    console.error(`Failed to update booking payment ${params.paymentId}`, error);
+  }
+}
+
 export async function POST(request: Request) {
   if (!env.PAYSTACK_SECRET_KEY) {
     return NextResponse.json(
@@ -95,8 +130,10 @@ export async function POST(request: Request) {
   const paymentId = typeof metadata.paymentId === "string" ? metadata.paymentId : undefined;
   const projectPaymentId =
     typeof metadata.projectPaymentId === "string" ? metadata.projectPaymentId : undefined;
+  const bookingPaymentId =
+    typeof metadata.bookingPaymentId === "string" ? metadata.bookingPaymentId : undefined;
 
-  if (!paymentId && !projectPaymentId) {
+  if (!paymentId && !projectPaymentId && !bookingPaymentId) {
     console.warn(`Paystack webhook ${event.event ?? "unknown"} missing payment references.`);
     return NextResponse.json({ received: true });
   }
@@ -140,6 +177,15 @@ export async function POST(request: Request) {
   if (projectPaymentId) {
     await updateProjectPaymentStatus({
       paymentId: projectPaymentId,
+      status: nextStatus,
+      providerRef,
+      receiptUrl,
+    });
+  }
+
+  if (bookingPaymentId) {
+    await updateBookingPaymentStatus({
+      paymentId: bookingPaymentId,
       status: nextStatus,
       providerRef,
       receiptUrl,

@@ -1,11 +1,11 @@
 import Link from "next/link";
 
-type PageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
-};
-
-export default function LaundryPaymentSuccessPage({ searchParams }: PageProps) {
-  const refParam = searchParams?.reference || searchParams?.trxref;
+export default function LaundryPaymentSuccessPage(props: any) {
+  const params =
+    props?.searchParams && typeof props.searchParams?.then === "function"
+      ? undefined
+      : (props?.searchParams as Record<string, string | string[] | undefined> | undefined);
+  const refParam = params?.reference || params?.trxref;
   const reference = Array.isArray(refParam) ? refParam[0] : refParam;
 
   return (

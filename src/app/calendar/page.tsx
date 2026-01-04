@@ -50,6 +50,7 @@ function eachDayOfInterval(interval: { start: Date; end: Date }): Date[] {
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
   { name: "Shop", href: "/shop", current: false },
+  { name: "Rooms", href: "/rooms", current: false },
   { name: "Feed", href: "/feed", current: false },
   { name: "Projects", href: "/projects", current: false },
   { name: "Suppliers", href: "/suppliers/dashboard", current: false },

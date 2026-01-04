@@ -21,6 +21,7 @@ import {
 const navigation = [
   { name: "Dashboard", href: "./", current: false },
   { name: "Shop", href: "/shop", current: false },
+  { name: "Rooms", href: "/rooms", current: false },
   { name: "Projects", href: "/projects", current: false },
   { name: "Team", href: "/team", current: true },
   { name: "Calendar", href: "/calendar", current: false },

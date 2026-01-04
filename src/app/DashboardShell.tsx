@@ -38,6 +38,7 @@ const navigation = [
   { name: "Feed", href: "/feed" },
   { name: "Projects", href: "/projects" },
   { name: "Shop", href: "/shop" },
+  { name: "Rooms", href: "/rooms" },
   { name: "Suppliers", href: "/suppliers/dashboard" },
   { name: "Drivers", href: "/drivers/dashboard" },
   { name: "Creators", href: "/creators/dashboard" },
