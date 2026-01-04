@@ -163,10 +163,10 @@ export function RoomBookingForm({
 
       <button
         type="submit"
-        disabled={bookMutation.isLoading}
+        disabled={bookMutation.status === "loading"}
         className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:bg-blue-200"
       >
-        {bookMutation.isLoading ? "Submitting..." : "Request booking"}
+        {bookMutation.status === "loading" ? "Submitting..." : "Request booking"}
       </button>
 
       {note && <p className="text-sm text-blue-700">{note}</p>}
