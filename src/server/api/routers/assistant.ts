@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -29,7 +28,7 @@ export const assistantRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { question, path } = input;
       const { text } = await generateText({
-        model: openai("gpt-5"),
+        model: "openai/gpt-5",
         temperature: 0,
         maxTokens: 400,
         system: SITE_MAP_PROMPT,
