@@ -30,7 +30,6 @@ export const assistantRouter = createTRPCRouter({
       const { text } = await generateText({
         model: "openai/gpt-5",
         temperature: 0,
-        maxTokens: 400,
         system: SITE_MAP_PROMPT,
         prompt: `Current route: ${path ?? "unknown"}\nQuestion: ${question}`,
       });
