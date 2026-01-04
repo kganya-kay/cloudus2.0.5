@@ -40,6 +40,11 @@ export default async function RoomsPage() {
                 href={`/rooms/${room.id}`}
                 className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
               >
+                {room.monthlyRateCents && room.monthlyRateCents > 0 && (
+                  <div className="absolute right-3 top-3 z-10 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow">
+                    Monthly: {room.currency} {(room.monthlyRateCents / 100).toFixed(0)}
+                  </div>
+                )}
                 <div className="relative h-48 w-full overflow-hidden">
                   <img
                     src={room.coverImage ?? room.gallery[0] ?? "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"}

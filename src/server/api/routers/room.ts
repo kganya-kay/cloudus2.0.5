@@ -5,6 +5,7 @@ import {
   RoomAdminStatus,
   RoomMediaType,
   RoomAvailabilityStatus,
+  Role,
 } from "@prisma/client";
 import { z } from "zod";
 import {
@@ -29,6 +30,7 @@ const createRoomInput = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
   nightlyRateCents: z.number().int().nonnegative(),
+  monthlyRateCents: z.number().int().nonnegative().optional(),
   cleaningFeeCents: z.number().int().nonnegative().default(0),
   currency: z.string().default("ZAR"),
   maxGuests: z.number().int().positive().default(1),
@@ -155,6 +157,7 @@ export const roomRouter = createTRPCRouter({
           title: input.title,
           description: input.description,
           nightlyRateCents: input.nightlyRateCents,
+          monthlyRateCents: input.monthlyRateCents,
           cleaningFeeCents: input.cleaningFeeCents,
           currency: input.currency,
           maxGuests: input.maxGuests,
@@ -323,4 +326,45 @@ export const roomRouter = createTRPCRouter({
       include: { room: true, host: { select: { id: true, name: true } } },
     });
   }),
+
+  adminList: protectedProcedure
+    .input(
+      z.object({
+        status: z.nativeEnum(RoomAdminStatus).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.session.user.role !== Role.ADMIN) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      return ctx.db.roomListing.findMany({
+        where: {
+          ...(input.status ? { adminStatus: input.status } : {}),
+        },
+        include: {
+          host: { select: { id: true, name: true, email: true } },
+          address: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
+  setStatus: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.string().min(1),
+        status: z.nativeEnum(RoomAdminStatus).default(RoomAdminStatus.APPROVED),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.session.user.role !== Role.ADMIN) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      return ctx.db.roomListing.update({
+        where: { id: input.roomId },
+        data: { adminStatus: input.status },
+      });
+    }),
 });

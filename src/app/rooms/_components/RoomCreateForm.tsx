@@ -7,6 +7,7 @@ type FormState = {
   title: string;
   description: string;
   nightlyRateCents: number;
+  monthlyRateCents: number;
   cleaningFeeCents: number;
   currency: string;
   maxGuests: number;
@@ -30,6 +31,7 @@ const defaultState: FormState = {
   title: "",
   description: "",
   nightlyRateCents: 0,
+  monthlyRateCents: 0,
   cleaningFeeCents: 0,
   currency: "ZAR",
   maxGuests: 1,
@@ -76,6 +78,7 @@ export function RoomCreateForm() {
       title: form.title,
       description: form.description,
       nightlyRateCents: form.nightlyRateCents,
+      monthlyRateCents: form.monthlyRateCents || undefined,
       cleaningFeeCents: form.cleaningFeeCents,
       currency: form.currency,
       maxGuests: form.maxGuests,
@@ -158,6 +161,17 @@ export function RoomCreateForm() {
             min={0}
             required
           />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-gray-700">
+          Monthly rate (cents)
+          <input
+            type="number"
+            className="rounded-md border border-gray-200 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            value={form.monthlyRateCents}
+            onChange={(e) => handleChange("monthlyRateCents", Number(e.target.value))}
+            min={0}
+          />
+          <span className="text-xs text-gray-500">Shown first if provided</span>
         </label>
         <label className="flex flex-col gap-1 text-sm text-gray-700">
           Cleaning fee (cents)

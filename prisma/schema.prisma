@@ -1042,6 +1042,7 @@ model RoomListing {
   title            String
   description      String
   nightlyRateCents Int
+  monthlyRateCents Int?
   cleaningFeeCents Int?            @default(0)
   currency         String          @default("ZAR")
   maxGuests        Int             @default(1)

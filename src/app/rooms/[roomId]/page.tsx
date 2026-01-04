@@ -54,6 +54,22 @@ export default async function RoomDetailPage({
             <p className="text-sm text-gray-600">
               {room.address?.city}, {room.address?.province ?? room.address?.country}
             </p>
+            <div className="flex flex-wrap gap-3 text-sm text-gray-800">
+              {room.monthlyRateCents ? (
+                <>
+                  <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+                    {room.currency} {(room.monthlyRateCents / 100).toFixed(0)} / month
+                  </span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                    {room.currency} {(room.nightlyRateCents / 100).toFixed(2)} / night
+                  </span>
+                </>
+              ) : (
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                  {room.currency} {(room.nightlyRateCents / 100).toFixed(2)} / night
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
