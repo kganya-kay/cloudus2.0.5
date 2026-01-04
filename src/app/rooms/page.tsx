@@ -9,7 +9,7 @@ export default async function RoomsPage() {
       <div className="bg-gradient-to-b from-blue-50 via-white to-white">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="space-y-3">
-            <p className="text-xs uppercase tracking-wide text-blue-600">Rooms</p>
+            <p className="text-xs uppercase tracking-wide text-blue-600">Rentals</p>
             <h1 className="text-3xl font-bold text-gray-900">
               Stay with Cloudus hosts.
             </h1>

@@ -108,6 +108,12 @@ export default async function AdminHome() {
           >
             Applications
           </Link>
+          <Link
+            href="/admin/rooms"
+            className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50"
+          >
+            Rentals
+          </Link>
         </div>
 
         <section className="grid gap-4 rounded-3xl border border-gray-100 bg-white/80 p-4 shadow-sm lg:grid-cols-[2fr,1fr]">

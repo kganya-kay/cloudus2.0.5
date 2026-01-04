@@ -1,11 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import { RoomAdminStatus } from "@prisma/client";
 
 export function RoomsAdminClient() {
-  const listQuery = api.room.adminList.useQuery({ status: RoomAdminStatus.PENDING });
+  const [statusFilter, setStatusFilter] = useState<RoomAdminStatus | undefined>(
+    RoomAdminStatus.PENDING
+  );
+
+  const listQuery = api.room.adminList.useQuery(
+    { status: statusFilter },
+    { staleTime: 10_000 }
+  );
   const approveMutation = api.room.setStatus.useMutation({
     onSuccess: () => {
       listQuery.refetch();
@@ -16,11 +23,36 @@ export function RoomsAdminClient() {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {[
+          { label: "Pending", value: RoomAdminStatus.PENDING },
+          { label: "Approved", value: RoomAdminStatus.APPROVED },
+          { label: "Rejected", value: RoomAdminStatus.REJECTED },
+          { label: "All", value: undefined },
+        ].map((tab) => {
+          const active = statusFilter === tab.value;
+          return (
+            <button
+              key={tab.label}
+              onClick={() => setStatusFilter(tab.value)}
+              className={`rounded-full px-3 py-1 text-sm font-semibold ring-1 transition ${
+                active
+                  ? "bg-blue-600 text-white ring-blue-600"
+                  : "bg-white text-blue-700 ring-blue-200 hover:bg-blue-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
       {rooms.length === 0 && (
         <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/60 p-4 text-sm text-blue-700">
-          No pending listings.
+          No listings for this filter.
         </div>
       )}
+
       {rooms.map((room) => (
         <div
           key={room.id}

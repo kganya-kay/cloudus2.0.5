@@ -33,7 +33,7 @@ export default function CareersPage() {
     const navigation = [
         { name: "Dashboard", href: "/", current: false },
         { name: "Shop", href: "/shop", current: false },
-        { name: "Rooms", href: "/rooms", current: false },
+        { name: "Rentals", href: "/rooms", current: false },
         { name: "Projects", href: "/projects", current: false },
         { name: "Team", href: "/team", current: false },
         { name: "Calendar", href: "/calendar", current: false },

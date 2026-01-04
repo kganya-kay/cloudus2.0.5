@@ -364,7 +364,12 @@ export const roomRouter = createTRPCRouter({
 
       return ctx.db.roomListing.update({
         where: { id: input.roomId },
-        data: { adminStatus: input.status },
+        data: {
+          adminStatus: input.status,
+          isActive: input.status === RoomAdminStatus.APPROVED ? true : false,
+          publishedAt:
+            input.status === RoomAdminStatus.APPROVED ? new Date() : null,
+        },
       });
     }),
 });

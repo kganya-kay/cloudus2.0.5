@@ -20,7 +20,7 @@ const navigation = [
   { name: "Feed", href: "/feed", current: false },
   { name: "Projects", href: "/projects", current: true },
   { name: "Shop", href: "/shop", current: false },
-  { name: "Rooms", href: "/rooms", current: false },
+  { name: "Rentals", href: "/rooms", current: false },
   { name: "Suppliers", href: "/suppliers/dashboard", current: false },
   { name: "Drivers", href: "/drivers/dashboard", current: false },
   { name: "Creators", href: "/creators/dashboard", current: false },
