@@ -149,7 +149,11 @@ const formatCurrency = (value?: number | null) => {
 };
 
 const defaultMode: StudioMode = "print";
-const defaultMaterial = studioMaterials[defaultMode][0];
+const defaultMaterial =
+  studioMaterials[defaultMode]?.[0] ??
+  studioMaterials.print?.[0] ??
+  studioMaterials.audio?.[0] ??
+  studioMaterials.video?.[0];
 
 export default function CreatorDashboardClient({
   initialProfile,
@@ -164,14 +168,23 @@ export default function CreatorDashboardClient({
   const profile = initialProfile.profile;
   const earnings = initialProfile.earnings;
 
+  const baseMaterial = defaultMaterial ?? studioMaterials[defaultMode]?.[0];
+  if (!baseMaterial) {
+    return (
+      <div className="rounded-3xl border border-red-200 bg-red-50/80 p-6 text-sm text-red-800">
+        Studio materials are not configured.
+      </div>
+    );
+  }
+
   const [mode, setMode] = useState<StudioMode>(defaultMode);
-  const [materialId, setMaterialId] = useState(defaultMaterial.id);
-  const [primaryImage, setPrimaryImage] = useState(defaultMaterial.primaryImage);
-  const [overlayImage, setOverlayImage] = useState(defaultMaterial.overlay);
-  const [primaryInput, setPrimaryInput] = useState(defaultMaterial.primaryImage);
-  const [overlayInput, setOverlayInput] = useState(defaultMaterial.overlay);
-  const [finish, setFinish] = useState<StudioMaterial["finish"]>(defaultMaterial.finish);
-  const [backgroundTone, setBackgroundTone] = useState<StudioMaterial["tone"]>(defaultMaterial.tone);
+  const [materialId, setMaterialId] = useState(baseMaterial.id);
+  const [primaryImage, setPrimaryImage] = useState(baseMaterial.primaryImage);
+  const [overlayImage, setOverlayImage] = useState(baseMaterial.overlay);
+  const [primaryInput, setPrimaryInput] = useState(baseMaterial.primaryImage);
+  const [overlayInput, setOverlayInput] = useState(baseMaterial.overlay);
+  const [finish, setFinish] = useState<StudioMaterial["finish"]>(baseMaterial.finish);
+  const [backgroundTone, setBackgroundTone] = useState<StudioMaterial["tone"]>(baseMaterial.tone);
 
   const [artworkScale, setArtworkScale] = useState(82);
   const [artworkOpacity, setArtworkOpacity] = useState(94);
