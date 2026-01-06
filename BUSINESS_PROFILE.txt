@@ -1,0 +1,91 @@
+Cloudus Digital Services — Enterprise Profile
+============================================
+
+Founder
+- Dr. (you), founder and lead technologist, with delivery experience for major enterprises including MTN and Liberty. Combines enterprise rigor with startup speed to deliver reliable, scalable solutions at accessible price points.
+
+Company Overview
+- Cloudus Digital Services brings enterprise-grade digital solutions to growing businesses at low prices. Focus areas include online presence, business automation, payment systems, custom software, CRM (Salesforce, Monday), AI services, customer portals, databases, dashboards/reporting (Power BI), and Azure-backed cloud.
+- Mission: Equip growing businesses with end-to-end digital capabilities so every customer touchpoint is visible, measurable, and actionable.
+
+Value Proposition
+- Enterprise DNA, accessible pricing: Proven delivery for MTN and Liberty translated into rapid, cost-effective implementations for SMBs and scale-ups.
+- Full-stack coverage: From front-of-house web/portals to back-office automation, payments, CRM, AI, data, and cloud infrastructure.
+- AI-forward and data-rich: Embedded AI assistants, structured data capture, dashboards, and reporting to illuminate every customer interaction.
+- Secure and scalable: Built on Next.js, Prisma/Postgres, Azure-friendly deployment, with payments via Paystack.
+
+Services & Capabilities (What We Deliver)
+- Online presence & customer experience: Modern web experiences, portals, and branded touchpoints.
+- Business automation & integrations: Workflow automation across CRM (Salesforce, Monday) and internal tools; custom APIs and back-office apps.
+- Payments & commerce: Secure payment flows (Paystack) for services, products, and rentals.
+- Custom software: Tailored applications for unique business logic.
+- CRM & AI services: CRM-connected AI helpers, support automations, and guided navigation.
+- Data & reporting: BI dashboards (Power BI), KPI tracking, customer touchpoint instrumentation.
+- Cloud & infra: Azure-ready deployments, databases, scalable services.
+
+Platform Capabilities (Routes, Processes, Actions)
+Public & Marketing
+- / : Landing shell with navigation to Shop, Projects, Rentals, Feed, Suppliers, Drivers, Creators, Calendar, Careers, Team.
+- /shop : Marketplace of packaged services; browse cards, open /shop/[itemId]; create orders; pay via Paystack checkout/webhook.
+- /projects : Project marketplace; /projects/create to publish briefs; /projects/[projectId] for detail, bids, tasks, payments.
+- /feed : Creator/marketplace feed with media, reactions, admin review queue.
+- /rentals (alias /rooms) : Rentals marketplace listing; /rentals/[roomId] detail with gallery, nightly + monthly rates, booking form, Paystack checkout; /rentals/create for host submission (admin approval).
+- /team : Meet squads; /careers : job listings and apply flow; /privacy, /terms, /specials : informational/legal pages.
+
+Auth & Profile
+- /auth/login, /auth/register (NextAuth); /profile/[email] for profile editing.
+
+Commerce & Orders
+- Shop orders: Detail at /shop/[itemId], create orders with optional delivery; payments via /api/payments/paystack/checkout; webhook updates Payment status; fulfillment tracked with caretakers/suppliers/drivers.
+- Rentals bookings: /rooms/[roomId] booking creates Booking + BookingPayment; Paystack checkout at /api/bookings/paystack/checkout; webhook confirms and marks booking CONFIRMED/PAID or CANCELED.
+- Laundry: /laundry flow with payment success at /laundry/payment/success.
+
+Projects & Collaboration
+- /projects/create to launch; /projects/[projectId] for bids, tasks, comments, likes/upvotes, payments; payouts and collaboration invites managed via project router.
+
+Creators & Feed
+- /creators/dashboard : Creator hub, featured creators, follower/following, feed posts with media.
+
+Suppliers & Drivers
+- /suppliers/apply onboarding; /suppliers/dashboard operations (orders, payouts, GPS).
+- /drivers/apply onboarding; /drivers/dashboard for delivery ops/status/location.
+
+Calendar & Scheduling
+- /calendar : Events/tasks; includes Salesforce event sync.
+
+Careers
+- /careers : Job listings; applications capture resume, cover letter, metadata.
+
+Admin (Role: ADMIN/CARETaker unless noted)
+- /admin : Ops overview (announcements, review queue, quick links).
+- Quick links: /admin/suppliers, /admin/drivers, /admin/orders, /admin/shopitems, /admin/reports, /admin/users, /admin/applications, /admin/rooms.
+- /admin/rooms : Review rentals; filter by Pending/Approved/Rejected/All; approve/reject sets adminStatus, activates listings, stamps publishedAt.
+- Other admin pages manage suppliers, drivers, orders, shop items, users, applications, reports; review queue covers feed/projects/shop items.
+
+Rental Workflows
+- Host: /rooms/create → PENDING → /admin/rooms approval → APPROVED sets isActive, publishes to /rooms + /rentals.
+- Guest: /rooms/[roomId] → enter dates/guests → booking created if no overlap → Paystack checkout → webhook confirms booking.
+
+AI Navigator
+- Assistant input uses npm AI SDK (`generateText` with model "openai/gpt-5") with sitemap-grounded prompt to return paths/actions; guides users across routes.
+
+Data & Reporting
+- Captures orders, projects, bookings, deliveries, payouts; /admin/reports for ops; Power BI-ready outputs; CRM touchpoints emphasized (“A growing business needs to know every customer touchpoint”).
+
+Technology Stack
+- Next.js (App Router), TypeScript, tRPC, Prisma/Postgres.
+- Payments: Paystack checkout + webhooks; BookingPayment/Payment models drive status.
+- Auth: NextAuth with roles (ADMIN, CARETAKER, SUPPLIER, CUSTOMER, DRIVER).
+- AI: npm AI SDK for navigator.
+- Cloud-ready: Azure-compatible deployment; supports databases, APIs, and BI integrations.
+
+Pricing & Positioning
+- “Enterprise solutions at low prices” with modular, fast deployments; ideal for SMBs and scale-ups needing enterprise-grade reliability without enterprise overhead.
+
+Security & Governance
+- Role-based access (admin/caretaker vs. suppliers/drivers/creators/customers).
+- Payment data handled via Paystack; sensitive routes protected; review queues for content.
+
+Operations & Support
+- Admin console for supply chain (suppliers/drivers), commerce (orders/shop items), rentals (rooms), and content (feed review).
+- Automation and integrations: CRM (Salesforce, Monday), AI assistants, workflow hooks; data available for dashboards (Power BI).
