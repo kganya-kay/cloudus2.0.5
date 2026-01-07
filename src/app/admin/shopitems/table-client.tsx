@@ -36,8 +36,8 @@ export default function Client() {
               <td className="px-3 py-2">{r.type}</td>
               <td className="px-3 py-2">R {Math.round(r.price / 100)}</td>
               <td className="px-3 py-2">{(r as unknown as { stock?: number }).stock ?? 0}</td>
-              <td className="px-3 py-2">{(r as unknown as { supplier?: { name?: string } }).supplier?.name ?? "ƒ?""}</td>
-              <td className="px-3 py-2">{(r as unknown as { ordersCount?: number }).ordersCount ?? "ƒ?""}</td>
+              <td className="px-3 py-2">{(r as unknown as { supplier?: { name?: string } }).supplier?.name ?? ""}</td>
+              <td className="px-3 py-2">{(r as unknown as { ordersCount?: number }).ordersCount ?? ""}</td>
               <td className="px-3 py-2 text-sm text-gray-600">{new Date(r.createdAt).toLocaleDateString()}</td>
             </tr>
           ))}
@@ -53,4 +53,3 @@ export default function Client() {
     </div>
   );
 }
-
