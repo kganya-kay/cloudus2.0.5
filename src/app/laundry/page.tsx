@@ -33,11 +33,12 @@ export default async function LaundryPage() {
   };
 
   const navigation = [
-    { name: "Dashboard", href: "/", current: false },
     { name: "Laundry", href: "/laundry", current: true },
-    { name: "Shop", href: "/shop", current: false },
     { name: "Rentals", href: "/rooms", current: false },
-    { name: "Feed", href: "/feed", current: false },
+    { name: "Shop", href: "/shop", current: false },
+    { name: "Web apps", href: undefined, current: false },
+    { name: "Integrations", href: undefined, current: false },
+    { name: "Reports & dashboards", href: undefined, current: false },
   ];
   const userNavigation = [
     { name: "Profile", href: "/profile" },
@@ -75,20 +76,32 @@ export default async function LaundryPage() {
                 </Link>
                 <div className="hidden md:block">
                   <div className="ml-10 flex items-baseline space-x-4">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Top services
+                    </span>
                     {navigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        aria-current={item.current ? "page" : undefined}
-                        className={classNames(
-                          item.current
-                            ? "bg-blue-500 text-white"
-                            : "text-gray-700 hover:bg-blue-100",
-                          "rounded-md px-3 py-2 text-sm font-medium transition",
-                        )}
-                      >
-                        {item.name}
-                      </Link>
+                      item.href ? (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          aria-current={item.current ? "page" : undefined}
+                          className={classNames(
+                            item.current
+                              ? "bg-blue-500 text-white"
+                              : "text-gray-700 hover:bg-blue-100",
+                            "rounded-md px-3 py-2 text-sm font-medium transition",
+                          )}
+                        >
+                          {item.name}
+                        </Link>
+                      ) : (
+                        <span
+                          key={item.name}
+                          className="rounded-md px-3 py-2 text-sm font-medium text-gray-500"
+                        >
+                          {item.name}
+                        </span>
+                      )
                     ))}
                   </div>
                 </div>
@@ -132,20 +145,29 @@ export default async function LaundryPage() {
           <DisclosurePanel className="bg-white shadow md:hidden">
             <div className="space-y-1 px-2 pt-2 pb-3">
               {navigation.map((item) => (
-                <DisclosureButton
-                  key={item.name}
-                  as="a"
-                  href={item.href}
-                  className={classNames(
-                    item.current
-                      ? "bg-blue-500 text-white"
-                      : "text-gray-700 hover:bg-blue-100",
-                    "block rounded-md px-3 py-2 text-base font-medium",
-                  )}
-                  aria-current={item.current ? "page" : undefined}
-                >
-                  {item.name}
-                </DisclosureButton>
+                item.href ? (
+                  <DisclosureButton
+                    key={item.name}
+                    as="a"
+                    href={item.href}
+                    className={classNames(
+                      item.current
+                        ? "bg-blue-500 text-white"
+                        : "text-gray-700 hover:bg-blue-100",
+                      "block rounded-md px-3 py-2 text-base font-medium",
+                    )}
+                    aria-current={item.current ? "page" : undefined}
+                  >
+                    {item.name}
+                  </DisclosureButton>
+                ) : (
+                  <span
+                    key={item.name}
+                    className="block rounded-md px-3 py-2 text-base font-medium text-gray-500"
+                  >
+                    {item.name}
+                  </span>
+                )
               ))}
             </div>
             <div className="border-t border-gray-200 px-4 py-3">
