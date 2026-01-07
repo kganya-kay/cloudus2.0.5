@@ -91,6 +91,12 @@ export default async function AdminHome() {
             Shop Items
           </Link>
           <Link
+            href="/admin/projects"
+            className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50"
+          >
+            Projects
+          </Link>
+          <Link
             href="/admin/reports"
             className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50"
           >
