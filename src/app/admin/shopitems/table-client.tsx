@@ -6,7 +6,7 @@ import { api } from "~/trpc/react";
 
 export default function Client() {
   const { data, isLoading } = api.shopItem.getAll.useQuery();
-  if (isLoading) return <p className="text-sm text-gray-500">Loading…</p>;
+  if (isLoading) return <p className="text-sm text-gray-500">Loadingƒ?İ</p>;
 
   type Row = NonNullable<typeof data>[number];
   const rows: Row[] = data ?? [];
@@ -19,6 +19,7 @@ export default function Client() {
             <th className="px-3 py-2">Name</th>
             <th className="px-3 py-2">Type</th>
             <th className="px-3 py-2">Price</th>
+            <th className="px-3 py-2">Stock</th>
             <th className="px-3 py-2">Supplier</th>
             <th className="px-3 py-2">Orders</th>
             <th className="px-3 py-2">Created</th>
@@ -34,14 +35,15 @@ export default function Client() {
               </td>
               <td className="px-3 py-2">{r.type}</td>
               <td className="px-3 py-2">R {Math.round(r.price / 100)}</td>
-              <td className="px-3 py-2">{(r as unknown as { supplier?: { name?: string } }).supplier?.name ?? "—"}</td>
-              <td className="px-3 py-2">{(r as unknown as { ordersCount?: number }).ordersCount ?? "—"}</td>
+              <td className="px-3 py-2">{(r as unknown as { stock?: number }).stock ?? 0}</td>
+              <td className="px-3 py-2">{(r as unknown as { supplier?: { name?: string } }).supplier?.name ?? "ƒ?""}</td>
+              <td className="px-3 py-2">{(r as unknown as { ordersCount?: number }).ordersCount ?? "ƒ?""}</td>
               <td className="px-3 py-2 text-sm text-gray-600">{new Date(r.createdAt).toLocaleDateString()}</td>
             </tr>
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-3 py-6 text-center text-sm text-gray-500">
+              <td colSpan={7} className="px-3 py-6 text-center text-sm text-gray-500">
                 No shop items found.
               </td>
             </tr>
@@ -51,3 +53,4 @@ export default function Client() {
     </div>
   );
 }
+

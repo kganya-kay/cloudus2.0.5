@@ -32,6 +32,7 @@ export default function Client({ id }: { id: number }) {
   const [type, setType] = useState("");
   const [description, setDescription] = useState("");
   const [priceRands, setPriceRands] = useState("");
+  const [stock, setStock] = useState("0");
   const [link, setLink] = useState("");
   const [apiField, setApiField] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
@@ -48,6 +49,7 @@ export default function Client({ id }: { id: number }) {
     setType(item.type ?? "");
     setDescription(item.description ?? "");
     setPriceRands(String(Math.round((item.price ?? 0) / 100)));
+    setStock(String(item.stock ?? 0));
     setLink(item.link ?? "");
     setApiField(item.api ?? "");
     setImage(item.image ?? undefined);
@@ -82,6 +84,7 @@ export default function Client({ id }: { id: number }) {
           type,
           description,
           priceCents,
+          stock: Math.max(0, Math.floor(Number(stock) || 0)),
           link,
           api: apiField,
           image,
@@ -104,6 +107,11 @@ export default function Client({ id }: { id: number }) {
           <label className="text-xs text-gray-600">Price (Rands)</label>
           <input value={priceRands} onChange={(e) => setPriceRands(e.target.value)} type="number" min="0" step="0.01" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
           <div className="mt-1 text-xs text-gray-500">Current: {formatRands(item.price)}</div>
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">In Stock</label>
+          <input value={stock} onChange={(e) => setStock(e.target.value)} type="number" min="0" step="1" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
+          <div className="mt-1 text-xs text-gray-500">Current: {item.stock ?? 0}</div>
         </div>
         <div>
           <label className="text-xs text-gray-600">External Link</label>

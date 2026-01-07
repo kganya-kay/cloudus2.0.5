@@ -26,6 +26,7 @@ export default function Client() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
   const [priceRands, setPriceRands] = useState("");
+  const [stock, setStock] = useState("0");
   const [link, setLink] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
   const [links, setLinks] = useState<string[]>([]);
@@ -52,6 +53,7 @@ export default function Client() {
           description,
           type,
           priceCents,
+          stock: Math.max(0, Math.floor(Number(stock) || 0)),
           image,
           link,
           api: "",
@@ -73,6 +75,10 @@ export default function Client() {
         <div>
           <label className="text-xs text-gray-600">Price (Rands)</label>
           <input value={priceRands} onChange={(e) => setPriceRands(e.target.value)} type="number" min="0" step="0.01" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">In Stock</label>
+          <input value={stock} onChange={(e) => setStock(e.target.value)} type="number" min="0" step="1" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
         </div>
         <div>
           <label className="text-xs text-gray-600">External Link (optional)</label>

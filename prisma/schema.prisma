@@ -422,6 +422,7 @@ model ShopItem {
   price        Int
   description  String
   image        String   @default("https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf")
+  stock        Int      @default(0)
   count        Int      @default(autoincrement())
   link         String
   // Contributors (M-N) explicitly named

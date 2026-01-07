@@ -15,6 +15,7 @@ const createShopItemInput = z.object({
   description: z.string().min(5),
   type: z.string().min(1),
   priceCents: z.number().int().nonnegative(), // maps to Prisma 'price'
+  stock: z.number().int().nonnegative().optional(),
   image: z.string().url().optional(),
   link: z.string().default(""),
   api: z.string().default(""),
@@ -28,6 +29,7 @@ const updateShopItemInput = z.object({
   description: z.string().min(5).optional(),
   type: z.string().min(1).optional(),
   priceCents: z.number().int().nonnegative().optional(), // maps to 'price'
+  stock: z.number().int().nonnegative().optional(),
   image: z.string().url().optional(),
   link: z.string().optional(),
   api: z.string().optional(),
@@ -81,7 +83,7 @@ const contributorInput = z.object({
 const isDefined = <T,>(v: T | undefined): v is T => v !== undefined;
 
 function buildUpdateData(input: UpdateInput): Prisma.ShopItemUpdateInput {
-  const { priceCents, name, description, type, image, link, api, links } = input;
+  const { priceCents, name, description, type, image, link, api, links, stock } = input;
   const data: Prisma.ShopItemUpdateInput = {};
   if (isDefined(name)) data.name = name;
   if (isDefined(description)) data.description = description;
@@ -91,6 +93,7 @@ function buildUpdateData(input: UpdateInput): Prisma.ShopItemUpdateInput {
   if (isDefined(api)) data.api = api;
   if (isDefined(links)) data.links = links;
   if (isDefined(priceCents)) data.price = priceCents;
+  if (isDefined(stock)) data.stock = stock;
   return data;
 }
 
@@ -111,6 +114,7 @@ export const shopItemRouter = createTRPCRouter({
           description: input.description,
           type: input.type,
           price: input.priceCents, // cents
+          stock: input.stock ?? 0,
           image:
             input.image ??
             "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",

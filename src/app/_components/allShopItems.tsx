@@ -168,9 +168,9 @@ export default function AllShopItems() {
 
               {/* Meta row */}
               <div className="flex items-center justify-between">
-                {Number.isFinite(item.count) && (
+                {Number.isFinite(item.stock) && (
                   <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                    {item.count} in stock
+                    {item.stock} in stock
                   </span>
                 )}
                 <span className="text-xs text-gray-400">{item.ordersCount} orders</span>
