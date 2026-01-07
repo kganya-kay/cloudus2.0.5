@@ -11,9 +11,15 @@ import {
 } from "@headlessui/react";
 import { api, type RouterInputs } from "~/trpc/react";
 
-export function LaundryOrderClient() {
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
+export function LaundryOrderClient({
+  defaultName,
+  defaultEmail,
+}: {
+  defaultName?: string | null;
+  defaultEmail?: string | null;
+}) {
+  const [customerName, setCustomerName] = useState(defaultName ?? "");
+  const [customerEmail, setCustomerEmail] = useState(defaultEmail ?? "");
   const [customerPhone, setCustomerPhone] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
   const [suburb, setSuburb] = useState("");
