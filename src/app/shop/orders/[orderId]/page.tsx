@@ -59,6 +59,7 @@ export default function OrderDetailPage() {
   const [addressLine1, setAddressLine1] = useState("");
   const [suburb, setSuburb] = useState("");
   const [city, setCity] = useState("");
+  const [deliveryType, setDeliveryType] = useState<"package" | "large">("package");
 
   const utils = api.useUtils();
 
@@ -69,6 +70,7 @@ export default function OrderDetailPage() {
     setAddressLine1("");
     setSuburb("");
     setCity("");
+    setDeliveryType("package");
     setCustomerLocation(null);
     setGeoError(null);
     setLocating(false);
@@ -160,8 +162,9 @@ export default function OrderDetailPage() {
 
   const estimatedTotalCents = useMemo(() => {
     if (!item) return 0;
-    return item.price ?? 0;
-  }, [item]);
+    const deliveryCents = deliveryType === "large" ? 25000 : 5000;
+    return (item.price ?? 0) + deliveryCents;
+  }, [item, deliveryType]);
 
   if (itemId == null) {
     return (
@@ -291,6 +294,7 @@ export default function OrderDetailPage() {
                         addressLine1: addressLine1 || undefined,
                         suburb: suburb || undefined,
                         city: city || undefined,
+                        deliveryCents: deliveryType === "large" ? 25000 : 5000,
                         customerLocation: customerLocation
                           ? {
                               lat: customerLocation.lat,
@@ -358,6 +362,35 @@ export default function OrderDetailPage() {
                       onChange={(e) => setNote(e.target.value)}
                       className="min-h-[90px] w-full rounded-2xl border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
                     />
+                    <div className="rounded-2xl border border-dashed px-4 py-3">
+                      <p className="text-xs font-semibold uppercase text-gray-600">Delivery type</p>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <label className="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm">
+                          <span>Package</span>
+                          <span className="font-semibold">{formatZAR(5000)}</span>
+                          <input
+                            type="radio"
+                            name="deliveryType"
+                            value="package"
+                            checked={deliveryType === "package"}
+                            onChange={() => setDeliveryType("package")}
+                            className="ml-3"
+                          />
+                        </label>
+                        <label className="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm">
+                          <span>Large items</span>
+                          <span className="font-semibold">{formatZAR(25000)}</span>
+                          <input
+                            type="radio"
+                            name="deliveryType"
+                            value="large"
+                            checked={deliveryType === "large"}
+                            onChange={() => setDeliveryType("large")}
+                            className="ml-3"
+                          />
+                        </label>
+                      </div>
+                    </div>
                     <div>
                       <label className="mb-1 block text-xs text-gray-600">
                         Share your live location
