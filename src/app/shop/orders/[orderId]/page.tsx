@@ -59,7 +59,7 @@ export default function OrderDetailPage() {
   const [addressLine1, setAddressLine1] = useState("");
   const [suburb, setSuburb] = useState("");
   const [city, setCity] = useState("");
-  const [deliveryType, setDeliveryType] = useState<"package" | "large">("package");
+  const [deliveryType, setDeliveryType] = useState<"none" | "package" | "large">("package");
 
   const utils = api.useUtils();
 
@@ -162,7 +162,8 @@ export default function OrderDetailPage() {
 
   const estimatedTotalCents = useMemo(() => {
     if (!item) return 0;
-    const deliveryCents = deliveryType === "large" ? 25000 : 5000;
+    const deliveryCents =
+      deliveryType === "large" ? 25000 : deliveryType === "package" ? 5000 : 0;
     return (item.price ?? 0) + deliveryCents;
   }, [item, deliveryType]);
 
@@ -294,7 +295,12 @@ export default function OrderDetailPage() {
                         addressLine1: addressLine1 || undefined,
                         suburb: suburb || undefined,
                         city: city || undefined,
-                        deliveryCents: deliveryType === "large" ? 25000 : 5000,
+                        deliveryCents:
+                          deliveryType === "large"
+                            ? 25000
+                            : deliveryType === "package"
+                              ? 5000
+                              : 0,
                         customerLocation: customerLocation
                           ? {
                               lat: customerLocation.lat,
@@ -364,7 +370,19 @@ export default function OrderDetailPage() {
                     />
                     <div className="rounded-2xl border border-dashed px-4 py-3">
                       <p className="text-xs font-semibold uppercase text-gray-600">Delivery type</p>
-                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        <label className="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm">
+                          <span>No delivery</span>
+                          <span className="font-semibold">{formatZAR(0)}</span>
+                          <input
+                            type="radio"
+                            name="deliveryType"
+                            value="none"
+                            checked={deliveryType === "none"}
+                            onChange={() => setDeliveryType("none")}
+                            className="ml-3"
+                          />
+                        </label>
                         <label className="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm">
                           <span>Package</span>
                           <span className="font-semibold">{formatZAR(5000)}</span>
