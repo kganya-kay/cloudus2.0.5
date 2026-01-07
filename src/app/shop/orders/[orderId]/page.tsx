@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 
-import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 
@@ -60,8 +59,6 @@ export default function OrderDetailPage() {
   const [addressLine1, setAddressLine1] = useState("");
   const [suburb, setSuburb] = useState("");
   const [city, setCity] = useState("");
-  const [quantityOpt, setQuantityOpt] = useState<string>("1");
-  const [customQty, setCustomQty] = useState<string>("1");
 
   const utils = api.useUtils();
 
@@ -72,8 +69,6 @@ export default function OrderDetailPage() {
     setAddressLine1("");
     setSuburb("");
     setCity("");
-    setQuantityOpt("1");
-    setCustomQty("1");
     setCustomerLocation(null);
     setGeoError(null);
     setLocating(false);
@@ -130,8 +125,6 @@ export default function OrderDetailPage() {
     { id: itemId ?? -1 },
     { enabled: itemId != null },
   );
-  const announcementsQuery = api.platform.announcements.useQuery({ limit: 3 });
-  const feedPreviewQuery = api.feed.list.useQuery({ limit: 3 });
   const latestOrderQuery = api.order.getLatest.useQuery(undefined, {
     enabled: !!session,
   });
@@ -165,18 +158,10 @@ export default function OrderDetailPage() {
     if (!city && order.city) setCity(order.city);
   }, [latestOrderQuery.data, customerPhone, addressLine1, suburb, city]);
 
-  const qtyNumber = useMemo(() => {
-    if (quantityOpt === "custom") {
-      const n = Number(customQty);
-      return Number.isFinite(n) && n > 0 ? n : 1;
-    }
-    return Number(quantityOpt) || 1;
-  }, [quantityOpt, customQty]);
-
   const estimatedTotalCents = useMemo(() => {
     if (!item) return 0;
-    return (item.price ?? 0) * qtyNumber;
-  }, [item, qtyNumber]);
+    return item.price ?? 0;
+  }, [item]);
 
   if (itemId == null) {
     return (
@@ -196,18 +181,11 @@ export default function OrderDetailPage() {
     );
   }
 
-  const announcements = announcementsQuery.data ?? [];
-  const feedItems = feedPreviewQuery.data?.items ?? [];
   const quickLinks = [
     {
       title: "Creator marketplace",
       href: "/projects",
       description: "See all open tasks and collaborators.",
-    },
-    {
-      title: "Visit the feed",
-      href: "/feed",
-      description: "Creator drops, launches, and client wins.",
     },
     {
       title: "Creators dashboard",
@@ -234,20 +212,10 @@ export default function OrderDetailPage() {
             </p>
             <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
               {item
-                ? `Confirm and fund ${item.name}`
-                : "Confirm your Cloudus order and secure fulfilment."}
+                ? `Make payment for: ${item.name}`
+                : "Make payment for your Cloudus order."}
             </h1>
-            <p className="text-sm text-white/80">
-              Share delivery notes, capture your location, and launch a secure Paystack checkout.
-              We also surface feed drops and marketplace contributors so you can keep momentum.
-            </p>
             <div className="flex flex-wrap gap-3">
-              <Link
-                href="/feed"
-                className="rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/30"
-              >
-                Explore feed
-              </Link>
               <Link
                 href="/projects"
                 className="rounded-full border border-white/60 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10"
@@ -271,9 +239,6 @@ export default function OrderDetailPage() {
             <p className="text-3xl font-semibold">
               {item ? formatZAR(estimatedTotalCents) : "Checking inventory..."}
             </p>
-            <p className="mt-1 text-white/70">
-              Quantity · {qtyNumber}kg • includes supplier payout + delivery prep.
-            </p>
           </div>
         </div>
       </section>
@@ -292,7 +257,7 @@ export default function OrderDetailPage() {
                       <span className="h-1 w-1 rounded-full bg-gray-300" />
                       <span>{item.type}</span>
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-900">Confirm order</h2>
+                    <h2 className="text-2xl font-semibold text-gray-900">Make payment</h2>
                     <p className="text-gray-600">
                       {item.description ?? "Capture your laundry request and pay securely."}
                     </p>
@@ -333,7 +298,6 @@ export default function OrderDetailPage() {
                               accuracy: customerLocation.accuracy ?? undefined,
                             }
                           : undefined,
-                        estimatedKg: qtyNumber,
                       });
                     }}
                     className="mt-4 flex flex-col gap-4"
@@ -394,41 +358,6 @@ export default function OrderDetailPage() {
                       onChange={(e) => setNote(e.target.value)}
                       className="min-h-[90px] w-full rounded-2xl border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
                     />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-xs text-gray-600">
-                          Quantity (kg)
-                        </label>
-                        <select
-                          name="quantity"
-                          value={quantityOpt}
-                          onChange={(e) => setQuantityOpt(e.target.value)}
-                          className="mt-1 w-full rounded-full border px-4 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-blue-400"
-                        >
-                          <option value="1">1</option>
-                          <option value="5">5</option>
-                          <option value="10">10</option>
-                          <option value="50">50</option>
-                          <option value="100">100</option>
-                          <option value="custom">Custom…</option>
-                        </select>
-                      </div>
-                      {quantityOpt === "custom" && (
-                        <div>
-                          <label className="mb-1 block text-xs text-gray-600">
-                            Custom qty
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            step={1}
-                            value={customQty}
-                            onChange={(e) => setCustomQty(e.target.value)}
-                            className="w-full rounded-full border px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
-                          />
-                        </div>
-                      )}
-                    </div>
                     <div>
                       <label className="mb-1 block text-xs text-gray-600">
                         Share your live location
@@ -512,94 +441,6 @@ export default function OrderDetailPage() {
           </div>
 
           <aside className="space-y-6">
-            <section className="rounded-3xl border border-blue-100 bg-white/80 p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-blue-600">
-                    Operations updates
-                  </p>
-                  <p className="text-sm text-gray-600">Announcements from the Cloudus team</p>
-                </div>
-                <Link href="/admin" className="text-xs font-semibold text-blue-700">
-                  View all
-                </Link>
-              </div>
-              {announcementsQuery.isLoading ? (
-                <p className="mt-3 text-sm text-gray-500">Loading updates...</p>
-              ) : announcements.length === 0 ? (
-                <p className="mt-3 text-sm text-gray-500">
-                  No announcements right now. Keep an eye on the feed for new drops.
-                </p>
-              ) : (
-                <div className="mt-3 space-y-3 text-sm">
-                  {announcements.map((announcement) => (
-                    <article
-                      key={announcement.id}
-                      className="rounded-2xl border border-blue-50 bg-blue-50/60 p-3"
-                    >
-                      <p className="text-xs uppercase text-blue-700">{announcement.title}</p>
-                      <p className="text-gray-600">{announcement.body}</p>
-                      {announcement.link && (
-                        <Link
-                          href={announcement.link}
-                          className="mt-1 inline-flex text-xs font-semibold text-blue-700"
-                        >
-                          Details
-                        </Link>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className="rounded-3xl border border-purple-100 bg-white/80 p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-purple-600">Feed drops</p>
-                  <p className="text-sm text-gray-600">Creator wins & supplier highlights</p>
-                </div>
-                <Link href="/feed" className="text-xs font-semibold text-purple-700">
-                  Feed
-                </Link>
-              </div>
-              {feedPreviewQuery.isLoading ? (
-                <p className="mt-3 text-sm text-gray-500">Loading stories...</p>
-              ) : feedItems.length === 0 ? (
-                <p className="mt-3 text-sm text-gray-500">
-                  Nothing new yet. Follow <Link href="/feed" className="text-blue-600 underline">the feed</Link>{" "}
-                  for launch recaps.
-                </p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {feedItems.slice(0, 3).map((post) => (
-                    <article
-                      key={post.id}
-                      className="rounded-2xl border border-purple-50 bg-purple-50/40 p-3 text-sm"
-                    >
-                      <p className="text-xs uppercase text-purple-600">
-                        {post.type.replaceAll("_", " ")}
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        {post.title ?? post.project?.name ?? "Update"}
-                      </p>
-                      {post.caption && (
-                        <p className="text-xs text-gray-600 line-clamp-2">{post.caption}</p>
-                      )}
-                      {post.project?.id && (
-                        <Link
-                          href={`/projects/${post.project.id}`}
-                          className="mt-1 inline-flex text-xs font-semibold text-purple-700"
-                        >
-                          View project →
-                        </Link>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-
             <section className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
               <p className="text-xs uppercase tracking-wide text-gray-500">Quick links</p>
               <ul className="mt-3 space-y-3">
@@ -616,13 +457,6 @@ export default function OrderDetailPage() {
                 ))}
               </ul>
             </section>
-
-            <MarketplaceTasksPanel
-              role="CREATOR"
-              limit={4}
-              title="Need a contributor?"
-              subtitle="Pitch your project to Cloudus creators."
-            />
           </aside>
         </div>
       </div>
