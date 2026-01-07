@@ -445,20 +445,22 @@ export const supplierRouter = createTRPCRouter({
       };
     }),
   update: caretakerProcedure
-    .input(
-      z.object({
-        id: z.string().min(1),
-        name: z.string().min(1).optional(),
-        phone: z.string().min(3).optional(),
-        email: z.string().email().nullable().optional(),
-        suburb: z.string().nullable().optional(),
-        city: z.string().nullable().optional(),
-        pricePerKgCents: z.number().int().nonnegative().nullable().optional(),
-        isActive: z.boolean().optional(),
-        rating: z.number().min(0).max(5).nullable().optional(),
-        notes: z.string().nullable().optional(),
-      }),
-    )
+      .input(
+        z.object({
+          id: z.string().min(1),
+          name: z.string().min(1).optional(),
+          phone: z.string().min(3).optional(),
+          email: z.string().email().nullable().optional(),
+          suburb: z.string().nullable().optional(),
+          city: z.string().nullable().optional(),
+          type: z.string().nullable().optional(),
+          description: z.string().nullable().optional(),
+          pricePerKgCents: z.number().int().nonnegative().nullable().optional(),
+          isActive: z.boolean().optional(),
+          rating: z.number().min(0).max(5).nullable().optional(),
+          notes: z.string().nullable().optional(),
+        }),
+      )
     .mutation(async ({ ctx, input }) => {
       const { id, pricePerKgCents, ...rest } = input;
       return ctx.db.supplier.update({
@@ -470,19 +472,21 @@ export const supplierRouter = createTRPCRouter({
       });
     }),
   create: caretakerProcedure
-    .input(
-      z.object({
-        name: z.string().min(1),
-        phone: z.string().min(3),
-        email: z.string().email().optional(),
-        suburb: z.string().optional(),
-        city: z.string().optional(),
-        pricePerKgCents: z.number().int().nonnegative().optional(),
-        rating: z.number().min(0).max(5).optional(),
-        notes: z.string().optional(),
-        isActive: z.boolean().optional(),
-      }),
-    )
+      .input(
+        z.object({
+          name: z.string().min(1),
+          phone: z.string().min(3),
+          email: z.string().email().optional(),
+          suburb: z.string().optional(),
+          city: z.string().optional(),
+          type: z.string().optional(),
+          description: z.string().optional(),
+          pricePerKgCents: z.number().int().nonnegative().optional(),
+          rating: z.number().min(0).max(5).optional(),
+          notes: z.string().optional(),
+          isActive: z.boolean().optional(),
+        }),
+      )
     .mutation(async ({ ctx, input }) => {
       return ctx.db.supplier.create({
         data: {
@@ -491,6 +495,8 @@ export const supplierRouter = createTRPCRouter({
           email: input.email,
           suburb: input.suburb,
           city: input.city,
+          type: input.type,
+          description: input.description,
           pricePerKg: input.pricePerKgCents,
           rating: input.rating,
           notes: input.notes,

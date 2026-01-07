@@ -30,6 +30,8 @@ export default function Client({ id }: { id: string }) {
   const [email, setEmail] = useState("");
   const [suburb, setSuburb] = useState("");
   const [city, setCity] = useState("");
+  const [type, setType] = useState("");
+  const [description, setDescription] = useState("");
   const [priceRands, setPriceRands] = useState("");
   const [rating, setRating] = useState("");
   const [notes, setNotes] = useState("");
@@ -42,6 +44,8 @@ export default function Client({ id }: { id: string }) {
     setEmail(data.email ?? "");
     setSuburb(data.suburb ?? "");
     setCity(data.city ?? "");
+    setType(data.type ?? "");
+    setDescription(data.description ?? "");
     setPriceRands(data.pricePerKg != null ? String(Math.round(data.pricePerKg / 100)) : "");
     setRating(data.rating != null ? String(data.rating) : "");
     setNotes(data.notes ?? "");
@@ -63,6 +67,8 @@ export default function Client({ id }: { id: string }) {
             email: email || null,
             suburb: suburb || null,
             city: city || null,
+            type: type || null,
+            description: description || null,
             pricePerKgCents,
             rating: ratingNum,
             notes: notes || null,
@@ -117,6 +123,14 @@ export default function Client({ id }: { id: string }) {
             <input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
           </div>
           <div>
+            <label className="text-xs text-gray-600">Type</label>
+            <input value={type} onChange={(e) => setType(e.target.value)} placeholder="Laundry or Service" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-xs text-gray-600">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="mt-1 w-full rounded-lg border px-4 py-2 text-sm" />
+          </div>
+          <div>
             <label className="text-xs text-gray-600">Price per Kg (Rands)</label>
             <input value={priceRands} onChange={(e) => setPriceRands(e.target.value)} type="number" min="0" step="0.01" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
           </div>
@@ -151,6 +165,7 @@ export default function Client({ id }: { id: string }) {
           <ul className="space-y-1 text-sm text-gray-700">
             <li>Price/kg: {s.pricePerKg != null ? `R ${Math.round(s.pricePerKg / 100)}` : "—"}</li>
             <li>Rating: {s.rating != null ? s.rating.toFixed(1) : "—"}</li>
+            <li>Type: {s.type ?? "—"}</li>
             <li>Created: {new Date(s.createdAt as unknown as string).toLocaleString()}</li>
           </ul>
         </section>

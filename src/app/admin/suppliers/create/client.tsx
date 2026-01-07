@@ -14,6 +14,8 @@ export default function Client() {
   const [email, setEmail] = useState("");
   const [suburb, setSuburb] = useState("");
   const [city, setCity] = useState("");
+  const [type, setType] = useState("");
+  const [description, setDescription] = useState("");
   const [priceRands, setPriceRands] = useState("");
   const [rating, setRating] = useState("");
   const [notes, setNotes] = useState("");
@@ -38,6 +40,8 @@ export default function Client() {
           email: email || undefined,
           suburb: suburb || undefined,
           city: city || undefined,
+          type: type || undefined,
+          description: description || undefined,
           pricePerKgCents,
           rating: ratingNum,
           notes: notes || undefined,
@@ -68,6 +72,14 @@ export default function Client() {
           <input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
         </div>
         <div>
+          <label className="text-xs text-gray-600">Type</label>
+          <input value={type} onChange={(e) => setType(e.target.value)} placeholder="Laundry or Service" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-xs text-gray-600">Description</label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="mt-1 w-full rounded-lg border px-4 py-2 text-sm" />
+        </div>
+        <div>
           <label className="text-xs text-gray-600">Price per Kg (Rands)</label>
           <input value={priceRands} onChange={(e) => setPriceRands(e.target.value)} type="number" min="0" step="0.01" className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
         </div>
@@ -94,4 +106,3 @@ export default function Client() {
     </form>
   );
 }
-

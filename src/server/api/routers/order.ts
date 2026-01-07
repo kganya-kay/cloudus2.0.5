@@ -141,11 +141,12 @@ const createLaundryInput = z.object({
   serviceType: z.string().min(2).optional(),
   instructions: z.string().optional(),
   estimatedKg: z.number().min(1).max(200),
+  deliveryCents: z.number().int().nonnegative().optional(),
   customerLocation: locationInput.optional(),
 });
 
-const LAUNDRY_PRICE_PER_KG_CENTS = 2500;
-const LAUNDRY_DELIVERY_CENTS = 3000;
+const LAUNDRY_PRICE_PER_KG_CENTS = 5000;
+const LAUNDRY_DELIVERY_CENTS = 5000;
 
 const exportCsvInput = z.object({
   from: z.string().datetime().optional(), // ISO
@@ -911,7 +912,7 @@ export const orderRouter = createTRPCRouter({
       const creatorId = await ensureCreator();
       const qty = Math.max(1, Math.round(input.estimatedKg));
       const priceCents = qty * LAUNDRY_PRICE_PER_KG_CENTS;
-      const deliveryCents = LAUNDRY_DELIVERY_CENTS;
+      const deliveryCents = input.deliveryCents ?? LAUNDRY_DELIVERY_CENTS;
       const descriptionParts = [input.serviceType, input.instructions].filter(Boolean);
 
       const order = await ctx.db.order.create({

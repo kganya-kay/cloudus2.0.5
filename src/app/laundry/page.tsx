@@ -46,7 +46,14 @@ export default async function LaundryPage() {
   ];
 
   const suppliers = await db.supplier.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      OR: [
+        { type: { equals: "laundry", mode: "insensitive" } },
+        { type: { equals: "service", mode: "insensitive" } },
+        { description: { contains: "laundry", mode: "insensitive" } },
+      ],
+    },
     orderBy: [{ createdAt: "desc" }],
     take: 12,
     select: {

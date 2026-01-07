@@ -27,6 +27,7 @@ export function LaundryOrderClient({
   const [serviceType, setServiceType] = useState("wash-fold");
   const [instructions, setInstructions] = useState("");
   const [estimatedKg, setEstimatedKg] = useState("5");
+  const [deliveryType, setDeliveryType] = useState<"none" | "package" | "large">("package");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
@@ -88,6 +89,12 @@ export function LaundryOrderClient({
       serviceType,
       instructions: instructions || undefined,
       estimatedKg: weight,
+      deliveryCents:
+        deliveryType === "large"
+          ? 25000
+          : deliveryType === "package"
+            ? 5000
+            : 0,
       customerLocation: customerLocation ?? undefined,
     });
   };
@@ -222,12 +229,53 @@ export function LaundryOrderClient({
             onChange={(e) => setInstructions(e.target.value)}
           />
           <div className="rounded-2xl border border-dashed px-4 py-3 text-sm text-gray-600">
+            <p className="text-xs font-semibold uppercase text-gray-600">Delivery type</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm">
+                <span>No delivery</span>
+                <span className="font-semibold">R0</span>
+                <input
+                  type="radio"
+                  name="deliveryType"
+                  value="none"
+                  checked={deliveryType === "none"}
+                  onChange={() => setDeliveryType("none")}
+                  className="ml-3"
+                />
+              </label>
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm">
+                <span>Package</span>
+                <span className="font-semibold">R50</span>
+                <input
+                  type="radio"
+                  name="deliveryType"
+                  value="package"
+                  checked={deliveryType === "package"}
+                  onChange={() => setDeliveryType("package")}
+                  className="ml-3"
+                />
+              </label>
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm">
+                <span>Large items</span>
+                <span className="font-semibold">R250</span>
+                <input
+                  type="radio"
+                  name="deliveryType"
+                  value="large"
+                  checked={deliveryType === "large"}
+                  onChange={() => setDeliveryType("large")}
+                  className="ml-3"
+                />
+              </label>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-dashed px-4 py-3 text-sm text-gray-600">
             <p className="font-semibold text-gray-900">Estimated total</p>
             <p className="text-xs text-gray-500">
               Final amount is confirmed once the supplier weighs your bag.
             </p>
             <p className="mt-2 text-xl font-bold text-gray-900">
-              {formatEstimate(Number(estimatedKg))}
+              {formatEstimate(Number(estimatedKg), deliveryType)}
             </p>
           </div>
           <button
@@ -282,8 +330,13 @@ export function LaundryOrderClient({
   );
 }
 
-const formatEstimate = (kg: number) => {
-  if (!Number.isFinite(kg) || kg <= 0) return "—";
-  const price = Math.round(kg) * 40 + 50;
-  return `~ R${price.toFixed(0)}`;
+const formatEstimate = (kg: number, deliveryType: "none" | "package" | "large") => {
+  if (!Number.isFinite(kg) || kg <= 0) return "-";
+  const weightKg = Math.ceil(kg);
+  const laundryTotal = weightKg * 50;
+  const delivery =
+    deliveryType === "large" ? 250 : deliveryType === "package" ? 50 : 0;
+  const total = laundryTotal + delivery;
+  return `~ R${total.toFixed(0)}`;
 };
+
