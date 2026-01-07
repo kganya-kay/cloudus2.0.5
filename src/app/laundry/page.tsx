@@ -1,4 +1,15 @@
 import { Metadata } from "next";
+import Link from "next/link";
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from "@headlessui/react";
+import { Bars3Icon, BellIcon } from "@heroicons/react/24/outline";
 
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
@@ -13,6 +24,26 @@ export const metadata: Metadata = {
 
 export default async function LaundryPage() {
   const session = await auth();
+  const user = {
+    name: session?.user?.name ?? "Guest",
+    image:
+      session?.user?.image ??
+      "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
+    email: session?.user?.email ?? "",
+  };
+
+  const navigation = [
+    { name: "Dashboard", href: "/", current: false },
+    { name: "Laundry", href: "/laundry", current: true },
+    { name: "Shop", href: "/shop", current: false },
+    { name: "Rentals", href: "/rooms", current: false },
+    { name: "Feed", href: "/feed", current: false },
+  ];
+  const userNavigation = [
+    { name: "Profile", href: "/profile" },
+    { name: session ? "Sign out" : "Sign in", href: session ? "/api/auth/signout" : "/api/auth/signin" },
+  ];
+
   const suppliers = await db.supplier.findMany({
     where: { isActive: true },
     orderBy: [{ createdAt: "desc" }],
@@ -26,9 +57,122 @@ export default async function LaundryPage() {
     },
   });
 
+  const classNames = (...classes: string[]) => classes.filter(Boolean).join(" ");
+
   return (
     <HydrateClient>
-      <main className="mx-auto max-w-5xl space-y-10 px-6 py-8">
+      <div className="min-h-full bg-gray-100">
+        <Disclosure as="nav" className="sticky top-0 z-40 bg-white shadow">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div className="flex items-center">
+                <Link href="/">
+                  <img
+                    alt="Cloudus"
+                    src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+                    className="h-10 w-10 rounded-full"
+                  />
+                </Link>
+                <div className="hidden md:block">
+                  <div className="ml-10 flex items-baseline space-x-4">
+                    {navigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        aria-current={item.current ? "page" : undefined}
+                        className={classNames(
+                          item.current
+                            ? "bg-blue-500 text-white"
+                            : "text-gray-700 hover:bg-blue-100",
+                          "rounded-md px-3 py-2 text-sm font-medium transition",
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden items-center gap-4 md:flex">
+                <button
+                  type="button"
+                  className="relative rounded-full bg-gray-100 p-2 text-gray-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  <span className="sr-only">View notifications</span>
+                  <BellIcon className="h-6 w-6" />
+                </button>
+                <Menu as="div" className="relative">
+                  <MenuButton className="flex items-center rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <img alt="" src={user.image} className="h-8 w-8 rounded-full" />
+                  </MenuButton>
+                  <MenuItems className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
+                    {userNavigation.map((item) => (
+                      <MenuItem key={item.name}>
+                        <a
+                          href={item.href}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+                        >
+                          {item.name}
+                        </a>
+                      </MenuItem>
+                    ))}
+                  </MenuItems>
+                </Menu>
+              </div>
+
+              <div className="flex md:hidden">
+                <DisclosureButton className="rounded-md bg-gray-100 p-2 text-gray-600 hover:bg-blue-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                  <Bars3Icon className="h-6 w-6" />
+                </DisclosureButton>
+              </div>
+            </div>
+          </div>
+
+          <DisclosurePanel className="bg-white shadow md:hidden">
+            <div className="space-y-1 px-2 pt-2 pb-3">
+              {navigation.map((item) => (
+                <DisclosureButton
+                  key={item.name}
+                  as="a"
+                  href={item.href}
+                  className={classNames(
+                    item.current
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-700 hover:bg-blue-100",
+                    "block rounded-md px-3 py-2 text-base font-medium",
+                  )}
+                  aria-current={item.current ? "page" : undefined}
+                >
+                  {item.name}
+                </DisclosureButton>
+              ))}
+            </div>
+            <div className="border-t border-gray-200 px-4 py-3">
+              <div className="flex items-center">
+                <img className="h-10 w-10 rounded-full" src={user.image} alt="" />
+                <div className="ml-3">
+                  <div className="text-base font-medium text-gray-800">{user.name}</div>
+                  <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1">
+                {userNavigation.map((item) => (
+                  <DisclosureButton
+                    key={item.name}
+                    as="a"
+                    href={item.href}
+                    className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-blue-100"
+                  >
+                    {item.name}
+                  </DisclosureButton>
+                ))}
+              </div>
+            </div>
+          </DisclosurePanel>
+        </Disclosure>
+
+        <main className="mx-auto max-w-5xl space-y-10 px-6 py-8">
         <section className="rounded-3xl border bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-sm">
           <p className="text-xs uppercase tracking-wide text-blue-700">Laundry</p>
           <h1 className="text-3xl font-semibold text-gray-900">Pickup, wash, deliver.</h1>
@@ -117,6 +261,7 @@ export default async function LaundryPage() {
           </div>
         </section>
       </main>
+      </div>
     </HydrateClient>
   );
 }
