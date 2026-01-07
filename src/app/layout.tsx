@@ -23,7 +23,7 @@ export default function RootLayout({
         <SessionProvider>
           <TRPCReactProvider>
             {children}
-            <div className="fixed bottom-4 left-4 z-[60] flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 shadow-lg ring-1 ring-blue-100 backdrop-blur">
+            <div className="fixed bottom-4 left-4 z-[60] flex items-center gap-2 rounded-full bg-blue-50/90 px-3 py-2 shadow-lg ring-1 ring-blue-100 backdrop-blur">
               <img
                 src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
                 alt="Cloudus"
