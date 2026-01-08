@@ -653,7 +653,7 @@ export default function CreatorDashboardClient({
               />
             </div>
           </div>
-          <div className="relative flex min-h-[60vh] flex-1 flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-slate-950 text-white shadow-2xl">
+          <div className="relative flex min-h-screen flex-1 flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-slate-950 text-white shadow-2xl">
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 p-4">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-blue-200">Live design</p>
