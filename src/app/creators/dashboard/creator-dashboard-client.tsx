@@ -11,7 +11,7 @@ import { api } from "~/trpc/react";
 type CreatorMe = RouterOutputs["creator"]["me"];
 type FeedItem = RouterOutputs["feed"]["list"]["items"][number];
 type ContributorOverview = RouterOutputs["project"]["contributorOverview"];
-type StudioMode = "print" | "audio" | "video";
+type StudioMode = "print" | "branding" | "signage";
 
 type StudioMaterial = {
   id: string;
@@ -27,91 +27,151 @@ type StudioMaterial = {
 const studioModes: Record<StudioMode, { label: string; tagline: string; helper: string }> = {
   print: {
     label: "Print",
-    tagline: "Textile + merch drops",
-    helper: "Oversized tees, totes, posters, vinyl sleeves.",
+    tagline: "Business print essentials",
+    helper: "Business cards, flyers, posters, brochures, menus.",
   },
-  audio: {
-    label: "Audio",
-    tagline: "Covers + waveforms",
-    helper: "Playlist art, vinyl mockups, player UI overlays.",
+  branding: {
+    label: "Branding",
+    tagline: "Identity and packaging",
+    helper: "Logos, stationery, shop kits, labels, packaging.",
   },
-  video: {
-    label: "Video",
-    tagline: "Frames + titles",
-    helper: "Storyboards, thumbnails, opening frames.",
+  signage: {
+    label: "Signage",
+    tagline: "Large format and outdoor",
+    helper: "Shop fronts, banners, vehicle wraps, window decals.",
   },
 };
 
 const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
   print: [
     {
-      id: "oversized-tee",
-      name: "Oversized tee",
-      description: "Organic cotton, 240gsm. Front print zone, edge-to-edge color.",
+      id: "business-cards",
+      name: "Business cards",
+      description: "Premium 350gsm, matte or gloss, square or rounded corners.",
       primaryImage:
-        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
       overlay:
-        "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?auto=format&fit=crop&w=1000&q=80",
-      swatch: "#0f172a",
-      finish: "matte",
-      tone: "dark",
-    },
-    {
-      id: "tote",
-      name: "Artist tote",
-      description: "12oz canvas, black ink on natural base. Great for line art.",
-      primaryImage:
-        "https://images.unsplash.com/photo-1530023367847-a683933f4177?auto=format&fit=crop&w=1100&q=80",
-      overlay:
-        "https://images.unsplash.com/photo-1509099836639-18ba02e2e2f0?auto=format&fit=crop&w=1000&q=80",
-      swatch: "#e4d2b4",
+        "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#1f2937",
       finish: "matte",
       tone: "light",
     },
     {
-      id: "poster",
-      name: "Studio poster",
-      description: "A2 satin poster with room for bold gradients and typography.",
+      id: "flyers",
+      name: "Flyers",
+      description: "A5/A4 flyers for promos, events, and quick handouts.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1526481280695-3c687fd643ed?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#111827",
+      finish: "satin",
+      tone: "light",
+    },
+    {
+      id: "posters",
+      name: "Posters",
+      description: "A2/A1 posters with satin finish for vibrant color.",
       primaryImage:
         "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=80",
       overlay:
-        "https://images.unsplash.com/photo-1522199755839-a2bacb67c546?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1522199755839-a2bacb67c546?auto=format&fit=crop&w=1000&q=80",
       swatch: "#0a0a0a",
       finish: "satin",
       tone: "dark",
     },
-  ],
-  audio: [
     {
-      id: "vinyl",
-      name: "Vinyl sleeve",
-      description: '12" matte sleeve with centered art and back metadata block.',
+      id: "brochures",
+      name: "Brochures",
+      description: "Tri-fold or bi-fold brochures with sharp typography.",
       primaryImage:
-        "https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1453733190371-0a9bedd82893?auto=format&fit=crop&w=1200&q=80",
       overlay:
-        "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#0f172a",
+      finish: "gloss",
+      tone: "light",
+    },
+    {
+      id: "menus",
+      name: "Menus",
+      description: "Cafe and restaurant menus with easy-to-read layout.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1000&q=80",
       swatch: "#111827",
       finish: "matte",
       tone: "dark",
     },
     {
-      id: "player",
-      name: "Player UI",
-      description: "Waveform player mock with hero art and mood lighting.",
+      id: "apparel",
+      name: "Branded apparel",
+      description: "Tees, hoodies, caps, and uniforms with durable print.",
       primaryImage:
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80",
       overlay:
-        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=80",
       swatch: "#0f172a",
-      finish: "gloss",
+      finish: "matte",
       tone: "dark",
     },
   ],
-  video: [
+  branding: [
     {
-      id: "thumbnail",
-      name: "Thumbnail",
-      description: "16:9 hero frame with bold title overlay and texture.",
+      id: "logo-suite",
+      name: "Logo suite",
+      description: "Primary, secondary, and icon marks with spacing guides.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#0f172a",
+      finish: "matte",
+      tone: "dark",
+    },
+    {
+      id: "stationery",
+      name: "Stationery set",
+      description: "Letterheads, envelopes, and presentation folders.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#e2e8f0",
+      finish: "satin",
+      tone: "light",
+    },
+    {
+      id: "shop-branding",
+      name: "Shop branding kit",
+      description: "In-store signage, decals, and point-of-sale assets.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#0b1224",
+      finish: "gloss",
+      tone: "dark",
+    },
+    {
+      id: "packaging",
+      name: "Packaging labels",
+      description: "Product labels, stickers, and barcode-ready sleeves.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#1f2937",
+      finish: "matte",
+      tone: "light",
+    },
+  ],
+  signage: [
+    {
+      id: "shop-front",
+      name: "Shop front sign",
+      description: "Exterior fascia boards with bold branding.",
       primaryImage:
         "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1400&q=80",
       overlay:
@@ -121,16 +181,52 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       tone: "dark",
     },
     {
-      id: "storyboard",
-      name: "Storyboard frame",
-      description: "Tall mobile frame for reels, with safety guides.",
+      id: "vehicle-branding",
+      name: "Vehicle branding",
+      description: "Full wraps and decals for fleet visibility.",
       primaryImage:
-        "https://images.unsplash.com/photo-1522199710521-72d69614c702?auto=format&fit=crop&w=1100&q=80",
+        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
       overlay:
-        "https://images.unsplash.com/photo-1529618160092-2f8ccc8e087b?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80",
       swatch: "#111827",
+      finish: "gloss",
+      tone: "dark",
+    },
+    {
+      id: "banners",
+      name: "Banners",
+      description: "Outdoor PVC banners for events and promotions.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#0f172a",
       finish: "satin",
       tone: "light",
+    },
+    {
+      id: "window-decals",
+      name: "Window decals",
+      description: "Frosted or full-color vinyl for glass surfaces.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#e2e8f0",
+      finish: "matte",
+      tone: "light",
+    },
+    {
+      id: "lightbox",
+      name: "Lightbox signage",
+      description: "Illuminated signage for storefronts and malls.",
+      primaryImage:
+        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80",
+      overlay:
+        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1000&q=80",
+      swatch: "#111827",
+      finish: "gloss",
+      tone: "dark",
     },
   ],
 };
@@ -152,8 +248,8 @@ const defaultMode: StudioMode = "print";
 const defaultMaterial =
   studioMaterials[defaultMode]?.[0] ??
   studioMaterials.print?.[0] ??
-  studioMaterials.audio?.[0] ??
-  studioMaterials.video?.[0];
+  studioMaterials.branding?.[0] ??
+  studioMaterials.signage?.[0];
 
 export default function CreatorDashboardClient({
   initialProfile,
