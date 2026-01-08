@@ -346,6 +346,8 @@ export default function CreatorDashboardClient({
   const [orderAddressLine1, setOrderAddressLine1] = useState("");
   const [orderSuburb, setOrderSuburb] = useState("");
   const [orderCity, setOrderCity] = useState("");
+  const [orderGpsLat, setOrderGpsLat] = useState("");
+  const [orderGpsLng, setOrderGpsLng] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const [orderDeliveryType, setOrderDeliveryType] = useState<"none" | "package" | "large">("package");
   const [orderQuantity, setOrderQuantity] = useState("50");
@@ -530,6 +532,9 @@ export default function CreatorDashboardClient({
           orderSafeMargin ? `Safe margin: ${orderSafeMargin} mm` : "",
           orderColorMode ? `Color: ${orderColorMode}` : "",
           orderResolution ? `Resolution: ${orderResolution} dpi` : "",
+          orderDeliveryType !== "none" && (orderGpsLat || orderGpsLng)
+            ? `GPS: ${orderGpsLat || "?"}, ${orderGpsLng || "?"}`
+            : "",
           handle ? `Creator: @${handle}` : displayName ? `Creator: ${displayName}` : "",
         ]
           .filter(Boolean)
@@ -1150,6 +1155,23 @@ export default function CreatorDashboardClient({
                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
                   />
                 </div>
+
+                {orderDeliveryType !== "none" ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={orderGpsLat}
+                      onChange={(e) => setOrderGpsLat(e.target.value)}
+                      placeholder="GPS latitude (driver delivery)"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    />
+                    <input
+                      value={orderGpsLng}
+                      onChange={(e) => setOrderGpsLng(e.target.value)}
+                      placeholder="GPS longitude (driver delivery)"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                ) : null}
 
                 <textarea
                   value={orderNotes}
