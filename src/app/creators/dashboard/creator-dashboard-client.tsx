@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon } from "@heroicons/react/16/solid";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   Dialog,
   DialogBackdrop,
@@ -581,8 +582,9 @@ export default function CreatorDashboardClient({
             <button
               type="button"
               onClick={() => setOrderFormOpen(true)}
-              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 ring-1 ring-white/40 transition hover:brightness-110"
             >
+              <PlusIcon className="h-4 w-4" />
               Create order
             </button>
           </div>
