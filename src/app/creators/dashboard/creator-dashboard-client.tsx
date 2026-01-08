@@ -30,6 +30,7 @@ type StudioMaterial = {
   finish: "matte" | "gloss" | "satin";
   tone: "light" | "dark";
   priceCents: number;
+  baseQty: number;
 };
 
 const studioModes: Record<StudioMode, { label: string; tagline: string; helper: string }> = {
@@ -64,6 +65,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "matte",
       tone: "light",
       priceCents: 16000,
+      baseQty: 50,
     },
     {
       id: "flyers",
@@ -77,6 +79,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "satin",
       tone: "light",
       priceCents: 15000,
+      baseQty: 50,
     },
     {
       id: "posters",
@@ -90,6 +93,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "satin",
       tone: "dark",
       priceCents: 19000,
+      baseQty: 1,
     },
     {
       id: "brochures",
@@ -103,6 +107,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "gloss",
       tone: "light",
       priceCents: 20000,
+      baseQty: 50,
     },
     {
       id: "menus",
@@ -116,6 +121,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "matte",
       tone: "dark",
       priceCents: 17000,
+      baseQty: 50,
     },
     {
       id: "apparel",
@@ -129,6 +135,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "matte",
       tone: "dark",
       priceCents: 22000,
+      baseQty: 1,
     },
   ],
   branding: [
@@ -144,6 +151,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "matte",
       tone: "dark",
       priceCents: 18000,
+      baseQty: 1,
     },
     {
       id: "stationery",
@@ -157,6 +165,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "satin",
       tone: "light",
       priceCents: 17000,
+      baseQty: 50,
     },
     {
       id: "shop-branding",
@@ -170,6 +179,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "gloss",
       tone: "dark",
       priceCents: 21000,
+      baseQty: 1,
     },
     {
       id: "packaging",
@@ -183,6 +193,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "matte",
       tone: "light",
       priceCents: 16000,
+      baseQty: 50,
     },
   ],
   signage: [
@@ -198,6 +209,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "gloss",
       tone: "dark",
       priceCents: 22000,
+      baseQty: 1,
     },
     {
       id: "vehicle-branding",
@@ -211,6 +223,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "gloss",
       tone: "dark",
       priceCents: 23000,
+      baseQty: 1,
     },
     {
       id: "banners",
@@ -224,6 +237,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "satin",
       tone: "light",
       priceCents: 18000,
+      baseQty: 1,
     },
     {
       id: "window-decals",
@@ -237,6 +251,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "matte",
       tone: "light",
       priceCents: 15000,
+      baseQty: 1,
     },
     {
       id: "lightbox",
@@ -250,6 +265,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       finish: "gloss",
       tone: "dark",
       priceCents: 21000,
+      baseQty: 1,
     },
   ],
 };
@@ -329,6 +345,7 @@ export default function CreatorDashboardClient({
   const [orderCity, setOrderCity] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const [orderDeliveryType, setOrderDeliveryType] = useState<"none" | "package" | "large">("package");
+  const [orderQuantity, setOrderQuantity] = useState("50");
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [orderRedirecting, setOrderRedirecting] = useState(false);
@@ -389,6 +406,10 @@ export default function CreatorDashboardClient({
   const materialOptions = studioMaterials[mode] ?? [];
   const selectedMaterial =
     materialOptions.find((option) => option.id === materialId) ?? materialOptions[0];
+  const quantityValue = Math.max(1, Number(orderQuantity) || 1);
+  const baseQty = selectedMaterial?.baseQty ?? 1;
+  const basePrice = selectedMaterial?.priceCents ?? 0;
+  const materialTotalCents = Math.round((quantityValue / baseQty) * basePrice);
   const previewRef = useRef<HTMLDivElement | null>(null);
 
   const loadImage = (src: string) =>
@@ -528,13 +549,14 @@ export default function CreatorDashboardClient({
       city: orderCity.trim() || undefined,
       materialId: selectedMaterial.id,
       materialName: selectedMaterial.name,
-      priceCents: selectedMaterial.priceCents,
+      priceCents: materialTotalCents,
       deliveryCents,
       image: preview,
       artworkUrl: overlayImage,
       notes:
         [
           orderNotes.trim(),
+          `Quantity: ${quantityValue}`,
           handle ? `Creator: @${handle}` : displayName ? `Creator: ${displayName}` : "",
         ]
           .filter(Boolean)
@@ -872,7 +894,9 @@ export default function CreatorDashboardClient({
                 <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
                   <span className="font-semibold text-slate-900">Material:</span>{" "}
                   {selectedMaterial?.name ?? "Select a material"} ·{" "}
-                  {selectedMaterial?.priceCents ? formatCurrency(selectedMaterial.priceCents) : "Price pending"}
+                  {selectedMaterial?.priceCents
+                    ? `${formatCurrency(selectedMaterial.priceCents)} / ${baseQty}`
+                    : "Price pending"}
                 </div>
                 <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
                   <span className="font-semibold text-slate-900">Delivery:</span>{" "}
@@ -882,7 +906,7 @@ export default function CreatorDashboardClient({
                   <span className="ml-2 text-slate-500">
                     (Total:{" "}
                     {formatCurrency(
-                      (selectedMaterial?.priceCents ?? 0) +
+                      materialTotalCents +
                         (orderDeliveryType === "large"
                           ? 25000
                           : orderDeliveryType === "package"
@@ -891,6 +915,18 @@ export default function CreatorDashboardClient({
                     )}
                     )
                   </span>
+                </div>
+                <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
+                  <span className="font-semibold text-slate-900">Quantity:</span>{" "}
+                  <input
+                    value={orderQuantity}
+                    onChange={(e) => setOrderQuantity(e.target.value)}
+                    type="number"
+                    min={1}
+                    step={1}
+                    className="ml-2 w-24 rounded-full border border-slate-200 px-2 py-1 text-xs"
+                  />
+                  <span className="ml-2 text-slate-500">Base: {baseQty} items (small up to A4)</span>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
