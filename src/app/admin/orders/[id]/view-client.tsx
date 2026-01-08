@@ -366,6 +366,21 @@ export default function Client({ id }: { id: number }) {
         )}
       </div>
 
+      {order.links && order.links.length > 0 && (
+        <section className="mt-4 rounded-lg border p-3">
+          <h2 className="mb-2 text-sm font-semibold">Artwork</h2>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            <a href={order.links[0]} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+              View original artwork
+            </a>
+          </div>
+          <div className="mt-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={order.links[0]} alt="Artwork" className="h-64 w-full object-cover" />
+          </div>
+        </section>
+      )}
+
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <section className="rounded-lg border p-3">
           <h2 className="mb-2 text-sm font-semibold">Edit Details</h2>
