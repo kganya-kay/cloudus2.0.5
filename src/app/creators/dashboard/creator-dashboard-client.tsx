@@ -614,6 +614,60 @@ export default function CreatorDashboardClient({
               </div>
             </div>
 
+            <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Design tools
+              </p>
+              <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">
+                {[
+                  {
+                    name: "Canva",
+                    href: "https://www.canva.com/",
+                    logo: "https://www.canva.com/favicon.ico",
+                  },
+                  {
+                    name: "Figma",
+                    href: "https://www.figma.com/",
+                    logo: "https://static.figma.com/app/icon/1/favicon.png",
+                  },
+                  {
+                    name: "Photopea",
+                    href: "https://www.photopea.com/",
+                    logo: "https://www.photopea.com/favicon.ico",
+                  },
+                  {
+                    name: "Pixlr",
+                    href: "https://pixlr.com/",
+                    logo: "https://pixlr.com/favicon.ico",
+                  },
+                  {
+                    name: "Unsplash",
+                    href: "https://unsplash.com/",
+                    logo: "https://unsplash.com/favicon-32x32.png",
+                  },
+                  {
+                    name: "Pexels",
+                    href: "https://www.pexels.com/",
+                    logo: "https://www.pexels.com/favicon.ico",
+                  },
+                ].map((tool) => (
+                  <a
+                    key={tool.name}
+                    href={tool.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-center gap-2 text-center text-xs text-slate-600"
+                  >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-slate-50 shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={tool.logo} alt="" className="h-6 w-6" />
+                    </span>
+                    <span className="font-semibold text-slate-800">{tool.name}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+
             <div className="grid gap-4 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 <ControlCard
