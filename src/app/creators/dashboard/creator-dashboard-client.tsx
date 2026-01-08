@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -357,6 +357,7 @@ export default function CreatorDashboardClient({
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [orderRedirecting, setOrderRedirecting] = useState(false);
+  const [orderFormOpen, setOrderFormOpen] = useState(false);
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
 
   const createStudioOrder = api.order.createStudioOrder.useMutation({
@@ -538,7 +539,7 @@ export default function CreatorDashboardClient({
   return (
     <div className="min-h-screen bg-slate-100 p-4 sm:p-6">
       <section className="flex min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl sm:min-h-[calc(100vh-3rem)]">
-        <div className="flex flex-wrap items-start justify-between gap-4 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 p-4 sm:p-6">
           <div>
             <p className="text-xs uppercase tracking-wide text-blue-600">Creator studio</p>
             <h2 className="text-3xl font-semibold text-slate-900">
@@ -549,7 +550,7 @@ export default function CreatorDashboardClient({
               controls nearby. Great for print, audio, or video assets.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             {(Object.keys(studioModes) as StudioMode[]).map((key) => (
               <button
                 key={key}
@@ -563,12 +564,32 @@ export default function CreatorDashboardClient({
                 {studioModes[key]?.label ?? key}
               </button>
             ))}
+            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm">
+              <span className="text-xs font-semibold uppercase text-slate-500">Material</span>
+              <select
+                value={materialId}
+                onChange={(e) => setMaterialId(e.target.value)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-sm"
+              >
+                {materialOptions.map((material) => (
+                  <option key={material.id} value={material.id}>
+                    {material.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOrderFormOpen(true)}
+              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+            >
+              Create order
+            </button>
           </div>
         </div>
 
-        <div className="grid flex-1 gap-6 border-t border-slate-100 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 sm:p-6 xl:grid-cols-[1.55fr,1fr]">
-          <div className="flex min-h-0 flex-col gap-5">
-            <div className="relative flex-1 overflow-hidden rounded-[30px] border border-slate-200 bg-slate-950 text-white shadow-2xl">
+        <div className="flex flex-1 flex-col gap-4 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 sm:p-6">
+            <div className="relative flex min-h-[60vh] flex-1 flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-slate-950 text-white shadow-2xl">
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 p-4">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-blue-200">Live design</p>
@@ -592,7 +613,7 @@ export default function CreatorDashboardClient({
                 </div>
               </div>
 
-              <div ref={previewRef} className="relative mt-2 h-full min-h-[320px] overflow-hidden px-2 pb-4">
+              <div ref={previewRef} className="relative mt-2 flex-1 overflow-hidden px-2 pb-4">
                 <div
                   className={`absolute inset-3 rounded-[26px] bg-gradient-to-br ${
                     backgroundTone === "dark"
@@ -889,209 +910,220 @@ export default function CreatorDashboardClient({
             </div>
           </div>
 
-          <aside className="flex min-h-0 flex-col gap-4">
-            <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Material shelf</p>
-                  <p className="text-base font-semibold text-slate-900">{currentMode.helper}</p>
-                </div>
-                <span className="text-xs font-semibold text-slate-500">
-                  {materialOptions.length} options
-                </span>
-              </div>
-              <div className="mt-3 grid gap-3">
-                {materialOptions.map((material) => (
-                  <button
-                    key={material.id}
-                    type="button"
-                    onClick={() => setMaterialId(material.id)}
-                    className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
-                      material.id === selectedMaterial?.id
-                        ? "border-blue-500 ring-2 ring-blue-100"
-                        : "border-slate-200"
-                    }`}
-                  >
-                    <div
-                      className="h-14 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${material.primaryImage})` }}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-slate-900">{material.name}</p>
-                      <p className="text-xs text-slate-500 line-clamp-2">{material.description}</p>
-                      <div className="mt-1 flex items-center gap-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full border border-slate-200"
-                          style={{ backgroundColor: material.swatch }}
-                        />
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                          {material.finish}
-                        </span>
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                          {formatCurrency(material.priceCents)}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          
+        </div>
+      </section>
 
-            <div className="rounded-[24px] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-800 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-blue-700">Create order</p>
-              <p className="font-semibold text-slate-900">Confirm and send your print order.</p>
-              <p className="text-xs text-slate-600">
-                We’ll capture your current design and attach it to the order.
-              </p>
-              <div className="mt-3 grid gap-2">
-                <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
-                  <span className="font-semibold text-slate-900">Material:</span>{" "}
-                  {selectedMaterial?.name ?? "Select a material"} ·{" "}
-                  {selectedMaterial?.priceCents
-                    ? `${formatCurrency(selectedMaterial.priceCents)} / ${baseQty}`
-                    : "Price pending"}
+      <Dialog
+        open={orderFormOpen}
+        onClose={() => setOrderFormOpen(false)}
+        className="relative z-40"
+      >
+        <DialogBackdrop className="fixed inset-0 bg-slate-900/60" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-3xl transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <div>
+                <DialogTitle className="text-lg font-semibold text-slate-900">
+                  Create order
+                </DialogTitle>
+                <p className="text-xs text-slate-500">
+                  Capture the current preview and confirm print specs.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOrderFormOpen(false)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600"
+              >
+                Close
+              </button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-6">
+              <div className="grid gap-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-700">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Material</p>
+                      <p className="text-base font-semibold text-slate-900">
+                        {selectedMaterial?.name ?? "Select a material"}
+                      </p>
+                      <p className="text-xs text-slate-500">{selectedMaterial?.description}</p>
+                    </div>
+                    <div className="text-right text-xs text-slate-500">
+                      <p className="font-semibold text-slate-900">
+                        {selectedMaterial?.priceCents
+                          ? `${formatCurrency(selectedMaterial.priceCents)} / ${baseQty}`
+                          : "Price pending"}
+                      </p>
+                      <p>Base: {baseQty} items (small up to A4)</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
-                  <span className="font-semibold text-slate-900">Delivery:</span>{" "}
-                  {formatCurrency(
-                    orderDeliveryType === "large" ? 25000 : orderDeliveryType === "package" ? 5000 : 0,
-                  )}
-                  <span className="ml-2 text-slate-500">
-                    (Total:{" "}
-                    {formatCurrency(
-                      materialTotalCents +
-                        (orderDeliveryType === "large"
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs">
+                    <p className="font-semibold text-slate-900">Quantity</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        value={orderQuantity}
+                        onChange={(e) => setOrderQuantity(e.target.value)}
+                        type="number"
+                        min={1}
+                        step={1}
+                        className="w-28 rounded-full border border-slate-200 px-3 py-2 text-sm"
+                      />
+                      <span className="text-slate-500">
+                        Total: {formatCurrency(materialTotalCents)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs">
+                    <p className="font-semibold text-slate-900">Delivery</p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                      <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-xs">
+                        <span>No delivery</span>
+                        <span className="font-semibold">R0</span>
+                        <input
+                          type="radio"
+                          name="studioDeliveryTypeModal"
+                          value="none"
+                          checked={orderDeliveryType === "none"}
+                          onChange={() => setOrderDeliveryType("none")}
+                          className="ml-2"
+                        />
+                      </label>
+                      <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-xs">
+                        <span>Package</span>
+                        <span className="font-semibold">R50</span>
+                        <input
+                          type="radio"
+                          name="studioDeliveryTypeModal"
+                          value="package"
+                          checked={orderDeliveryType === "package"}
+                          onChange={() => setOrderDeliveryType("package")}
+                          className="ml-2"
+                        />
+                      </label>
+                      <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-xs">
+                        <span>Large items</span>
+                        <span className="font-semibold">R250</span>
+                        <input
+                          type="radio"
+                          name="studioDeliveryTypeModal"
+                          value="large"
+                          checked={orderDeliveryType === "large"}
+                          onChange={() => setOrderDeliveryType("large")}
+                          className="ml-2"
+                        />
+                      </label>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">
+                      Delivery fee:{" "}
+                      {formatCurrency(
+                        orderDeliveryType === "large"
                           ? 25000
                           : orderDeliveryType === "package"
                             ? 5000
-                            : 0),
-                    )}
-                    )
-                  </span>
-                </div>
-                <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
-                  <span className="font-semibold text-slate-900">Quantity:</span>{" "}
-                  <input
-                    value={orderQuantity}
-                    onChange={(e) => setOrderQuantity(e.target.value)}
-                    type="number"
-                    min={1}
-                    step={1}
-                    className="ml-2 w-24 rounded-full border border-slate-200 px-2 py-1 text-xs"
-                  />
-                  <span className="ml-2 text-slate-500">Base: {baseQty} items (small up to A4)</span>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
-                    <span className="font-semibold text-slate-900">Size (mm)</span>
-                    <input
-                      value={orderWidth}
-                      onChange={(e) => setOrderWidth(e.target.value)}
-                      type="number"
-                      min={1}
-                      step={1}
-                      placeholder="Width"
-                      className="w-20 rounded-full border border-slate-200 px-2 py-1 text-xs"
-                    />
-                    <span className="text-slate-500">x</span>
-                    <input
-                      value={orderHeight}
-                      onChange={(e) => setOrderHeight(e.target.value)}
-                      type="number"
-                      min={1}
-                      step={1}
-                      placeholder="Height"
-                      className="w-20 rounded-full border border-slate-200 px-2 py-1 text-xs"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
-                    <span className="font-semibold text-slate-900">Bleed</span>
-                    <input
-                      value={orderBleed}
-                      onChange={(e) => setOrderBleed(e.target.value)}
-                      type="number"
-                      min={0}
-                      step={1}
-                      className="w-16 rounded-full border border-slate-200 px-2 py-1 text-xs"
-                    />
-                    <span className="text-slate-500">mm</span>
-                    <span className="font-semibold text-slate-900">Safe</span>
-                    <input
-                      value={orderSafeMargin}
-                      onChange={(e) => setOrderSafeMargin(e.target.value)}
-                      type="number"
-                      min={0}
-                      step={1}
-                      className="w-16 rounded-full border border-slate-200 px-2 py-1 text-xs"
-                    />
-                    <span className="text-slate-500">mm</span>
+                            : 0,
+                      )}{" "}
+                      - Total:{" "}
+                      {formatCurrency(
+                        materialTotalCents +
+                          (orderDeliveryType === "large"
+                            ? 25000
+                            : orderDeliveryType === "package"
+                              ? 5000
+                              : 0),
+                      )}
+                    </p>
                   </div>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
-                    <span className="font-semibold text-slate-900">Color</span>
-                    <select
-                      value={orderColorMode}
-                      onChange={(e) => setOrderColorMode(e.target.value)}
-                      className="rounded-full border border-slate-200 px-2 py-1 text-xs"
-                    >
-                      <option value="CMYK">CMYK</option>
-                      <option value="RGB">RGB</option>
-                      <option value="PANTONE">PANTONE</option>
-                    </select>
-                    <span className="font-semibold text-slate-900">DPI</span>
-                    <input
-                      value={orderResolution}
-                      onChange={(e) => setOrderResolution(e.target.value)}
-                      type="number"
-                      min={72}
-                      step={1}
-                      className="w-16 rounded-full border border-slate-200 px-2 py-1 text-xs"
-                    />
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs">
+                    <p className="font-semibold text-slate-900">Print size (mm)</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        value={orderWidth}
+                        onChange={(e) => setOrderWidth(e.target.value)}
+                        type="number"
+                        min={1}
+                        step={1}
+                        placeholder="Width"
+                        className="w-24 rounded-full border border-slate-200 px-3 py-2 text-sm"
+                      />
+                      <span className="text-slate-500">x</span>
+                      <input
+                        value={orderHeight}
+                        onChange={(e) => setOrderHeight(e.target.value)}
+                        type="number"
+                        min={1}
+                        step={1}
+                        placeholder="Height"
+                        className="w-24 rounded-full border border-slate-200 px-3 py-2 text-sm"
+                      />
+                    </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-[11px] text-slate-500">
-                    Recommended: CMYK, 300dpi, 3mm bleed, 5mm safe margin.
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs">
+                    <p className="font-semibold text-slate-900">Bleed and safe margin</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        value={orderBleed}
+                        onChange={(e) => setOrderBleed(e.target.value)}
+                        type="number"
+                        min={0}
+                        step={1}
+                        className="w-20 rounded-full border border-slate-200 px-3 py-2 text-sm"
+                      />
+                      <span className="text-slate-500">mm bleed</span>
+                      <input
+                        value={orderSafeMargin}
+                        onChange={(e) => setOrderSafeMargin(e.target.value)}
+                        type="number"
+                        min={0}
+                        step={1}
+                        className="w-20 rounded-full border border-slate-200 px-3 py-2 text-sm"
+                      />
+                      <span className="text-slate-500">mm safe</span>
+                    </div>
+                    <p className="mt-2 text-[11px] text-slate-500">
+                      Recommended: 3mm bleed, 5mm safe margin.
+                    </p>
                   </div>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
-                    <span>No delivery</span>
-                    <span className="font-semibold">R0</span>
-                    <input
-                      type="radio"
-                      name="studioDeliveryType"
-                      value="none"
-                      checked={orderDeliveryType === "none"}
-                      onChange={() => setOrderDeliveryType("none")}
-                      className="ml-2"
-                    />
-                  </label>
-                  <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
-                    <span>Package</span>
-                    <span className="font-semibold">R50</span>
-                    <input
-                      type="radio"
-                      name="studioDeliveryType"
-                      value="package"
-                      checked={orderDeliveryType === "package"}
-                      onChange={() => setOrderDeliveryType("package")}
-                      className="ml-2"
-                    />
-                  </label>
-                  <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
-                    <span>Large items</span>
-                    <span className="font-semibold">R250</span>
-                    <input
-                      type="radio"
-                      name="studioDeliveryType"
-                      value="large"
-                      checked={orderDeliveryType === "large"}
-                      onChange={() => setOrderDeliveryType("large")}
-                      className="ml-2"
-                    />
-                  </label>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs">
+                    <p className="font-semibold text-slate-900">Color mode</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <select
+                        value={orderColorMode}
+                        onChange={(e) => setOrderColorMode(e.target.value)}
+                        className="rounded-full border border-slate-200 px-3 py-2 text-sm"
+                      >
+                        <option value="CMYK">CMYK</option>
+                        <option value="RGB">RGB</option>
+                        <option value="PANTONE">PANTONE</option>
+                      </select>
+                      <span className="text-slate-500">Resolution</span>
+                      <input
+                        value={orderResolution}
+                        onChange={(e) => setOrderResolution(e.target.value)}
+                        type="number"
+                        min={72}
+                        step={1}
+                        className="w-20 rounded-full border border-slate-200 px-3 py-2 text-sm"
+                      />
+                      <span className="text-slate-500">dpi</span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-500">
+                    Recommended: CMYK color, 300dpi, print-ready PDF or PNG.
+                  </div>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
+
+                <div className="grid gap-3 sm:grid-cols-2">
                   <input
                     value={orderCustomerName}
                     onChange={(e) => setOrderCustomerName(e.target.value)}
@@ -1129,29 +1161,36 @@ export default function CreatorDashboardClient({
                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
                   />
                 </div>
+
                 <textarea
                   value={orderNotes}
                   onChange={(e) => setOrderNotes(e.target.value)}
                   placeholder="Order notes (optional)"
-                  className="min-h-[70px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
                 />
-                <button
-                  type="button"
-                  onClick={() => void handleCreateOrder()}
-                  disabled={createStudioOrder.isPending || orderRedirecting}
-                  className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
-                >
-                  {createStudioOrder.isPending
-                    ? "Creating order..."
-                    : orderRedirecting
-                      ? "Redirecting to payment..."
-                      : "Create order"}
-                </button>
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs text-slate-500">
+                    We will capture the current preview and attach it to the order.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void handleCreateOrder()}
+                    disabled={createStudioOrder.isPending || orderRedirecting}
+                    className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {createStudioOrder.isPending
+                      ? "Creating order..."
+                      : orderRedirecting
+                        ? "Redirecting to payment..."
+                        : "Create order"}
+                  </button>
+                </div>
               </div>
             </div>
-          </aside>
+          </DialogPanel>
         </div>
-      </section>
+      </Dialog>
 
       <Dialog
         open={orderDialogOpen}
@@ -1219,3 +1258,4 @@ function ControlCard({
     </div>
   );
 }
+
