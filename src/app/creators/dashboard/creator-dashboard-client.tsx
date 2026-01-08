@@ -589,7 +589,71 @@ export default function CreatorDashboardClient({
         </div>
 
         <div className="flex flex-1 flex-col gap-4 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 sm:p-6">
-            <div className="relative flex min-h-[60vh] flex-1 flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-slate-950 text-white shadow-2xl">
+          <div className="grid gap-3 rounded-[24px] border border-slate-200 bg-white p-3 shadow-sm md:grid-cols-2">
+            <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Artwork
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={overlayInput}
+                  onChange={(e) => setOverlayInput(e.target.value)}
+                  placeholder="https://your-artwork.jpg"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setOverlayImage(overlayInput)}
+                  className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Apply
+                </button>
+              </div>
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res) => {
+                  const url = getUploadedUrl(res);
+                  if (url) {
+                    setOverlayInput(url);
+                    setOverlayImage(url);
+                  }
+                }}
+                onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
+              />
+            </div>
+            <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Background
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={primaryInput}
+                  onChange={(e) => setPrimaryInput(e.target.value)}
+                  placeholder="https://surface.jpg"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPrimaryImage(primaryInput)}
+                  className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200"
+                >
+                  Swap
+                </button>
+              </div>
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res) => {
+                  const url = getUploadedUrl(res);
+                  if (url) {
+                    setPrimaryInput(url);
+                    setPrimaryImage(url);
+                  }
+                }}
+                onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
+              />
+            </div>
+          </div>
+          <div className="relative flex min-h-[60vh] flex-1 flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-slate-950 text-white shadow-2xl">
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 p-4">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-blue-200">Live design</p>
@@ -810,80 +874,6 @@ export default function CreatorDashboardClient({
               </div>
 
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Artwork layer
-                  </p>
-                  <p className="text-sm text-slate-700">
-                    Upload your artwork or paste a URL.
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      value={overlayInput}
-                      onChange={(e) => setOverlayInput(e.target.value)}
-                      placeholder="https://your-artwork.jpg"
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setOverlayImage(overlayInput)}
-                      className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  <div className="mt-3">
-                    <UploadButton
-                      endpoint="imageUploader"
-                      onClientUploadComplete={(res) => {
-                        const url = getUploadedUrl(res);
-                        if (url) {
-                          setOverlayInput(url);
-                          setOverlayImage(url);
-                        }
-                      }}
-                      onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Surface image
-                  </p>
-                  <p className="text-sm text-slate-700">
-                    Swap the base photo: fabric, cover, or frame.
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      value={primaryInput}
-                      onChange={(e) => setPrimaryInput(e.target.value)}
-                      placeholder="https://surface.jpg"
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPrimaryImage(primaryInput)}
-                      className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200"
-                    >
-                      Swap
-                    </button>
-                  </div>
-                  <div className="mt-3">
-                    <UploadButton
-                      endpoint="imageUploader"
-                      onClientUploadComplete={(res) => {
-                        const url = getUploadedUrl(res);
-                        if (url) {
-                          setPrimaryInput(url);
-                          setPrimaryImage(url);
-                        }
-                      }}
-                      onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
-                    />
-                  </div>
-                </div>
-
                 <div className="rounded-2xl border border-slate-200 bg-blue-50/80 p-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
                     Mode vibe
