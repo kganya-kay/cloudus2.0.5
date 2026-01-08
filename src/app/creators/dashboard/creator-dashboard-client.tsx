@@ -908,9 +908,6 @@ export default function CreatorDashboardClient({
                 </div>
               </div>
             </div>
-          </div>
-
-          
         </div>
       </section>
 
