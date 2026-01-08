@@ -500,6 +500,7 @@ export default function CreatorDashboardClient({
       priceCents: selectedMaterial.priceCents,
       deliveryCents,
       image: preview,
+      artworkUrl: overlayImage,
       notes:
         [
           orderNotes.trim(),

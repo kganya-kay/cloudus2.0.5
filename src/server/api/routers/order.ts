@@ -157,6 +157,7 @@ const createStudioOrderInput = z.object({
   priceCents: z.number().int().nonnegative(),
   deliveryCents: z.number().int().nonnegative().optional(),
   image: z.string().optional(),
+  artworkUrl: z.string().url().optional(),
   notes: z.string().optional(),
   customerLocation: locationInput.optional(),
 });
@@ -1012,7 +1013,7 @@ export const orderRouter = createTRPCRouter({
           deliveryCents,
           link: "/creators/dashboard",
           api: "studio",
-          links: [],
+          links: input.artworkUrl ? [input.artworkUrl] : [],
           image:
             input.image ??
             "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
