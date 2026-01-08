@@ -9,6 +9,7 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
+import { UploadButton } from "~/utils/uploadthing";
 
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
@@ -278,6 +279,18 @@ const formatCurrency = (value?: number | null) => {
     return `R ${(value / 100).toFixed(0)}`;
   }
 };
+
+function getUploadedUrl(files: unknown): string | undefined {
+  if (!Array.isArray(files) || files.length === 0) return undefined;
+  const f = files[0] as Record<string, unknown>;
+  const pick = (v: unknown) => (typeof v === "string" && v.trim().length > 0 ? v : undefined);
+  return (
+    pick(f.url) ??
+    pick(f.ufsUrl) ??
+    pick((f.serverData as Record<string, unknown> | undefined)?.url) ??
+    (pick(f.key) ? `https://utfs.io/f/${String(f.key)}` : undefined)
+  );
+}
 
 const defaultMode: StudioMode = "print";
 const defaultMaterial =
@@ -780,7 +793,9 @@ export default function CreatorDashboardClient({
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Artwork layer
                   </p>
-                  <p className="text-sm text-slate-700">Drop a URL for the print/audio/video art.</p>
+                  <p className="text-sm text-slate-700">
+                    Upload your artwork or paste a URL.
+                  </p>
                   <div className="mt-2 flex gap-2">
                     <input
                       value={overlayInput}
@@ -795,6 +810,19 @@ export default function CreatorDashboardClient({
                     >
                       Apply
                     </button>
+                  </div>
+                  <div className="mt-3">
+                    <UploadButton
+                      endpoint="imageUploader"
+                      onClientUploadComplete={(res) => {
+                        const url = getUploadedUrl(res);
+                        if (url) {
+                          setOverlayInput(url);
+                          setOverlayImage(url);
+                        }
+                      }}
+                      onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
+                    />
                   </div>
                 </div>
 
@@ -819,6 +847,19 @@ export default function CreatorDashboardClient({
                     >
                       Swap
                     </button>
+                  </div>
+                  <div className="mt-3">
+                    <UploadButton
+                      endpoint="imageUploader"
+                      onClientUploadComplete={(res) => {
+                        const url = getUploadedUrl(res);
+                        if (url) {
+                          setPrimaryInput(url);
+                          setPrimaryImage(url);
+                        }
+                      }}
+                      onUploadError={(error: Error) => alert(`ERROR: ${error.message}`)}
+                    />
                   </div>
                 </div>
 
