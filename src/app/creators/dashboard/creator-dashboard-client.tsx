@@ -335,6 +335,12 @@ export default function CreatorDashboardClient({
   const [orderNotes, setOrderNotes] = useState("");
   const [orderDeliveryType, setOrderDeliveryType] = useState<"none" | "package" | "large">("package");
   const [orderQuantity, setOrderQuantity] = useState("50");
+  const [orderWidth, setOrderWidth] = useState("");
+  const [orderHeight, setOrderHeight] = useState("");
+  const [orderBleed, setOrderBleed] = useState("3");
+  const [orderSafeMargin, setOrderSafeMargin] = useState("5");
+  const [orderColorMode, setOrderColorMode] = useState("CMYK");
+  const [orderResolution, setOrderResolution] = useState("300");
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [orderRedirecting, setOrderRedirecting] = useState(false);
@@ -504,6 +510,11 @@ export default function CreatorDashboardClient({
         [
           orderNotes.trim(),
           `Quantity: ${quantityValue}`,
+          orderWidth && orderHeight ? `Size: ${orderWidth} x ${orderHeight} mm` : "",
+          orderBleed ? `Bleed: ${orderBleed} mm` : "",
+          orderSafeMargin ? `Safe margin: ${orderSafeMargin} mm` : "",
+          orderColorMode ? `Color: ${orderColorMode}` : "",
+          orderResolution ? `Resolution: ${orderResolution} dpi` : "",
           handle ? `Creator: @${handle}` : displayName ? `Creator: ${displayName}` : "",
         ]
           .filter(Boolean)
@@ -874,6 +885,78 @@ export default function CreatorDashboardClient({
                     className="ml-2 w-24 rounded-full border border-slate-200 px-2 py-1 text-xs"
                   />
                   <span className="ml-2 text-slate-500">Base: {baseQty} items (small up to A4)</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+                    <span className="font-semibold text-slate-900">Size (mm)</span>
+                    <input
+                      value={orderWidth}
+                      onChange={(e) => setOrderWidth(e.target.value)}
+                      type="number"
+                      min={1}
+                      step={1}
+                      placeholder="Width"
+                      className="w-20 rounded-full border border-slate-200 px-2 py-1 text-xs"
+                    />
+                    <span className="text-slate-500">x</span>
+                    <input
+                      value={orderHeight}
+                      onChange={(e) => setOrderHeight(e.target.value)}
+                      type="number"
+                      min={1}
+                      step={1}
+                      placeholder="Height"
+                      className="w-20 rounded-full border border-slate-200 px-2 py-1 text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+                    <span className="font-semibold text-slate-900">Bleed</span>
+                    <input
+                      value={orderBleed}
+                      onChange={(e) => setOrderBleed(e.target.value)}
+                      type="number"
+                      min={0}
+                      step={1}
+                      className="w-16 rounded-full border border-slate-200 px-2 py-1 text-xs"
+                    />
+                    <span className="text-slate-500">mm</span>
+                    <span className="font-semibold text-slate-900">Safe</span>
+                    <input
+                      value={orderSafeMargin}
+                      onChange={(e) => setOrderSafeMargin(e.target.value)}
+                      type="number"
+                      min={0}
+                      step={1}
+                      className="w-16 rounded-full border border-slate-200 px-2 py-1 text-xs"
+                    />
+                    <span className="text-slate-500">mm</span>
+                  </div>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+                    <span className="font-semibold text-slate-900">Color</span>
+                    <select
+                      value={orderColorMode}
+                      onChange={(e) => setOrderColorMode(e.target.value)}
+                      className="rounded-full border border-slate-200 px-2 py-1 text-xs"
+                    >
+                      <option value="CMYK">CMYK</option>
+                      <option value="RGB">RGB</option>
+                      <option value="PANTONE">PANTONE</option>
+                    </select>
+                    <span className="font-semibold text-slate-900">DPI</span>
+                    <input
+                      value={orderResolution}
+                      onChange={(e) => setOrderResolution(e.target.value)}
+                      type="number"
+                      min={72}
+                      step={1}
+                      className="w-16 rounded-full border border-slate-200 px-2 py-1 text-xs"
+                    />
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-[11px] text-slate-500">
+                    Recommended: CMYK, 300dpi, 3mm bleed, 5mm safe margin.
+                  </div>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
