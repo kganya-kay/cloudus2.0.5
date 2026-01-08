@@ -145,6 +145,22 @@ const createLaundryInput = z.object({
   customerLocation: locationInput.optional(),
 });
 
+const createStudioOrderInput = z.object({
+  customerName: z.string().min(1),
+  customerPhone: z.string().min(5),
+  customerEmail: z.string().email().optional(),
+  addressLine1: z.string().min(3).optional(),
+  suburb: z.string().min(2).optional(),
+  city: z.string().min(2).optional(),
+  materialId: z.string().min(1),
+  materialName: z.string().min(1),
+  priceCents: z.number().int().nonnegative(),
+  deliveryCents: z.number().int().nonnegative().optional(),
+  image: z.string().optional(),
+  notes: z.string().optional(),
+  customerLocation: locationInput.optional(),
+});
+
 const LAUNDRY_PRICE_PER_KG_CENTS = 5000;
 const LAUNDRY_DELIVERY_CENTS = 5000;
 
@@ -946,6 +962,76 @@ export const orderRouter = createTRPCRouter({
               status: DeliveryStatus.PENDING,
             },
           },
+        },
+        select: { id: true },
+      });
+
+      await notifyOrderCreated(ctx, order.id);
+
+      return { id: order.id };
+    }),
+
+  createStudioOrder: publicProcedure
+    .input(createStudioOrderInput)
+    .mutation(async ({ ctx, input }) => {
+      const ensureCreator = async () => {
+        if (ctx.session?.user?.id) return ctx.session.user.id;
+        if (input.customerEmail) {
+          const guest = await ctx.db.user.upsert({
+            where: { email: input.customerEmail },
+            update: { name: input.customerName },
+            create: {
+              email: input.customerEmail,
+              name: input.customerName,
+              role: Role.CUSTOMER,
+            },
+          });
+          return guest.id;
+        }
+        const guest = await ctx.db.user.create({
+          data: {
+            name: input.customerName,
+            role: Role.CUSTOMER,
+          },
+        });
+        return guest.id;
+      };
+
+      const creatorId = await ensureCreator();
+      const deliveryCents = input.deliveryCents ?? 0;
+      const descriptionParts = [
+        `Studio order: ${input.materialName}`,
+        input.notes,
+      ].filter(Boolean);
+
+      const order = await ctx.db.order.create({
+        data: {
+          name: `Studio Order: ${input.materialName}`,
+          description: descriptionParts.join(" • ") || "Studio order",
+          price: input.priceCents,
+          deliveryCents,
+          link: "/creators/dashboard",
+          api: "studio",
+          links: [],
+          image:
+            input.image ??
+            "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          customerEmail: input.customerEmail ?? null,
+          addressLine1: input.addressLine1 ?? null,
+          suburb: input.suburb ?? null,
+          city: input.city ?? null,
+          ...(input.customerLocation
+            ? {
+                customerLocationLat: input.customerLocation.lat,
+                customerLocationLng: input.customerLocation.lng,
+                customerLocationAccuracy: input.customerLocation.accuracy ?? null,
+                customerLocationAt: new Date(),
+              }
+            : {}),
+          createdBy: { connect: { id: creatorId } },
+          status: FulfilmentStatus.NEW,
         },
         select: { id: true },
       });

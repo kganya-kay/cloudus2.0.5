@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownTrayIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
 import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
@@ -22,6 +22,7 @@ type StudioMaterial = {
   swatch: string;
   finish: "matte" | "gloss" | "satin";
   tone: "light" | "dark";
+  priceCents: number;
 };
 
 const studioModes: Record<StudioMode, { label: string; tagline: string; helper: string }> = {
@@ -55,6 +56,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#1f2937",
       finish: "matte",
       tone: "light",
+      priceCents: 16000,
     },
     {
       id: "flyers",
@@ -67,6 +69,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#111827",
       finish: "satin",
       tone: "light",
+      priceCents: 15000,
     },
     {
       id: "posters",
@@ -79,6 +82,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#0a0a0a",
       finish: "satin",
       tone: "dark",
+      priceCents: 19000,
     },
     {
       id: "brochures",
@@ -91,6 +95,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#0f172a",
       finish: "gloss",
       tone: "light",
+      priceCents: 20000,
     },
     {
       id: "menus",
@@ -103,6 +108,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#111827",
       finish: "matte",
       tone: "dark",
+      priceCents: 17000,
     },
     {
       id: "apparel",
@@ -115,6 +121,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#0f172a",
       finish: "matte",
       tone: "dark",
+      priceCents: 22000,
     },
   ],
   branding: [
@@ -129,6 +136,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#0f172a",
       finish: "matte",
       tone: "dark",
+      priceCents: 18000,
     },
     {
       id: "stationery",
@@ -141,6 +149,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#e2e8f0",
       finish: "satin",
       tone: "light",
+      priceCents: 17000,
     },
     {
       id: "shop-branding",
@@ -153,6 +162,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#0b1224",
       finish: "gloss",
       tone: "dark",
+      priceCents: 21000,
     },
     {
       id: "packaging",
@@ -165,6 +175,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#1f2937",
       finish: "matte",
       tone: "light",
+      priceCents: 16000,
     },
   ],
   signage: [
@@ -179,6 +190,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#0b1224",
       finish: "gloss",
       tone: "dark",
+      priceCents: 22000,
     },
     {
       id: "vehicle-branding",
@@ -191,6 +203,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#111827",
       finish: "gloss",
       tone: "dark",
+      priceCents: 23000,
     },
     {
       id: "banners",
@@ -203,6 +216,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#0f172a",
       finish: "satin",
       tone: "light",
+      priceCents: 18000,
     },
     {
       id: "window-decals",
@@ -215,6 +229,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#e2e8f0",
       finish: "matte",
       tone: "light",
+      priceCents: 15000,
     },
     {
       id: "lightbox",
@@ -227,6 +242,7 @@ const studioMaterials: Record<StudioMode, StudioMaterial[]> = {
       swatch: "#111827",
       finish: "gloss",
       tone: "dark",
+      priceCents: 21000,
     },
   ],
 };
@@ -296,9 +312,29 @@ export default function CreatorDashboardClient({
   const [skills, setSkills] = useState((profile?.skills ?? []).join(", "));
   const [focusAreas, setFocusAreas] = useState((profile?.focusAreas ?? []).join(", "));
 
+  const [orderCustomerName, setOrderCustomerName] = useState(
+    profile?.displayName ?? "",
+  );
+  const [orderCustomerPhone, setOrderCustomerPhone] = useState("");
+  const [orderCustomerEmail, setOrderCustomerEmail] = useState("");
+  const [orderAddressLine1, setOrderAddressLine1] = useState("");
+  const [orderSuburb, setOrderSuburb] = useState("");
+  const [orderCity, setOrderCity] = useState("");
+  const [orderNotes, setOrderNotes] = useState("");
+  const [orderDeliveryType, setOrderDeliveryType] = useState<"none" | "package" | "large">("package");
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+
   const upsertProfile = api.creator.upsertProfile.useMutation({
     onSuccess: async () => {
       await utils.creator.me.invalidate();
+    },
+  });
+
+  const createStudioOrder = api.order.createStudioOrder.useMutation({
+    onSuccess: () => {
+      setOrderSuccess("Order created. We'll contact you with next steps.");
+      setOrderError(null);
     },
   });
 
@@ -322,6 +358,60 @@ export default function CreatorDashboardClient({
   const materialOptions = studioMaterials[mode] ?? [];
   const selectedMaterial =
     materialOptions.find((option) => option.id === materialId) ?? materialOptions[0];
+  const previewRef = useRef<HTMLDivElement | null>(null);
+
+  const loadImage = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Image failed to load"));
+      img.src = src;
+    });
+
+  const createDesignPreview = async () => {
+    if (!primaryImage || !overlayImage) return null;
+    try {
+      const width = 1200;
+      const height = 960;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+
+      const base = await loadImage(primaryImage);
+      const baseScale = Math.max(width / base.width, height / base.height);
+      const baseW = base.width * baseScale;
+      const baseH = base.height * baseScale;
+      const baseX = (width - baseW) / 2;
+      const baseY = (height - baseH) / 2;
+      ctx.drawImage(base, baseX, baseY, baseW, baseH);
+
+      const overlay = await loadImage(overlayImage);
+      const maxW = width * 0.55;
+      const maxH = height * 0.55;
+      const fitScale = Math.min(maxW / overlay.width, maxH / overlay.height);
+      const scale = fitScale * (artworkScale / 100);
+      const drawW = overlay.width * scale;
+      const drawH = overlay.height * scale;
+      const offsetX = (artworkOffsetX / 100) * maxW;
+      const offsetY = (artworkOffsetY / 100) * maxH;
+      const centerX = width / 2 + offsetX;
+      const centerY = height / 2 + offsetY;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate((artworkRotation * Math.PI) / 180);
+      ctx.globalAlpha = artworkOpacity / 100;
+      ctx.drawImage(overlay, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      return canvas.toDataURL("image/png");
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     const fallback = studioMaterials[mode]?.[0];
@@ -362,6 +452,61 @@ export default function CreatorDashboardClient({
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
+    });
+  };
+
+  const handleCreateOrder = async () => {
+    setOrderError(null);
+    setOrderSuccess(null);
+
+    if (!selectedMaterial) {
+      setOrderError("Select a material before creating the order.");
+      return;
+    }
+    if (!orderCustomerName.trim() || !orderCustomerPhone.trim()) {
+      setOrderError("Customer name and phone are required.");
+      return;
+    }
+
+    let preview: string | null = null;
+    if (previewRef.current) {
+      try {
+        const { toPng } = await import("html-to-image");
+        preview = await toPng(previewRef.current, { cacheBust: true, pixelRatio: 2 });
+      } catch {
+        preview = null;
+      }
+    }
+    if (!preview) {
+      preview = await createDesignPreview();
+    }
+    if (!preview) {
+      setOrderError("Unable to capture the design preview. Please try again.");
+      return;
+    }
+
+    const deliveryCents =
+      orderDeliveryType === "large" ? 25000 : orderDeliveryType === "package" ? 5000 : 0;
+
+    createStudioOrder.mutate({
+      customerName: orderCustomerName.trim(),
+      customerPhone: orderCustomerPhone.trim(),
+      customerEmail: orderCustomerEmail.trim() || undefined,
+      addressLine1: orderAddressLine1.trim() || undefined,
+      suburb: orderSuburb.trim() || undefined,
+      city: orderCity.trim() || undefined,
+      materialId: selectedMaterial.id,
+      materialName: selectedMaterial.name,
+      priceCents: selectedMaterial.priceCents,
+      deliveryCents,
+      image: preview,
+      notes:
+        [
+          orderNotes.trim(),
+          handle ? `Creator: @${handle}` : displayName ? `Creator: ${displayName}` : "",
+        ]
+          .filter(Boolean)
+          .join(" • ") || undefined,
     });
   };
 
@@ -408,6 +553,11 @@ export default function CreatorDashboardClient({
                   <p className="text-sm text-slate-200">{selectedMaterial?.description}</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {selectedMaterial?.priceCents ? (
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+                      {formatCurrency(selectedMaterial.priceCents)}
+                    </span>
+                  ) : null}
                   <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
                     {finish}
                   </span>
@@ -417,7 +567,7 @@ export default function CreatorDashboardClient({
                 </div>
               </div>
 
-              <div className="relative mt-2 aspect-[5/4] overflow-hidden px-2 pb-4">
+              <div ref={previewRef} className="relative mt-2 aspect-[5/4] overflow-hidden px-2 pb-4">
                 <div
                   className={`absolute inset-3 rounded-[26px] bg-gradient-to-br ${
                     backgroundTone === "dark"
@@ -670,6 +820,9 @@ export default function CreatorDashboardClient({
                         <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                           {material.finish}
                         </span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          {formatCurrency(material.priceCents)}
+                        </span>
                       </div>
                     </div>
                   </button>
@@ -678,23 +831,126 @@ export default function CreatorDashboardClient({
             </div>
 
             <div className="rounded-[24px] border border-blue-200 bg-blue-50/80 p-4 text-sm text-slate-800 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-blue-700">Shots</p>
-              <p className="font-semibold text-slate-900">Export to the feed or client review.</p>
+              <p className="text-xs uppercase tracking-wide text-blue-700">Create order</p>
+              <p className="font-semibold text-slate-900">Confirm and send your print order.</p>
               <p className="text-xs text-slate-600">
-                Save this layout as a print-ready PNG, a mock player shot, or a frame preview.
+                We’ll capture your current design and attach it to the order.
               </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2">
+                <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
+                  <span className="font-semibold text-slate-900">Material:</span>{" "}
+                  {selectedMaterial?.name ?? "Select a material"} ·{" "}
+                  {selectedMaterial?.priceCents ? formatCurrency(selectedMaterial.priceCents) : "Price pending"}
+                </div>
+                <div className="rounded-xl bg-white/80 px-3 py-2 text-xs text-slate-700">
+                  <span className="font-semibold text-slate-900">Delivery:</span>{" "}
+                  {formatCurrency(
+                    orderDeliveryType === "large" ? 25000 : orderDeliveryType === "package" ? 5000 : 0,
+                  )}
+                  <span className="ml-2 text-slate-500">
+                    (Total:{" "}
+                    {formatCurrency(
+                      (selectedMaterial?.priceCents ?? 0) +
+                        (orderDeliveryType === "large"
+                          ? 25000
+                          : orderDeliveryType === "package"
+                            ? 5000
+                            : 0),
+                    )}
+                    )
+                  </span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+                    <span>No delivery</span>
+                    <span className="font-semibold">R0</span>
+                    <input
+                      type="radio"
+                      name="studioDeliveryType"
+                      value="none"
+                      checked={orderDeliveryType === "none"}
+                      onChange={() => setOrderDeliveryType("none")}
+                      className="ml-2"
+                    />
+                  </label>
+                  <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+                    <span>Package</span>
+                    <span className="font-semibold">R50</span>
+                    <input
+                      type="radio"
+                      name="studioDeliveryType"
+                      value="package"
+                      checked={orderDeliveryType === "package"}
+                      onChange={() => setOrderDeliveryType("package")}
+                      className="ml-2"
+                    />
+                  </label>
+                  <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+                    <span>Large items</span>
+                    <span className="font-semibold">R250</span>
+                    <input
+                      type="radio"
+                      name="studioDeliveryType"
+                      value="large"
+                      checked={orderDeliveryType === "large"}
+                      onChange={() => setOrderDeliveryType("large")}
+                      className="ml-2"
+                    />
+                  </label>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    value={orderCustomerName}
+                    onChange={(e) => setOrderCustomerName(e.target.value)}
+                    placeholder="Customer name"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={orderCustomerPhone}
+                    onChange={(e) => setOrderCustomerPhone(e.target.value)}
+                    placeholder="Phone / WhatsApp"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={orderCustomerEmail}
+                    onChange={(e) => setOrderCustomerEmail(e.target.value)}
+                    placeholder="Email (optional)"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={orderAddressLine1}
+                    onChange={(e) => setOrderAddressLine1(e.target.value)}
+                    placeholder="Address line (optional)"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={orderSuburb}
+                    onChange={(e) => setOrderSuburb(e.target.value)}
+                    placeholder="Suburb (optional)"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={orderCity}
+                    onChange={(e) => setOrderCity(e.target.value)}
+                    placeholder="City (optional)"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <textarea
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  placeholder="Order notes (optional)"
+                  className="min-h-[70px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                />
+                {orderError && <p className="text-xs text-red-600">{orderError}</p>}
+                {orderSuccess && <p className="text-xs text-emerald-700">{orderSuccess}</p>}
                 <button
                   type="button"
-                  className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
+                  onClick={() => void handleCreateOrder()}
+                  disabled={createStudioOrder.isPending}
+                  className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
                 >
-                  Save mock
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-900 ring-1 ring-slate-200"
-                >
-                  Queue for feed
+                  {createStudioOrder.isPending ? "Creating order..." : "Create order"}
                 </button>
               </div>
             </div>
