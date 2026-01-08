@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownTrayIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/16/solid";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  DialogTitle,
+} from "@headlessui/react";
 
 import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
 import type { RouterOutputs } from "~/trpc/react";
@@ -324,6 +331,8 @@ export default function CreatorDashboardClient({
   const [orderDeliveryType, setOrderDeliveryType] = useState<"none" | "package" | "large">("package");
   const [orderError, setOrderError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [orderRedirecting, setOrderRedirecting] = useState(false);
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
 
   const upsertProfile = api.creator.upsertProfile.useMutation({
     onSuccess: async () => {
@@ -332,9 +341,31 @@ export default function CreatorDashboardClient({
   });
 
   const createStudioOrder = api.order.createStudioOrder.useMutation({
-    onSuccess: () => {
-      setOrderSuccess("Order created. We'll contact you with next steps.");
+    onSuccess: async (order) => {
+      setOrderSuccess("Order created. Redirecting to payment...");
       setOrderError(null);
+      setOrderDialogOpen(true);
+      setOrderRedirecting(true);
+      try {
+        const response = await fetch("/api/payments/paystack/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: order.id }),
+        });
+        const data = (await response.json().catch(() => null)) as
+          | { checkoutUrl?: string; error?: string }
+          | null;
+        if (!response.ok || typeof data?.checkoutUrl !== "string") {
+          throw new Error(data?.error ?? "Unable to start payment. Please try again.");
+        }
+        window.location.href = data.checkoutUrl;
+      } catch (err) {
+        setOrderRedirecting(false);
+        setOrderDialogOpen(true);
+        setOrderError(
+          err instanceof Error ? err.message : "Payment error. Please try again.",
+        );
+      }
     },
   });
 
@@ -943,15 +974,17 @@ export default function CreatorDashboardClient({
                   placeholder="Order notes (optional)"
                   className="min-h-[70px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
                 />
-                {orderError && <p className="text-xs text-red-600">{orderError}</p>}
-                {orderSuccess && <p className="text-xs text-emerald-700">{orderSuccess}</p>}
                 <button
                   type="button"
                   onClick={() => void handleCreateOrder()}
-                  disabled={createStudioOrder.isPending}
+                  disabled={createStudioOrder.isPending || orderRedirecting}
                   className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
                 >
-                  {createStudioOrder.isPending ? "Creating order..." : "Create order"}
+                  {createStudioOrder.isPending
+                    ? "Creating order..."
+                    : orderRedirecting
+                      ? "Redirecting to payment..."
+                      : "Create order"}
                 </button>
               </div>
             </div>
@@ -1257,6 +1290,40 @@ export default function CreatorDashboardClient({
           </a>
         </p>
       </section>
+
+      <Dialog
+        open={orderDialogOpen}
+        onClose={() => (!orderRedirecting ? setOrderDialogOpen(false) : null)}
+        className="relative z-50"
+      >
+        <DialogBackdrop className="fixed inset-0 bg-gray-500/75" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white shadow-xl transition-all">
+            <div className="p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                <CheckIcon className="h-6 w-6 text-blue-600" />
+              </div>
+              <DialogTitle as="h3" className="mt-4 text-lg font-semibold text-gray-900">
+                {orderError ? "Payment issue" : "Redirecting to payment"}
+              </DialogTitle>
+              <p className="mt-2 text-sm text-gray-600">
+                {orderError ?? orderSuccess ?? "Hang tight while we launch a secure payment page."}
+              </p>
+              {orderError && (
+                <div className="mt-6 flex justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOrderDialogOpen(false)}
+                    className="rounded-full border border-gray-300 bg-white px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          </DialogPanel>
+        </div>
+      </Dialog>
     </div>
   );
 }
