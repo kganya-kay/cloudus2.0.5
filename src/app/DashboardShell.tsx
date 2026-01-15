@@ -564,7 +564,7 @@ function SiteFooter() {
           <p className="text-sm text-gray-600">
             Services marketplace for projects, suppliers, and logistics — built on Paystack.
           </p>
-          <p className="text-xs text-gray-500">© {new Date().getFullYear()} Cloudus.</p>
+          <p className="text-xs text-gray-500">© 2025 Cloudus.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-8 md:grid-cols-3">
