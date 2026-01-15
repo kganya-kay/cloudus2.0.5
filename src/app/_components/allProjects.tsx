@@ -27,6 +27,13 @@ function imgOrPlaceholder(url: string | undefined): string {
   return url && url.trim().length > 0 ? url : PLACEHOLDER_IMG;
 }
 
+function isValidImageUrl(url: string | undefined): url is string {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  return /^https?:\/\//i.test(trimmed) || /^data:image\//i.test(trimmed);
+}
+
 export default function AllProjects() {
   const [allProjects] = api.project.getAll.useSuspenseQuery();
 
@@ -58,11 +65,7 @@ export default function AllProjects() {
       <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {allProjects.map((project) => {
           const hero = imgOrPlaceholder(project.image);
-          const thumbs: string[] = [
-            project.links?.[0],
-            project.links?.[1],
-            project.links?.[2],
-          ].map(imgOrPlaceholder);
+          const thumbs = (project.links ?? []).filter(isValidImageUrl).slice(0, 3);
 
           return (
             <li
