@@ -291,6 +291,7 @@ model FeedPost {
   id          String       @id @default(cuid())
   creatorId   String
   projectId   Int?
+  eventId     Int?
   shopItemId  Int?
   orderId     Int?
   type        FeedPostType @default(PROJECT_UPDATE)
@@ -305,6 +306,7 @@ model FeedPost {
 
   creator          CreatorProfile     @relation(fields: [creatorId], references: [id])
   project          Project?           @relation(fields: [projectId], references: [id])
+  event            Event?             @relation(fields: [eventId], references: [id])
   shopItem         ShopItem?          @relation(fields: [shopItemId], references: [id])
   order            Order?             @relation(fields: [orderId], references: [id])
   media            FeedMedia[]
@@ -313,6 +315,7 @@ model FeedPost {
 
   @@index([creatorId])
   @@index([projectId])
+  @@index([eventId])
   @@index([shopItemId])
 }
 
@@ -385,12 +388,14 @@ model Project {
   followers         ProjectFollower[]
   invites           CollaborationInvite[]
   feedPosts         FeedPost[]
+  events            Event[]
 
   // Social
   comments         Comment[]          @relation("ProjectComments")
   likes            Like[]             @relation("ProjectLikes")
   upvotes          Upvote[]           @relation("ProjectUpvotes")
   AdminReviewQueue AdminReviewQueue[]
+  eventPosts       EventPost[]
 
   @@index([name])
 }
@@ -406,6 +411,56 @@ model ProjectFollower {
 
   @@unique([projectId, userId])
   @@index([userId])
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  startAt     DateTime
+  endAt       DateTime?
+  location    String?
+  venue       String?
+  streamUrl   String?
+  coverImage  String?
+  status      String   @default("Scheduled")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id])
+
+  hostId String
+  host   User   @relation("EventHost", fields: [hostId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("EventCreatedBy", fields: [createdById], references: [id])
+
+  shopItems ShopItem[]
+  feedPosts FeedPost[]
+  chatPosts EventPost[]
+
+  @@index([projectId])
+  @@index([hostId])
+  @@index([createdById])
+  @@index([startAt])
+}
+
+model EventPost {
+  id        String   @id @default(cuid())
+  eventId   Int
+  projectId Int?
+  message   String
+  createdAt DateTime @default(now())
+
+  event     Event   @relation(fields: [eventId], references: [id])
+  project   Project? @relation(fields: [projectId], references: [id])
+  createdById String
+  createdBy User    @relation(fields: [createdById], references: [id])
+
+  @@index([eventId, createdAt])
+  @@index([projectId])
+  @@index([createdById])
 }
 
 model ShopItem {
@@ -429,6 +484,8 @@ model ShopItem {
   contributors User[]   @relation("ShopItemContributors")
   api          String
   links        String[]
+  eventId      Int?
+  event        Event?   @relation(fields: [eventId], references: [id])
 
   // Supplier link (nullable for backward compatibility; enforce at creation time)
   supplierId String?
@@ -445,6 +502,7 @@ model ShopItem {
   AdminReviewQueue AdminReviewQueue[]
 
   @@index([name])
+  @@index([eventId])
 }
 
 model Order {
@@ -736,6 +794,8 @@ model User {
   shopItemsCreated ShopItem[] @relation("ShopItemCreatedBy")
   ordersCreated    Order[]    @relation("OrderCreatedBy")
   caretakerOrders  Order[]    @relation("OrderCaretaker")
+  eventsHosted     Event[]    @relation("EventHost")
+  eventsCreated    Event[]    @relation("EventCreatedBy")
 
   // M-N contributor relations
   projectContributions         Project[]                  @relation("ProjectContributors")
@@ -756,6 +816,7 @@ model User {
   addresses         UserAddress[]
   // back-rel for posts authored by this user
   posts             Post[]              @relation("PostCreatedBy")
+  eventPosts        EventPost[]
   notifications     Notification[]
   AdminAnnouncement AdminAnnouncement[]
   AdminReviewQueue  AdminReviewQueue[]

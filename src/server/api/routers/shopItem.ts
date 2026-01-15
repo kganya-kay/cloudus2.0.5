@@ -21,6 +21,7 @@ const createShopItemInput = z.object({
   api: z.string().default(""),
   links: z.array(z.string()).default([]),
   supplierId: z.string().min(1),
+  eventId: z.number().int().positive().optional(),
 });
 
 const updateShopItemInput = z.object({
@@ -108,6 +109,21 @@ export const shopItemRouter = createTRPCRouter({
   create: protectedProcedure
     .input(createShopItemInput)
     .mutation(async ({ ctx, input }) => {
+      if (input.eventId) {
+        const event = await ctx.db.event.findUnique({
+          where: { id: input.eventId },
+          select: { createdById: true },
+        });
+        if (!event) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+        }
+        if (event.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only the event owner can add shop items to this event.",
+          });
+        }
+      }
       return ctx.db.shopItem.create({
         data: {
           name: input.name,
@@ -124,6 +140,7 @@ export const shopItemRouter = createTRPCRouter({
           createdBy: { connect: { id: ctx.session.user.id } },
           contributors: { connect: [{ id: ctx.session.user.id }] },
           supplier: { connect: { id: input.supplierId } },
+          ...(input.eventId ? { event: { connect: { id: input.eventId } } } : {}),
         },
       });
     }),

@@ -1,6 +1,7 @@
 import { postRouter } from "~/server/api/routers/post";
 import { projectRouter } from "~/server/api/routers/project";
 import { shopItemRouter } from "~/server/api/routers/shopItem";
+import { eventRouter } from "~/server/api/routers/event";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { orderRouter } from "./routers/order";
 import { userRouter } from "./routers/user";
@@ -26,6 +27,7 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   project:projectRouter,
   shopItem: shopItemRouter,
+  event: eventRouter,
   order : orderRouter,
   user: userRouter,
   ops: opsRouter,

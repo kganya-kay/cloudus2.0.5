@@ -17,6 +17,7 @@ const publishInput = z.object({
   coverImage: z.string().url().optional(),
   visibility: z.string().optional(),
   projectId: z.number().int().positive().optional(),
+  eventId: z.number().int().positive().optional(),
   shopItemId: z.number().int().positive().optional(),
   orderId: z.number().int().positive().optional(),
   isPinned: z.boolean().optional(),
@@ -57,6 +58,7 @@ export const feedRouter = createTRPCRouter({
         data: {
           creatorId: profile.id,
           projectId: input.projectId ?? null,
+          eventId: input.eventId ?? null,
           shopItemId: input.shopItemId ?? null,
           orderId: input.orderId ?? null,
           type: input.type,
@@ -98,6 +100,7 @@ export const feedRouter = createTRPCRouter({
         },
         media: true,
         project: { select: { id: true, name: true, image: true, status: true } },
+        event: { select: { id: true, name: true } },
         shopItem: { select: { id: true, name: true, price: true, image: true } },
       },
     });
