@@ -718,6 +718,7 @@ export default function LatestProject() {
     { enabled: canManageBids },
   );
   const feedQuery = api.feed.list.useQuery({ limit: 50 });
+  const projectEventsQuery = api.event.list.useQuery({ projectId: parsedId, take: 50 });
   const projectFeedItems = useMemo(
     () =>
       (feedQuery.data?.items ?? []).filter((post) => {
@@ -769,7 +770,36 @@ export default function LatestProject() {
       <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-6">
       {p ? (
         <>
-          <div className="mt-6 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-4">
+              <img
+                alt="Project cover"
+                src={p.image ?? ""}
+                className="h-14 w-14 rounded-2xl bg-slate-100 object-cover"
+              />
+              <div>
+                <InlineEditText
+                  value={p.name}
+                  onSave={(val) => updateProject.mutate({ id: p.id, data: { name: val } })}
+                  className="text-xl font-semibold text-slate-900"
+                />
+                <p className="text-xs text-slate-500">
+                  Owner:{" "}
+                  <span className="font-semibold text-slate-700">
+                    {p.createdBy?.name ?? "Owner"}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Budget</p>
+              <p className="text-lg font-semibold text-slate-900">
+                {formatCurrency(projectBudgetCents)}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 hidden rounded-full border border-slate-200 bg-white p-2 shadow-sm md:block">
             <div className="grid grid-cols-5 gap-2 text-xs font-semibold uppercase text-slate-500">
               {statusSteps.map((step, index) => {
                 const isActive = index <= activeStepIndex;
@@ -834,74 +864,6 @@ export default function LatestProject() {
                     </p>
                   </div>
                   <div className="mt-4">{projectFeedList}</div>
-                </section>
-              )}
-
-              {activeTab === "chat" && (
-                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">Chat</p>
-                    <p className="text-sm text-slate-600">
-                      Live chatter for everyone following this project.
-                    </p>
-                  </div>
-                  <div className="mt-4">{projectFeedList}</div>
-                </section>
-              )}
-
-              {activeTab === "details" && (
-                <div className="space-y-6">
-          {/* Project Info with inline edits */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-500">Project Type</p>
-              <InlineEditText
-                value={p.type}
-                onSave={(val) => updateProject.mutate({ id: p.id, data: { type: val } })}
-              />
-              {p.link ? (
-                <Link
-                  href={p.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-2 text-xs text-white bg-blue-500 px-3 py-1 rounded-full hover:bg-blue-600 transition"
-                >
-                  Visit Project
-                </Link>
-              ) : null}
-              <div className="mt-3">
-                <p className="text-xs text-gray-500">Project URL</p>
-                <InlineEditText
-                  value={p.link ?? ""}
-                  onSave={(val) => updateProject.mutate({ id: p.id, data: { link: val } })}
-                  placeholder="https://…"
-                />
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
-              <p className="text-xs text-gray-500">Created On</p>
-              <p className="text-sm font-medium text-blue-500">
-                {new Date(p.createdAt).toDateString()}
-              </p>
-
-              <div className="mt-3">
-                <p className="text-xs text-gray-500">Budget (Price)</p>
-                <InlineEditNumber
-                  value={p.price}
-                  onSave={(val) => updateProject.mutate({ id: p.id, data: { price: val } })}
-                />
-              </div>
-
-              <div className="mt-3">
-                <p className="text-xs text-gray-500">WhatsApp (Contact #)</p>
-                <InlineEditNumber
-                  value={p.contactNumber ?? 0}
-                  onSave={(val) => updateProject.mutate({ id: p.id, data: { contactNumber: val } })}
-                />
-              </div>
-            </div>
-          </div>
 
           <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1030,6 +992,118 @@ export default function LatestProject() {
                 Only the project owner or an admin can create an event for this project.
               </p>
             )}
+          </div>
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">Project events</p>
+                      <Link
+                        href="/events"
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                      >
+                        View all
+                      </Link>
+                    </div>
+                    {projectEventsQuery.isLoading ? (
+                      <p className="mt-3 text-sm text-slate-500">Loading events...</p>
+                    ) : projectEventsQuery.data?.items?.length ? (
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        {projectEventsQuery.data.items.map((event) => (
+                          <Link
+                            key={event.id}
+                            href={`/events/${event.id}`}
+                            className="rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm transition hover:border-blue-200"
+                          >
+                            <p className="font-semibold text-slate-900">{event.name}</p>
+                            <p className="text-xs text-slate-500">
+                              {new Date(event.startAt).toLocaleDateString()}{" "}
+                              {event.location ? `• ${event.location}` : ""}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5">
+                                {event.shopItemCount} shop items
+                              </span>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5">
+                                {event.chatCount} chat posts
+                              </span>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-slate-500">No events yet.</p>
+                    )}
+                  </div>
+                </section>
+              )}
+          </div>
+
+
+              {activeTab === "chat" && (
+                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Chat</p>
+                    <p className="text-sm text-slate-600">
+                      Live chatter for everyone following this project.
+                    </p>
+                  </div>
+                  <div className="mt-4">{projectFeedList}</div>
+                </section>
+              )}
+
+              {activeTab === "details" && (
+                <div className="space-y-6">
+          {/* Project Info with inline edits */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-500">Project Type</p>
+              <InlineEditText
+                value={p.type}
+                onSave={(val) => updateProject.mutate({ id: p.id, data: { type: val } })}
+              />
+              {p.link ? (
+                <Link
+                  href={p.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs text-white bg-blue-500 px-3 py-1 rounded-full hover:bg-blue-600 transition"
+                >
+                  Visit Project
+                </Link>
+              ) : null}
+              <div className="mt-3">
+                <p className="text-xs text-gray-500">Project URL</p>
+                <InlineEditText
+                  value={p.link ?? ""}
+                  onSave={(val) => updateProject.mutate({ id: p.id, data: { link: val } })}
+                  placeholder="https://…"
+                />
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
+              <p className="text-xs text-gray-500">Created On</p>
+              <p className="text-sm font-medium text-blue-500">
+                {new Date(p.createdAt).toDateString()}
+              </p>
+
+              <div className="mt-3">
+                <p className="text-xs text-gray-500">Budget (Price)</p>
+                <InlineEditNumber
+                  value={p.price}
+                  onSave={(val) => updateProject.mutate({ id: p.id, data: { price: val } })}
+                />
+              </div>
+
+              <div className="mt-3">
+                <p className="text-xs text-gray-500">WhatsApp (Contact #)</p>
+                <InlineEditNumber
+                  value={p.contactNumber ?? 0}
+                  onSave={(val) => updateProject.mutate({ id: p.id, data: { contactNumber: val } })}
+                />
+              </div>
+            </div>
+          </div>
+
           </div>
 
 
