@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import { UploadButton } from "@uploadthing/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { OurFileRouter } from "~/app/api/uploadthing/core";
 import { api } from "~/trpc/react";
 import { IconButton } from "@mui/material";
@@ -18,6 +18,8 @@ import {
   ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import type { ProjectTaskPayoutType } from "@prisma/client";
+import { Role } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 
 // Helper: safely extract a usable URL from UploadThing's callback result
@@ -346,6 +348,8 @@ export default function LatestProject() {
   const router = useRouter();
   const { projectId } = useParams<{ projectId?: string }>();
   const parsedId = projectId ? Number(projectId) : 1;
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === Role.ADMIN;
 
   const utils = api.useUtils();
   const tasksQuery = api.project.tasks.useQuery({ projectId: parsedId });
@@ -530,6 +534,23 @@ export default function LatestProject() {
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [selectedBidTaskIds, setSelectedBidTaskIds] = useState<number[]>([]);
   const [bidMessage, setBidMessage] = useState("");
+  const [eventForm, setEventForm] = useState({
+    name: "",
+    description: "",
+    hostId: "",
+    startAt: "",
+    endAt: "",
+    location: "",
+    venue: "",
+    streamUrl: "",
+  });
+  const usersQuery = api.user.getAll.useQuery(undefined, { enabled: isAdmin });
+  const createEvent = api.event.create.useMutation({
+    onSuccess: async (event) => {
+      await utils.event.list.invalidate();
+      router.push(`/events/${event.id}`);
+    },
+  });
 
   const createProject = api.project.create.useMutation({
     onSuccess: async () => {
@@ -568,6 +589,20 @@ export default function LatestProject() {
   });
 
   const p = selectedProject.data;
+  const canManageEvents = Boolean(p?.viewerContext?.isOwner) || isAdmin;
+  const hostOptions = useMemo(() => {
+    const users = usersQuery.data ?? [];
+    return users.map((user) => ({
+      id: user.id,
+      label: user.name ?? user.email ?? user.id,
+    }));
+  }, [usersQuery.data]);
+
+  useEffect(() => {
+    if (!eventForm.hostId && p?.createdById) {
+      setEventForm((prev) => ({ ...prev, hostId: p.createdById }));
+    }
+  }, [eventForm.hostId, p?.createdById]);
   const followerAvatars =
     (p?.followers ?? [])
       .map((follow) => follow.user)
@@ -930,10 +965,139 @@ export default function LatestProject() {
                   onSave={(val) => updateProject.mutate({ id: p.id, data: { contactNumber: val } })}
                 />
               </div>
+            </div>
           </div>
-        </div>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-[1.3fr,0.7fr]">
+          <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">Create event</p>
+                <p className="text-sm text-gray-600">
+                  Link an activation to this project so tasks and payouts sync automatically.
+                </p>
+              </div>
+              <Link
+                href="/events"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+              >
+                View all events
+              </Link>
+            </div>
+
+            {canManageEvents ? (
+              <form
+                className="mt-4 grid gap-3 md:grid-cols-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (createEvent.isPending || !eventForm.name.trim()) return;
+                  const hostId = isAdmin
+                    ? eventForm.hostId || p.createdById
+                    : session?.user?.id;
+                  if (!hostId) return;
+                  createEvent.mutate({
+                    name: eventForm.name.trim(),
+                    description: eventForm.description.trim() || undefined,
+                    projectId: p.id,
+                    hostId,
+                    startAt: new Date(eventForm.startAt),
+                    endAt: eventForm.endAt ? new Date(eventForm.endAt) : undefined,
+                    location: eventForm.location.trim() || undefined,
+                    venue: eventForm.venue.trim() || undefined,
+                    streamUrl: eventForm.streamUrl.trim() || undefined,
+                  });
+                }}
+              >
+                <input
+                  className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900"
+                  placeholder="Event name"
+                  value={eventForm.name}
+                  onChange={(event) =>
+                    setEventForm((prev) => ({ ...prev, name: event.target.value }))
+                  }
+                  required
+                />
+                <input
+                  type="datetime-local"
+                  className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900"
+                  value={eventForm.startAt}
+                  onChange={(event) =>
+                    setEventForm((prev) => ({ ...prev, startAt: event.target.value }))
+                  }
+                  required
+                />
+                <input
+                  type="datetime-local"
+                  className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900"
+                  value={eventForm.endAt}
+                  onChange={(event) =>
+                    setEventForm((prev) => ({ ...prev, endAt: event.target.value }))
+                  }
+                />
+                {isAdmin && (
+                  <select
+                    className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900"
+                    value={eventForm.hostId}
+                    onChange={(event) =>
+                      setEventForm((prev) => ({ ...prev, hostId: event.target.value }))
+                    }
+                  >
+                    <option value="">Host (defaults to project owner)</option>
+                    {hostOptions.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <input
+                  className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900"
+                  placeholder="Location"
+                  value={eventForm.location}
+                  onChange={(event) =>
+                    setEventForm((prev) => ({ ...prev, location: event.target.value }))
+                  }
+                />
+                <input
+                  className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900"
+                  placeholder="Venue"
+                  value={eventForm.venue}
+                  onChange={(event) =>
+                    setEventForm((prev) => ({ ...prev, venue: event.target.value }))
+                  }
+                />
+                <input
+                  className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900 md:col-span-2"
+                  placeholder="YouTube or livestream URL"
+                  value={eventForm.streamUrl}
+                  onChange={(event) =>
+                    setEventForm((prev) => ({ ...prev, streamUrl: event.target.value }))
+                  }
+                />
+                <textarea
+                  rows={2}
+                  className="w-full rounded-xl border px-3 py-2 text-sm text-gray-900 md:col-span-2"
+                  placeholder="Event description"
+                  value={eventForm.description}
+                  onChange={(event) =>
+                    setEventForm((prev) => ({ ...prev, description: event.target.value }))
+                  }
+                />
+                <button
+                  type="submit"
+                  disabled={createEvent.isPending}
+                  className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white md:col-span-2 disabled:opacity-60"
+                >
+                  {createEvent.isPending ? "Creating event..." : "Create event"}
+                </button>
+              </form>
+            ) : (
+              <p className="mt-3 text-sm text-gray-500">
+                Only the project owner or an admin can create an event for this project.
+              </p>
+            )}
+          </div>
+
+          <section className="mt-6 grid gap-4 lg:grid-cols-[1.3fr,0.7fr]">
           <div className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-gray-500">Community & reach</p>
             <dl className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-3">

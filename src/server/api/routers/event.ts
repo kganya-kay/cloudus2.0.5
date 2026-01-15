@@ -71,10 +71,22 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const project = await ctx.db.project.findUnique({
         where: { id: input.projectId },
-        select: { id: true },
+        select: { id: true, createdById: true },
       });
       if (!project) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+      }
+      if (!canManageAllEvents(ctx) && project.createdById !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only create events for projects you own.",
+        });
+      }
+      if (!canManageAllEvents(ctx) && input.hostId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can assign a different host.",
+        });
       }
       return ctx.db.event.create({
         data: {
