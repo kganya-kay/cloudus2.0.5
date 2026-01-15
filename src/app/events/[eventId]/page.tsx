@@ -19,6 +19,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { api } from "~/trpc/react";
+import { Role } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 const badgeClass =
   "inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/70 px-3 py-1 text-xs text-slate-200";
@@ -44,6 +46,9 @@ export default function EventDetailPage() {
   const params = useParams<{ eventId?: string }>();
   const parsedId = Number(params.eventId ?? 0);
   const [message, setMessage] = useState("");
+  const [editingStream, setEditingStream] = useState(false);
+  const [streamUrlInput, setStreamUrlInput] = useState("");
+  const { data: session } = useSession();
 
   const eventQuery = api.event.select.useQuery({ id: parsedId }, { enabled: parsedId > 0 });
   const event = eventQuery.data;
@@ -70,6 +75,12 @@ export default function EventDetailPage() {
       await utils.event.listChat.invalidate({ eventId: parsedId });
     },
   });
+  const updateEvent = api.event.update.useMutation({
+    onSuccess: async () => {
+      await utils.event.select.invalidate({ id: parsedId });
+      setEditingStream(false);
+    },
+  });
 
   const stats = useMemo(() => {
     const taskTotal = tasksQuery.data?.length ?? 0;
@@ -79,6 +90,10 @@ export default function EventDetailPage() {
   }, [tasksQuery.data, projectQuery.data, event?._count?.shopItems]);
 
   const embedUrl = getEmbedUrl(event?.streamUrl ?? null);
+  const canEditStream =
+    session?.user?.role === Role.ADMIN ||
+    Boolean(event?.viewerContext?.isOwner) ||
+    Boolean(event?.viewerContext?.isHost);
 
   if (!parsedId) {
     return <p className="p-6 text-sm text-slate-400">Select an event to view.</p>;
@@ -145,6 +160,68 @@ export default function EventDetailPage() {
               </div>
             )}
           </div>
+          {canEditStream && (
+            <div className="border-t border-slate-800 p-4">
+              {editingStream ? (
+                <form
+                  className="flex flex-col gap-2 md:flex-row md:items-center"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!streamUrlInput.trim()) return;
+                    updateEvent.mutate({
+                      id: parsedId,
+                      data: { streamUrl: streamUrlInput.trim() },
+                    });
+                  }}
+                >
+                  <input
+                    className="flex-1 rounded-full border border-slate-800 bg-slate-950/70 px-4 py-2 text-xs text-slate-100"
+                    placeholder="Paste YouTube or livestream URL"
+                    value={streamUrlInput}
+                    onChange={(event) => setStreamUrlInput(event.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={updateEvent.isPending}
+                      className="rounded-full bg-emerald-400 px-4 py-2 text-xs font-semibold text-slate-900 disabled:opacity-60"
+                    >
+                      {updateEvent.isPending ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingStream(false);
+                        setStreamUrlInput(event?.streamUrl ?? "");
+                      }}
+                      className="rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+                  <span>
+                    Stream link:{" "}
+                    <span className="text-slate-100">
+                      {event?.streamUrl ?? "Not set"}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingStream(true);
+                      setStreamUrlInput(event?.streamUrl ?? "");
+                    }}
+                    className="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-200"
+                  >
+                    Update stream
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2 border-t border-slate-800 p-4 text-xs">
             <span className={iconButtonClass}>
               <BriefcaseIcon className="h-4 w-4 text-emerald-300" />
