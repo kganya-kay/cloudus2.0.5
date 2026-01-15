@@ -534,6 +534,9 @@ export default function LatestProject() {
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [selectedBidTaskIds, setSelectedBidTaskIds] = useState<number[]>([]);
   const [bidMessage, setBidMessage] = useState("");
+  const [activeTab, setActiveTab] = useState<"activity" | "details" | "chat">(
+    "activity",
+  );
   const [eventForm, setEventForm] = useState({
     name: "",
     description: "",
@@ -714,208 +717,140 @@ export default function LatestProject() {
     { projectId: parsedId },
     { enabled: canManageBids },
   );
+  const feedQuery = api.feed.list.useQuery({ limit: 50 });
+  const projectFeedItems = useMemo(
+    () =>
+      (feedQuery.data?.items ?? []).filter((post) => {
+        const postProjectId = post.projectId ?? post.project?.id;
+        return postProjectId === parsedId;
+      }),
+    [feedQuery.data, parsedId],
+  );
+  const statusSteps = ["Briefed", "Planning", "In progress", "Review", "Complete"];
+  const normalizedStatus = (p?.status ?? "").toLowerCase();
+  const activeStepIndex = Math.max(
+    0,
+    statusSteps.findIndex((step) => normalizedStatus.includes(step.toLowerCase())),
+  );
+  const projectFeedList = (
+    <div className="space-y-3">
+      {projectFeedItems.length === 0 ? (
+        <p className="text-sm text-slate-500">No posts yet.</p>
+      ) : (
+        projectFeedItems.map((post) => {
+          const author = post.creator?.user?.name ?? "Contributor";
+          const summary = post.title ?? post.caption ?? "Project update";
+          return (
+            <div key={post.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span className="font-semibold text-slate-700">{author}</span>
+                <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
+              </div>
+              <p className="mt-2 text-sm font-semibold text-slate-900">{summary}</p>
+              {post.coverImage && (
+                <img
+                  src={post.coverImage}
+                  alt={post.title ?? "Project post"}
+                  className="mt-3 h-44 w-full rounded-xl object-cover"
+                />
+              )}
+              {post.caption && post.caption !== summary && (
+                <p className="mt-2 text-sm text-slate-600">{post.caption}</p>
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-white shadow-md rounded-xl">
-      {p && (
-        <div className="mb-6 space-y-4">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-700 to-slate-900 p-6 text-white shadow-lg">
-            <div className="absolute -left-12 -top-12 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-            <div className="absolute -bottom-16 -right-10 h-48 w-48 rounded-full bg-blue-300/10 blur-3xl" />
-            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-5">
-                <img
-                  alt="Project"
-                  src={p.image ?? ""}
-                  className="h-20 w-20 rounded-2xl bg-white/10 object-cover ring-2 ring-white/20"
-                />
-                <div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-white/70">
-                    <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
-                      {p.status}
-                    </span>
-                    <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
-                      {p.type}
-                    </span>
-                    {p.openSource ? (
-                      <span className="rounded-full bg-emerald-400/20 px-3 py-1 font-semibold text-emerald-50">
-                        Open source
-                      </span>
-                    ) : null}
-                  </div>
-                  <InlineEditText
-                    value={p.name}
-                    onSave={(val) => updateProject.mutate({ id: p.id, data: { name: val } })}
-                    className="mt-1 text-2xl font-semibold text-white"
-                  />
-                  <p className="text-sm text-white/80">
-                    <ClockIcon className="mr-1 inline h-4 w-4" />
-                    {new Date(p.createdAt).toDateString()}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-white/80">
-                    <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
-                      #{p.id}
-                    </span>
-                    <span className="rounded-full bg-white/10 px-3 py-1 font-semibold">
-                      {p.createdBy?.name ?? "Owner"}
-                    </span>
-                    {p.link && (
-                      <Link
-                        href={p.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 font-semibold hover:bg-white/20"
-                      >
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                        Visit
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full max-w-md rounded-2xl bg-white/10 p-4 backdrop-blur">
-                <div className="flex items-center justify-between text-sm text-white/80">
-                  <span>Budget usage</span>
-                  <span className="font-semibold text-white">{budgetUsedPercent}%</span>
-                </div>
-                <div className="mt-2 h-2 rounded-full bg-white/15">
-                  <div
-                    className="h-2 rounded-full bg-emerald-300 transition-all"
-                    style={{ width: `${budgetUsedPercent}%` }}
-                  />
-                </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-white/80">
-                  <span>{formatCurrency(projectCostCents)} committed</span>
-                  <span>{formatCurrency(availableBudgetCents)} available</span>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {canManageBids && (
-                    <Button
-                      onClick={() => {
-                        const el = document.getElementById("tasks");
-                        if (el) el.scrollIntoView({ behavior: "smooth" });
-                      }}
-                      variant="contained"
-                      className="!rounded-full !bg-white !text-blue-700 hover:!bg-white/90"
-                      startIcon={<CheckCircleIcon className="h-4 w-4" />}
-                    >
-                      Manage tasks
-                    </Button>
-                  )}
-                  {paymentPortal.data?.project && viewer?.isOwner && (
-                    <Button
-                      component={Link}
-                      href={`/projects/${p.id}/payment${
-                        pendingPayment ? `?paymentId=${pendingPayment.id}` : ""
-                      }`}
-                      variant="outlined"
-                      className="!rounded-full !border-white !text-white hover:!bg-white/10"
-                      startIcon={<BanknotesIcon className="h-4 w-4" />}
-                    >
-                      Payments
-                    </Button>
-                  )}
-                  <Button
-                    href="/projects/create"
-                    variant="outlined"
-                    className="!rounded-full !border-white/60 !text-white hover:!bg-white/10"
-                  >
-                    New project
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
-                <div className="rounded-xl bg-white/20 p-2">
-                  <CurrencyDollarIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-white/70">Total budget</p>
-                  <p className="text-lg font-semibold text-white">{formatCurrency(projectBudgetCents)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
-                <div className="rounded-xl bg-white/20 p-2">
-                  <BanknotesIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-white/70">Committed</p>
-                  <p className="text-lg font-semibold text-white">{formatCurrency(projectCostCents)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
-                <div className="rounded-xl bg-white/20 p-2">
-                  <CheckCircleIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-white/70">Open tasks</p>
-                  <p className="text-lg font-semibold text-white">{openTaskCount}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3">
-                <div className="rounded-xl bg-white/20 p-2">
-                  <UserGroupIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-white/70">Contributors</p>
-                  <p className="text-lg font-semibold text-white">{contributorCount}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Top actions */}
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Button
-          href="./"
-          type="button"
-          variant="outlined"
-          className="rounded-full px-6 py-2 font-semibold transition hover:bg-gray-700 hover:text-white"
-        >
-          Exit Project Mode
-        </Button>
-
-        <Button
-          type="button"
-          variant="contained"
-          color="error"
-          onClick={handleDelete}
-          disabled={deleteProject.isPending || !p}
-          className="rounded-full px-6 py-2 font-semibold"
-        >
-          {deleteProject.isPending ? "Deleting..." : "Delete Project"}
-        </Button>
-      </div>
-
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-6">
       {p ? (
         <>
-          {/* Project Header + inline name edit */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 border-b pb-4">
-            <img
-              alt="Project"
-              src={p.image ?? ""}
-              className="w-16 h-16 rounded-full bg-slate-200 object-cover"
-            />
-            <div className="w-full text-center sm:text-left">
-              <InlineEditText
-                value={p.name}
-                onSave={(val) => updateProject.mutate({ id: p.id, data: { name: val } })}
-                className="max-w-lg"
-              />
-              <p className="text-xs text-gray-600">
-                Created by{" "}
-                <span className="font-medium text-blue-500">
-                  {p.createdBy?.name ?? "—"}
-                </span>
-              </p>
-              <p className="text-xs text-gray-500">{p.createdBy?.email ?? "—"}</p>
+          <div className="mt-6 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+            <div className="grid grid-cols-5 gap-2 text-xs font-semibold uppercase text-slate-500">
+              {statusSteps.map((step, index) => {
+                const isActive = index <= activeStepIndex;
+                return (
+                  <div
+                    key={step}
+                    className={`rounded-full px-3 py-2 text-center ${
+                      isActive ? "bg-blue-600 text-white" : "bg-slate-100"
+                    }`}
+                  >
+                    {step}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-white px-4">
+            <div className="flex flex-wrap gap-6 border-b border-slate-200 pb-3 pt-3 text-sm font-semibold text-slate-600">
+              <button
+                type="button"
+                onClick={() => setActiveTab("activity")}
+                className={`pb-2 ${
+                  activeTab === "activity"
+                    ? "border-b-2 border-blue-600 text-blue-700"
+                    : "text-slate-500"
+                }`}
+              >
+                Activity
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("details")}
+                className={`pb-2 ${
+                  activeTab === "details"
+                    ? "border-b-2 border-blue-600 text-blue-700"
+                    : "text-slate-500"
+                }`}
+              >
+                Details
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("chat")}
+                className={`pb-2 ${
+                  activeTab === "chat" ? "border-b-2 border-blue-600 text-blue-700" : "text-slate-500"
+                }`}
+              >
+                Chat
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-[2fr,1fr]">
+            <div className="space-y-6">
+              {activeTab === "activity" && (
+                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Activity</p>
+                    <p className="text-sm text-slate-600">
+                      Recent updates from the project feed.
+                    </p>
+                  </div>
+                  <div className="mt-4">{projectFeedList}</div>
+                </section>
+              )}
+
+              {activeTab === "chat" && (
+                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Chat</p>
+                    <p className="text-sm text-slate-600">
+                      Live chatter for everyone following this project.
+                    </p>
+                  </div>
+                  <div className="mt-4">{projectFeedList}</div>
+                </section>
+              )}
+
+              {activeTab === "details" && (
+                <div className="space-y-6">
           {/* Project Info with inline edits */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
@@ -1097,103 +1032,6 @@ export default function LatestProject() {
             )}
           </div>
 
-          <section className="mt-6 grid gap-4 lg:grid-cols-[1.3fr,0.7fr]">
-          <div className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-gray-500">Community & reach</p>
-            <dl className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-3">
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-gray-500">Followers</dt>
-                <dd className="text-2xl font-semibold text-gray-900">{followerCount}</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-gray-500">Contributors</dt>
-                <dd className="text-2xl font-semibold text-gray-900">{contributorCount}</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-gray-500">Open tasks</dt>
-                <dd className="text-2xl font-semibold text-gray-900">{openTaskCount}</dd>
-              </div>
-            </dl>
-            {followerAvatars.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">Latest followers</p>
-                <div className="mt-2 flex -space-x-3">
-                  {followerAvatars.map((user) => (
-                    <img
-                      key={user.id}
-                      src={user.image ?? "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"}
-                      alt={user.name ?? "Follower"}
-                      className="h-8 w-8 rounded-full border-2 border-white object-cover shadow-sm"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-            {shareableLinks.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">Shareable links</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {shareableLinks.map((link) => {
-                    const href = shareLinkHref(link);
-                    const label = shareLinkLabel(link);
-                    const className =
-                      "inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700";
-                    return href ? (
-                      <a
-                        key={`${p?.id}-link-${label}`}
-                        href={href}
-                        target={href.startsWith("http") ? "_blank" : undefined}
-                        rel={href.startsWith("http") ? "noreferrer" : undefined}
-                        className={className}
-                      >
-                        {label}
-                      </a>
-                    ) : (
-                      <span key={`${p?.id}-link-${label}`} className={className}>
-                        {label}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            <p className="mt-4 text-xs text-gray-500">
-              {bidsCount} bids submitted · {assignedTaskCount} tasks assigned
-            </p>
-          </div>
-          <div className="rounded-3xl border border-emerald-100 bg-white/80 p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-emerald-600">Contributor earnings</p>
-            <dl className="mt-4 space-y-3 text-sm text-gray-600">
-              <div className="flex items-center justify-between">
-                <dt>Total task budget</dt>
-                <dd className="text-base font-semibold text-gray-900">
-                  {formatCurrency(taskBudgetCents)}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt>Approved work</dt>
-                <dd className="text-base font-semibold text-gray-900">
-                  {formatCurrency(completedBudgetCents)}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt>Paid out</dt>
-                <dd className="text-base font-semibold text-emerald-700">
-                  {formatCurrency(taskPaidOutCents)}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt>Pending payouts</dt>
-                <dd className="text-base font-semibold text-amber-700">
-                  {formatCurrency(pendingPayoutCents)}
-                </dd>
-              </div>
-            </dl>
-            <p className="mt-3 text-xs text-gray-500">
-              Keep tasks updated so contributors can request payouts as they submit work.
-            </p>
-          </div>
-        </section>
 
         {/* Status Bar with inline edits */}
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
@@ -1315,73 +1153,6 @@ export default function LatestProject() {
               )}
             </div>
           </div>
-
-          {viewer?.isOwner && (
-            <section className="mt-6 grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
-              <div className="rounded-3xl border border-emerald-200 bg-white/80 p-5 shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-emerald-700">
-                  Funding summary
-                </p>
-                {paymentPortal.isLoading ? (
-                  <p className="mt-2 text-sm text-gray-500">Loading payment data...</p>
-                ) : (
-                  <>
-                    <h3 className="mt-1 text-2xl font-semibold text-gray-900">
-                      {formatCurrency(outstandingCents)} outstanding of{" "}
-                      {formatCurrency(totalBudgetCents)}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600">
-                      Paid to date:{" "}
-                      <span className="font-semibold text-emerald-700">
-                        {formatCurrency(paidCents)}
-                      </span>
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <Button
-                        onClick={handleLaunchDepositCheckout}
-                        disabled={paymentCheckoutLoading || !pendingPayment}
-                        variant="contained"
-                        className="!rounded-full !bg-blue-600"
-                      >
-                        {paymentCheckoutLoading ? "Launching checkout..." : "Pay deposit now"}
-                      </Button>
-                      <Button
-                        component={Link}
-                        href={`/projects/${p.id}/payment${
-                          pendingPayment ? `?paymentId=${pendingPayment.id}` : ""
-                        }`}
-                        variant="outlined"
-                        className="!rounded-full"
-                      >
-                        Open payment portal
-                      </Button>
-                    </div>
-                    <p className="mt-2 text-xs text-gray-500">
-                      Payment reference: {pendingPayment?.id ?? "No pending deposit"}
-                    </p>
-                    {paymentCheckoutError && (
-                      <p className="mt-1 text-xs text-red-600">{paymentCheckoutError}</p>
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="rounded-3xl border border-dashed border-blue-200 bg-blue-50/70 p-5 text-sm text-gray-700">
-                <p className="text-xs font-semibold uppercase text-blue-600">
-                  Route shortcuts
-                </p>
-                <ul className="mt-3 space-y-3">
-                  {OWNER_ROUTE_SHORTCUTS.map((route) => (
-                    <li key={route.href} className="rounded-2xl bg-white/70 p-3 shadow-sm">
-                      <Link href={route.href} className="font-semibold text-blue-700">
-                        {route.title}
-                      </Link>
-                      <p className="text-xs text-gray-600">{route.description}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
 
           {/* Cost Breakdown (read-only except if you track cost) */}
           <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
@@ -1870,6 +1641,177 @@ export default function LatestProject() {
                 )}
               </div>
             )}
+                </div>
+              </div>
+        )}
+      </div>
+            <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
+              <div className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Community & reach</p>
+                <dl className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-3">
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-gray-500">Followers</dt>
+                    <dd className="text-2xl font-semibold text-gray-900">{followerCount}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-gray-500">Contributors</dt>
+                    <dd className="text-2xl font-semibold text-gray-900">{contributorCount}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-gray-500">Open tasks</dt>
+                    <dd className="text-2xl font-semibold text-gray-900">{openTaskCount}</dd>
+                  </div>
+                </dl>
+                {followerAvatars.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Latest followers</p>
+                    <div className="mt-2 flex -space-x-3">
+                      {followerAvatars.map((user) => (
+                        <img
+                          key={user.id}
+                          src={
+                            user.image ??
+                            "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV"
+                          }
+                          alt={user.name ?? "Follower"}
+                          className="h-8 w-8 rounded-full border-2 border-white object-cover shadow-sm"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {shareableLinks.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Shareable links</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {shareableLinks.map((link) => {
+                        const href = shareLinkHref(link);
+                        const label = shareLinkLabel(link);
+                        const className =
+                          "inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700";
+                        return href ? (
+                          <a
+                            key={`${p?.id}-link-${label}`}
+                            href={href}
+                            target={href.startsWith("http") ? "_blank" : undefined}
+                            rel={href.startsWith("http") ? "noreferrer" : undefined}
+                            className={className}
+                          >
+                            {label}
+                          </a>
+                        ) : (
+                          <span key={`${p?.id}-link-${label}`} className={className}>
+                            {label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <p className="mt-4 text-xs text-gray-500">
+                  {bidsCount} bids submitted and {assignedTaskCount} tasks assigned
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-emerald-100 bg-white/80 p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-emerald-600">
+                  Contributor earnings
+                </p>
+                <dl className="mt-4 space-y-3 text-sm text-gray-600">
+                  <div className="flex items-center justify-between">
+                    <dt>Total task budget</dt>
+                    <dd className="text-base font-semibold text-gray-900">
+                      {formatCurrency(taskBudgetCents)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Approved work</dt>
+                    <dd className="text-base font-semibold text-gray-900">
+                      {formatCurrency(completedBudgetCents)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Paid out</dt>
+                    <dd className="text-base font-semibold text-emerald-700">
+                      {formatCurrency(taskPaidOutCents)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Pending payouts</dt>
+                    <dd className="text-base font-semibold text-amber-700">
+                      {formatCurrency(pendingPayoutCents)}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-xs text-gray-500">
+                  Keep tasks updated so contributors can request payouts as they submit work.
+                </p>
+              </div>
+
+              {viewer?.isOwner && (
+                <div className="rounded-3xl border border-emerald-200 bg-white/80 p-5 shadow-sm">
+                  <p className="text-xs uppercase tracking-wide text-emerald-700">Funding summary</p>
+                  {paymentPortal.isLoading ? (
+                    <p className="mt-2 text-sm text-gray-500">Loading payment data...</p>
+                  ) : (
+                    <>
+                      <h3 className="mt-1 text-2xl font-semibold text-gray-900">
+                        {formatCurrency(outstandingCents)} outstanding of{" "}
+                        {formatCurrency(totalBudgetCents)}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-600">
+                        Paid to date:{" "}
+                        <span className="font-semibold text-emerald-700">
+                          {formatCurrency(paidCents)}
+                        </span>
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Button
+                          onClick={handleLaunchDepositCheckout}
+                          disabled={paymentCheckoutLoading || !pendingPayment}
+                          variant="contained"
+                          className="!rounded-full !bg-blue-600"
+                        >
+                          {paymentCheckoutLoading ? "Launching checkout..." : "Pay deposit now"}
+                        </Button>
+                        <Button
+                          component={Link}
+                          href={`/projects/${p.id}/payment${
+                            pendingPayment ? `?paymentId=${pendingPayment.id}` : ""
+                          }`}
+                          variant="outlined"
+                          className="!rounded-full"
+                        >
+                          Open payment portal
+                        </Button>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Payment reference: {pendingPayment?.id ?? "No pending deposit"}
+                      </p>
+                      {paymentCheckoutError && (
+                        <p className="mt-1 text-xs text-red-600">{paymentCheckoutError}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {viewer?.isOwner && (
+                <div className="rounded-3xl border border-dashed border-blue-200 bg-blue-50/70 p-5 text-sm text-gray-700">
+                  <p className="text-xs font-semibold uppercase text-blue-600">Route shortcuts</p>
+                  <ul className="mt-3 space-y-3">
+                    {OWNER_ROUTE_SHORTCUTS.map((route) => (
+                      <li key={route.href} className="rounded-2xl bg-white/70 p-3 shadow-sm">
+                        <Link href={route.href} className="font-semibold text-blue-700">
+                          {route.title}
+                        </Link>
+                        <p className="text-xs text-gray-600">{route.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </>
       ) : (
@@ -1954,6 +1896,7 @@ export default function LatestProject() {
             View Your Projects
           </Button>
         </form>
+      </div>
       </div>
     </div>
   );
