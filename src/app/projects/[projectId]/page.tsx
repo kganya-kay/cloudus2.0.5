@@ -592,6 +592,15 @@ export default function LatestProject() {
   });
 
   const p = selectedProject.data;
+  if (!p) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-6">
+          <p className="text-center text-sm text-gray-500">Loading project...</p>
+        </div>
+      </div>
+    );
+  }
   const canManageEvents = Boolean(p?.viewerContext?.isOwner) || isAdmin;
   const hostOptions = useMemo(() => {
     const users = usersQuery.data ?? [];
@@ -712,6 +721,85 @@ export default function LatestProject() {
   const canBid = !!viewer && !viewer.isOwner && !viewer.isContributor && !!viewer.userId;
   const viewerBid = viewer?.bid ?? null;
   const canManageBids = !!viewer?.canManageBids;
+  let bidContent: React.ReactNode;
+  if (!viewer?.userId) {
+    bidContent = (
+      <p className="mt-2 text-sm text-gray-600">
+        <Link href="/api/auth/signin" className="text-blue-600 underline">
+          Sign in
+        </Link>{" "}
+        to place a bid and collaborate.
+      </p>
+    );
+  } else if (viewer?.isOwner) {
+    bidContent = <p className="mt-2 text-sm text-gray-600">You're the project owner.</p>;
+  } else if (viewer?.isContributor) {
+    bidContent = <p className="mt-2 text-sm text-gray-600">You're already a contributor.</p>;
+  } else {
+    bidContent = (
+      <form className="mt-3 space-y-3" onSubmit={handleBidSubmit}>
+        <div>
+          <label className="text-xs uppercase text-gray-500">
+            Select the tasks you can deliver
+          </label>
+          {availableBidTasks.length ? (
+            <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-2xl border bg-white p-3 text-left text-sm text-gray-700">
+              {availableBidTasks.map((task) => {
+                const checked = selectedBidTaskIds.includes(task.id);
+                return (
+                  <label key={task.id} className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={checked}
+                      onChange={() =>
+                        setSelectedBidTaskIds((prev) =>
+                          checked ? prev.filter((id) => id !== task.id) : [...prev, task.id],
+                        )
+                      }
+                    />
+                    <span>
+                      <span className="font-semibold text-gray-900">{task.title}</span>
+                      <span className="block text-xs text-gray-500">
+                        {formatCurrency(task.budgetCents)} · {task.status.replaceAll("_", " ")}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-2 rounded-2xl border border-dashed border-gray-200 p-3 text-sm text-gray-500">
+              Project owner hasn&apos;t published unassigned tasks yet. Check back later.
+            </p>
+          )}
+          <p className="mt-2 text-xs text-gray-500">
+            Selected budget total:{" "}
+            <span className="font-semibold text-gray-900">
+              {formatCurrency(selectedBidTotalCents)}
+            </span>
+          </p>
+        </div>
+        <div>
+          <label className="text-xs uppercase text-gray-500">Why you're a good fit</label>
+          <textarea
+            value={bidMessage}
+            onChange={(e) => setBidMessage(e.target.value)}
+            className="mt-1 w-full rounded-2xl border px-3 py-2 text-sm"
+            rows={3}
+            placeholder="Include relevant skills, timeline, or questions."
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={createBid.isPending || availableBidTasks.length === 0}
+          className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {createBid.isPending ? "Submitting..." : "Submit bid"}
+        </button>
+      </form>
+    );
+  }
 
   const projectBids = api.project.listBids.useQuery(
     { projectId: parsedId },
@@ -768,9 +856,7 @@ export default function LatestProject() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-6">
-      {p ? (
-        <>
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-4">
               <img
                 alt="Project cover"
@@ -1035,8 +1121,6 @@ export default function LatestProject() {
                   </div>
                 </section>
               )}
-          </div>
-
 
               {activeTab === "chat" && (
                 <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -1050,7 +1134,7 @@ export default function LatestProject() {
                 </section>
               )}
 
-              {activeTab === "details" && (
+              {activeTab === "details" ? (
                 <div className="space-y-6">
           {/* Project Info with inline edits */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
@@ -1103,9 +1187,6 @@ export default function LatestProject() {
               </div>
             </div>
           </div>
-
-          </div>
-
 
         {/* Status Bar with inline edits */}
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
@@ -1565,82 +1646,7 @@ export default function LatestProject() {
           <div id="bid" className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border bg-white p-4 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900">Contribute to this project</h3>
-              {!viewer?.userId ? (
-                <p className="mt-2 text-sm text-gray-600">
-                  <Link href="/api/auth/signin" className="text-blue-600 underline">
-                    Sign in
-                  </Link>{" "}
-                  to place a bid and collaborate.
-                </p>
-              ) : viewer?.isOwner ? (
-                <p className="mt-2 text-sm text-gray-600">You're the project owner.</p>
-              ) : viewer?.isContributor ? (
-                <p className="mt-2 text-sm text-gray-600">You're already a contributor.</p>
-              ) : (
-                <form className="mt-3 space-y-3" onSubmit={handleBidSubmit}>
-                  <div>
-                    <label className="text-xs uppercase text-gray-500">
-                      Select the tasks you can deliver
-                    </label>
-                    {availableBidTasks.length ? (
-                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-2xl border bg-white p-3 text-left text-sm text-gray-700">
-                        {availableBidTasks.map((task) => {
-                          const checked = selectedBidTaskIds.includes(task.id);
-                          return (
-                            <label key={task.id} className="flex items-start gap-3">
-                              <input
-                                type="checkbox"
-                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                checked={checked}
-                                onChange={() =>
-                                  setSelectedBidTaskIds((prev) =>
-                                    checked
-                                      ? prev.filter((id) => id !== task.id)
-                                      : [...prev, task.id],
-                                  )
-                                }
-                              />
-                              <span>
-                                <span className="font-semibold text-gray-900">{task.title}</span>
-                                <span className="block text-xs text-gray-500">
-                                  {formatCurrency(task.budgetCents)} · {task.status.replaceAll("_", " ")}
-                                </span>
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="mt-2 rounded-2xl border border-dashed border-gray-200 p-3 text-sm text-gray-500">
-                        Project owner hasn&apos;t published unassigned tasks yet. Check back later.
-                      </p>
-                    )}
-                    <p className="mt-2 text-xs text-gray-500">
-                      Selected budget total:{" "}
-                      <span className="font-semibold text-gray-900">
-                        {formatCurrency(selectedBidTotalCents)}
-                      </span>
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs uppercase text-gray-500">Why you're a good fit</label>
-                    <textarea
-                      value={bidMessage}
-                      onChange={(e) => setBidMessage(e.target.value)}
-                      className="mt-1 w-full rounded-2xl border px-3 py-2 text-sm"
-                      rows={3}
-                      placeholder="Include relevant skills, timeline, or questions."
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={createBid.isPending || availableBidTasks.length === 0}
-                    className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                  >
-                    {createBid.isPending ? "Submitting..." : "Submit bid"}
-                  </button>
-                </form>
-              )}
+              {bidContent}
               {viewerBid && (
                 <div className="mt-4 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
                   <p className="font-semibold text-gray-800">Your latest bid</p>
@@ -1715,11 +1721,11 @@ export default function LatestProject() {
                 )}
               </div>
             )}
-                </div>
-              </div>
-        )}
-      </div>
-            <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
+          </div>
+        </div>
+      ) : null}
+    </div>
+    <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
               <div className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
                 <p className="text-xs uppercase tracking-wide text-gray-500">Community & reach</p>
                 <dl className="mt-4 grid gap-4 text-sm text-gray-600 sm:grid-cols-3">
@@ -1887,10 +1893,6 @@ export default function LatestProject() {
               )}
             </div>
           </div>
-        </>
-      ) : (
-        <p className="text-center text-sm text-gray-500">Loading project...</p>
-      )}
 
       {/* Create New Project (unchanged) */}
       <div className="mt-8 bg-blue-50 rounded-lg p-4">
