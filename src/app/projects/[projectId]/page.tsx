@@ -592,15 +592,6 @@ export default function LatestProject() {
   });
 
   const p = selectedProject.data;
-  if (!p) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-6">
-          <p className="text-center text-sm text-gray-500">Loading project...</p>
-        </div>
-      </div>
-    );
-  }
   const canManageEvents = Boolean(p?.viewerContext?.isOwner) || isAdmin;
   const hostOptions = useMemo(() => {
     const users = usersQuery.data ?? [];
@@ -815,6 +806,16 @@ export default function LatestProject() {
       }),
     [feedQuery.data, parsedId],
   );
+
+  if (!p) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="mx-auto w-full max-w-[1600px] px-4 pb-12 pt-6">
+          <p className="text-center text-sm text-gray-500">Loading project...</p>
+        </div>
+      </div>
+    );
+  }
   const statusSteps = ["Briefed", "Planning", "In progress", "Review", "Complete"];
   const normalizedStatus = (p?.status ?? "").toLowerCase();
   const activeStepIndex = Math.max(
