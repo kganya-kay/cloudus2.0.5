@@ -3,6 +3,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { api } from "~/trpc/react";
 
 const parseLinks = (value: string) =>
@@ -14,7 +15,12 @@ const parseLinks = (value: string) =>
 export default function Client({ id }: { id: number }) {
   const router = useRouter();
   const utils = api.useUtils();
+  const { data: session } = useSession();
   const { data: project, isLoading } = api.project.select.useQuery({ id });
+  const canUpdateOwner = session?.user?.role === "ADMIN";
+  const { data: users, isLoading: isUsersLoading } = api.user.getAll.useQuery(undefined, {
+    enabled: canUpdateOwner,
+  });
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
@@ -27,6 +33,7 @@ export default function Client({ id }: { id: number }) {
   const [status, setStatus] = useState("");
   const [openSource, setOpenSource] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [ownerId, setOwnerId] = useState("");
 
   useMemo(() => {
     if (!project) return;
@@ -41,6 +48,7 @@ export default function Client({ id }: { id: number }) {
     setStatus(project.status ?? "");
     setOpenSource(Boolean(project.openSource));
     setCompleted(Boolean(project.completed));
+    setOwnerId(project.createdById ?? "");
   }, [project]);
 
   const update = api.project.update.useMutation({
@@ -48,6 +56,13 @@ export default function Client({ id }: { id: number }) {
       await utils.project.getAll.invalidate();
       await utils.project.select.invalidate({ id });
       router.push("/admin/projects");
+    },
+  });
+
+  const updateOwner = api.project.updateOwner.useMutation({
+    onSuccess: async () => {
+      await utils.project.getAll.invalidate();
+      await utils.project.select.invalidate({ id });
     },
   });
 
@@ -116,6 +131,43 @@ export default function Client({ id }: { id: number }) {
           <label className="text-xs text-gray-600">Status</label>
           <input value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 w-full rounded-full border px-4 py-2 text-sm" />
         </div>
+        {canUpdateOwner ? (
+          <div className="sm:col-span-2">
+            <label className="text-xs text-gray-600">Project owner</label>
+            <div className="mt-1 flex flex-wrap gap-2">
+              <select
+                value={ownerId}
+                onChange={(e) => setOwnerId(e.target.value)}
+                className="min-w-[240px] flex-1 rounded-full border px-4 py-2 text-sm"
+              >
+                <option value="">{isUsersLoading ? "Loading users..." : "Select owner"}</option>
+                {(users ?? []).map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name ?? user.email ?? user.id}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!ownerId || ownerId === project.createdById) return;
+                  updateOwner.mutate({ projectId: id, ownerId });
+                }}
+                disabled={
+                  updateOwner.isPending || !ownerId || ownerId === project.createdById
+                }
+                className="rounded-full border px-4 py-2 text-sm font-semibold disabled:opacity-50"
+              >
+                {updateOwner.isPending ? "Updating owner..." : "Update owner"}
+              </button>
+            </div>
+            {project.createdBy ? (
+              <p className="mt-2 text-xs text-gray-500">
+                Current owner: {project.createdBy.name ?? project.createdBy.email ?? project.createdBy.id}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="sm:col-span-2 flex flex-wrap gap-4 pt-2 text-sm text-gray-700">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={openSource} onChange={(e) => setOpenSource(e.target.checked)} />
@@ -160,4 +212,3 @@ export default function Client({ id }: { id: number }) {
     </form>
   );
 }
-

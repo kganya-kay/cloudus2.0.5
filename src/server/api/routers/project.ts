@@ -20,6 +20,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { adminProcedure } from "../rbac";
 
 const canManageAllProjects = (ctx: {
   session?: { user?: { role: Role; email?: string | null } } | null;
@@ -178,6 +179,11 @@ const launchConfiguratorInput = z.object({
 
 const projectPaymentPortalInput = z.object({
   projectId: z.number().int().positive(),
+});
+
+const updateOwnerInput = z.object({
+  projectId: z.number().int().positive(),
+  ownerId: z.string().cuid(),
 });
 
 const marketplaceTasksInput = z
@@ -470,6 +476,41 @@ export const projectRouter = createTRPCRouter({
         data: input.data,
       });
       return updated;
+    }),
+
+  updateOwner: adminProcedure
+    .input(updateOwnerInput)
+    .mutation(async ({ ctx, input }) => {
+      const project = await ctx.db.project.findUnique({
+        where: { id: input.projectId },
+        select: { id: true, createdById: true },
+      });
+      if (!project) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found.",
+        });
+      }
+
+      const owner = await ctx.db.user.findUnique({
+        where: { id: input.ownerId },
+        select: { id: true },
+      });
+      if (!owner) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Owner not found.",
+        });
+      }
+
+      if (project.createdById === owner.id) {
+        return project;
+      }
+
+      return ctx.db.project.update({
+        where: { id: project.id },
+        data: { createdBy: { connect: { id: owner.id } } },
+      });
     }),
 
   bid: protectedProcedure
