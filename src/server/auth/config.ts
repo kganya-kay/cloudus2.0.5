@@ -9,7 +9,7 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import { verifyPassword } from "./password";
 import { db } from "~/server/db";
-import { SUPER_ADMIN_EMAIL } from "~/server/auth/super-admin";
+import { SUPER_ADMIN_EMAILS } from "~/server/auth/super-admin";
 
 /* =========================
    Type augmentation
@@ -115,7 +115,11 @@ export const authConfig = {
       }
       // Ensure super admin always has ADMIN role
       const email = (token.email as string | null) ?? session.user?.email ?? null;
-      const isSuper = !!email && email.toLowerCase() === SUPER_ADMIN_EMAIL;
+      const isSuper =
+        !!email &&
+        SUPER_ADMIN_EMAILS.includes(
+          email.toLowerCase() as (typeof SUPER_ADMIN_EMAILS)[number],
+        );
       if (isSuper && session.user) {
         session.user.role = Role.ADMIN;
       }
