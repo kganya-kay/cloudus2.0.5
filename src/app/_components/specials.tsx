@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Special() {
   // ---- Contact CTAs ----
-  const salesEmail = "sales@cloudusdigital.com";
+  const salesEmail = "info@cloudusdigital.com";
   const emailHref = `mailto:${salesEmail}?subject=${encodeURIComponent(
     "Web Application Enquiry"
   )}`;

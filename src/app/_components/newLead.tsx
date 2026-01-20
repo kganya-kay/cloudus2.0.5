@@ -37,7 +37,7 @@ const SalesforceLeadForm = () => {
           </p>
           <ul className="space-y-2 text-sm text-gray-700">
             <li>�?� Need a quick chat? WhatsApp <a href="https://wa.me/27640204765" className="font-semibold text-blue-700 underline">+27 64 020 4765</a>.</li>
-            <li>�?� Prefer email? Drop a note to <a href="mailto:sales@cloudusdigital.com" className="font-semibold text-blue-700 underline">sales@cloudusdigital.com</a>.</li>
+            <li>�?� Prefer email? Drop a note to <a href="mailto:info@cloudusdigital.com" className="font-semibold text-blue-700 underline">info@cloudusdigital.com</a>.</li>
             <li>�?� Already a customer? Log a request via <Link href="/projects" className="font-semibold text-blue-700 underline">/projects</Link>.</li>
           </ul>
         </div>

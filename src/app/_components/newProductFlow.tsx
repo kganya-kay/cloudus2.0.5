@@ -670,8 +670,8 @@ export default function NewProductFlow() {
                   +27 64 020 4765
                 </a>{" "}
                 or email{" "}
-                <a href="mailto:sales@cloudusdigital.com" className="font-semibold text-blue-700 underline">
-                  sales@cloudusdigital.com
+                <a href="mailto:info@cloudusdigital.com" className="font-semibold text-blue-700 underline">
+                  info@cloudusdigital.com
                 </a>
                 .
               </p>
@@ -784,8 +784,8 @@ export default function NewProductFlow() {
           </ol>
           <p className="text-xs text-gray-600">
             Prefer a concierge experience? Email{" "}
-            <Link href="mailto:sales@cloudusdigital.com" className="font-semibold text-blue-800 underline">
-              sales@cloudusdigital.com
+            <Link href="mailto:info@cloudusdigital.com" className="font-semibold text-blue-800 underline">
+              info@cloudusdigital.com
             </Link>{" "}
             or WhatsApp{" "}
             <Link href="https://wa.me/27640204765" className="font-semibold text-blue-800 underline">
