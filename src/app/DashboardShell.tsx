@@ -601,7 +601,7 @@ function SiteFooter() {
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Contact</h3>
           <div className="flex flex-col gap-1 text-sm">
-            <span className="text-gray-700">Email: <a href="mailto:kganyakekana@gmail.com" className="text-blue-700 hover:underline">kganyakekana@gmail.com</a></span>
+            <span className="text-gray-700">Email: <a href="mailto:info@cloudusdigital.com" className="text-blue-700 hover:underline">info@cloudusdigital.com</a></span>
             <span className="text-gray-700">Phone: <a href="tel:0640204765" className="text-blue-700 hover:underline">0640204765</a></span>
           </div>
         </div>

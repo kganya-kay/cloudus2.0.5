@@ -46,7 +46,7 @@ export default function RefundsPage() {
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-gray-900">5) Contact</h2>
         <p>
-          Email kganyakekana@gmail.com or call 0640204765 to start a refund request.
+          Email info@cloudusdigital.com or call 0640204765 to start a refund request.
         </p>
       </section>
     </main>

@@ -61,7 +61,7 @@ export default function PrivacyPage() {
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-gray-900">7) Contact</h2>
         <p>
-          Email kganyakekana@gmail.com or call 0640204765.
+          Email info@cloudusdigital.com or call 0640204765.
         </p>
       </section>
     </main>

@@ -52,7 +52,7 @@ const SalesforceLeadForm = () => {
         {/* Optional Debug Fields */}
         {/* 
         <input type="hidden" name="debug" value="1" />
-        <input type="hidden" name="debugEmail" value="kganyakekana@gmail.com" />
+        <input type="hidden" name="debugEmail" value="info@cloudusdigital.com" />
         */}
 
 

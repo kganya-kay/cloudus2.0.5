@@ -69,7 +69,7 @@ export default function TermsPage() {
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-gray-900">8) Contact</h2>
         <p>
-          Questions? Email kganyakekana@gmail.com or call 0640204765.
+          Questions? Email info@cloudusdigital.com or call 0640204765.
         </p>
       </section>
     </main>

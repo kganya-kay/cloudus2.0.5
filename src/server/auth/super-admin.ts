@@ -1,4 +1,7 @@
-export const SUPER_ADMIN_EMAIL = "kganyakekana@gmail.com" as const;
+export const SUPER_ADMIN_EMAILS = [
+  "kganyakekana@gmail.com",
+  "info@cloudusdigital.com",
+] as const;
 
 export const isSuperAdminEmail = (email: string | null | undefined) =>
-  !!email && email.toLowerCase() === SUPER_ADMIN_EMAIL;
+  !!email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase() as (typeof SUPER_ADMIN_EMAILS)[number]);
