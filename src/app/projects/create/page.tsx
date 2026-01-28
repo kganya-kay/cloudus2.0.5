@@ -282,7 +282,7 @@ export default async function Home() {
                     </li>
                   </ol>
                   <p className="mt-4 text-xs text-gray-500">
-                    Need help wiring Salesforce leads or WhatsApp notifications? Email{" "}
+                    Need help wiring lead routing or WhatsApp notifications? Email{" "}
                     <Link href="mailto:info@cloudusdigital.com" className="font-semibold text-blue-700 underline">
                       info@cloudusdigital.com
                     </Link>

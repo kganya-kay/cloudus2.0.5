@@ -31,7 +31,7 @@ const SalesforceLeadForm = () => {
           <p className="text-xs uppercase tracking-widest text-blue-500">Talk to Cloudus</p>
           <h3 className="text-2xl font-semibold text-gray-900">Share your vision. We’ll co-create the roadmap.</h3>
           <p className="text-sm text-gray-600">
-            Submit the Salesforce-powered form and our team will reach out within 24 hours. Tell us about the product,
+            Submit the form and our team will reach out within 24 hours. Tell us about the product,
             operations workflow, or service you want to digitise. We’ll align the right squad, estimate budget,
             and propose timelines.
           </p>
@@ -154,7 +154,7 @@ const SalesforceLeadForm = () => {
             >
               <option value="">--None--</option>
               <option value="1">Web Application Development</option>
-              <option value="2">Salesforce and CRM integration</option>
+              <option value="2">CRM integration</option>
               <option value="3">E-commerce Solutions</option>
               <option value="4">Cloud Hosting and Infrastructure</option>
               <option value="5">Mobile Application Development</option>

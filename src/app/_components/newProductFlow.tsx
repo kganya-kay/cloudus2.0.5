@@ -20,7 +20,7 @@ const steps = ["Vision & goals", "Your details", "Budget & scope", "Review & lau
 const products = [
   "Web Development",
   "Mobile App Development",
-  "Salesforce Development",
+  "CRM Development",
   "Printing Services",
   "Integration Services",
   "Digital Marketing",
@@ -34,7 +34,7 @@ const products = [
 
 const productInterestMap: Record<string, string> = {
   "Web Development": "1",
-  "Salesforce Development": "2",
+  "CRM Development": "2",
   "E-commerce Solutions": "3",
   "Printing Services": "4",
   "Integration Services": "5",
@@ -482,11 +482,11 @@ export default function NewProductFlow() {
             <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 text-sm text-gray-700">
               <p className="text-sm font-semibold text-gray-900">Why we ask</p>
               <p className="mt-1 text-xs text-gray-600">
-                We sync these details with Salesforce leads and your Cloudus project so ops, sales,
+                We sync these details with our lead system and your Cloudus project so ops, sales,
                 and delivery teams can align on next steps.
               </p>
               <ul className="mt-4 space-y-2 text-xs text-gray-600">
-                <li>- Instant Salesforce lead (same fields as /contact-sales)</li>
+                <li>- Instant lead (same fields as /contact-sales)</li>
                 <li>- New /projects workspace tagged with your organisation</li>
                 <li>- Human follow-up within 24h to confirm scope & deposit</li>
               </ul>
@@ -754,7 +754,7 @@ export default function NewProductFlow() {
             Capture the idea, qualify the budget, and unlock your Cloudus project in four guided steps.
           </h3>
           <p className="text-sm text-gray-600">
-            Every submission creates a Salesforce lead, spins up a /projects workspace, and keeps the brief
+            Every submission creates a lead, spins up a /projects workspace, and keeps the brief
             inactive until a 50% deposit is paid. An AI tour guide is embedded to keep customers oriented.
           </p>
           <ul className="space-y-2 text-sm text-gray-700">
@@ -778,7 +778,7 @@ export default function NewProductFlow() {
           <p className="text-xs font-semibold uppercase text-blue-600">Flow overview</p>
           <ol className="list-decimal space-y-2 pl-5">
             <li>Share your idea + timeline. Navigator suggests next steps across the site map.</li>
-            <li>Confirm contact details so Salesforce + Cloudus stay in sync.</li>
+            <li>Confirm contact details so your CRM + Cloudus stay in sync.</li>
             <li>Set the total budget. A deposit order (50% minimum) is generated automatically.</li>
             <li>Review, submit, and head to /projects/{`{id}`}/payment to pay and activate tasks.</li>
           </ol>

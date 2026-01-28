@@ -26,26 +26,26 @@ export const jobs: Job[] = [
   {
     id: "sf-dev-mid-1",
     slug: "salesforce-developer-intermediate",
-    title: "Salesforce Developer (Intermediate)",
+    title: "Platform Developer (Intermediate)",
     type: "Full-time • Hybrid",
     location: "Johannesburg • Hybrid",
-    tags: ["Salesforce", "Apex", "LWC", "SOQL", "PD1"],
+    tags: ["CRM", "APIs", "Integrations", "Automation", "Testing"],
     summary:
-      "Build high-quality features in Apex/LWC, contribute tests, and support releases with CI/CD.",
+      "Build high-quality platform features, contribute tests, and support releases with CI/CD.",
     description:
-      "Responsibilities: implement features in Apex, LWC, and Flows; write unit tests with meaningful coverage; optimize SOQL and governor limits; collaborate with consultants/UX; participate in code reviews; assist with CI/CD (e.g., Copado/Git). Requirements: 2–4 years Salesforce dev experience, strong Apex/LWC fundamentals, solid SOQL/Async knowledge, Git familiarity, Platform Developer I preferred (or equivalent experience). Nice to have: App Builder, integration exposure (REST/Platform Events)."
+      "Responsibilities: implement features in the CRM platform, build UI components and automations, write unit tests with meaningful coverage, optimize data queries and limits, collaborate with consultants/UX, participate in code reviews, assist with CI/CD. Requirements: 2–4 years platform dev experience, strong automation and data-model fundamentals, solid async/integration knowledge, Git familiarity. Nice to have: app builder experience, integration exposure (REST/Webhooks)."
   },
   {
     id: "sf-dev-sen-1",
     slug: "salesforce-developer-senior",
-    title: "Senior Salesforce Developer",
+    title: "Senior Platform Developer",
     type: "Full-time • Hybrid/Remote",
     location: "Johannesburg • Hybrid/Remote",
-    tags: ["Salesforce", "Apex", "LWC", "Architecture", "Integrations", "PDII"],
+    tags: ["CRM", "Architecture", "Integrations", "Leadership", "Automation"],
     summary:
-      "Lead complex delivery across Sales/Service Cloud, design integrations and patterns, and mentor the team.",
+      "Lead complex delivery across CRM initiatives, design integrations and patterns, and mentor the team.",
     description:
-      "Responsibilities: own technical design and implementation for complex epics; architect scalable data models and integration patterns (Apex, LWC, Platform Events, External Services); enforce code quality and testing practices; guide reviews and mentor developers; collaborate with architects and product leads; contribute to release planning and risk management. Requirements: 5+ years Salesforce engineering, deep Apex/LWC expertise, strong integration experience, proven leadership/mentorship. Nice to have: Platform Developer II, App Builder, OmniStudio or CTA track exposure."
+      "Responsibilities: own technical design and implementation for complex epics; architect scalable data models and integration patterns; enforce code quality and testing practices; guide reviews and mentor developers; collaborate with architects and product leads; contribute to release planning and risk management. Requirements: 5+ years platform engineering, deep automation/UI expertise, strong integration experience, proven leadership/mentorship. Nice to have: enterprise architecture exposure, advanced admin certification."
   }
 ];
 
