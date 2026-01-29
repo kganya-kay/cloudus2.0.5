@@ -338,10 +338,10 @@ export default function DashboardShell({
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                  { title: "Web Apps", href: "/services/webapps" },
-                    { title: "Online Stores", href: "/services/ecommerce" },
-                    { title: "Integrations", href: "/services/integrations" },
-                    { title: "Branding Pack", href: "/services/branding" },
+                    { title: "Web Apps", href: "/projects/create" },
+                    { title: "Online Stores", href: "/projects/create" },
+                    { title: "Integrations", href: "/projects/create" },
+                    { title: "Branding Pack", href: "/projects/create" },
                   ].map((p) => (
                     <Link
                       key={p.title}
