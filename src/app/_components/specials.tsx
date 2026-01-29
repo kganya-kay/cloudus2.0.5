@@ -46,7 +46,7 @@ export default function Special() {
             </h2>
             <p className="mt-6 text-pretty text-sm text-gray-300">
               Bundle storefronts from /shop, fulfilment from /drivers/dashboard, and collaboration from /projects
-              into a single deployment. We plug into your existing CRM, billing, and support stack.
+              into a single deployment. We plug into your existing billing and support stack.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">

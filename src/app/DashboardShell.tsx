@@ -338,9 +338,7 @@ export default function DashboardShell({
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { title: "CRM Setup", href: "/services/crm" },
-                    { title: "CRM Impl.", href: "/services/salesforce" },
-                    { title: "Web Apps", href: "/services/webapps" },
+                  { title: "Web Apps", href: "/services/webapps" },
                     { title: "Online Stores", href: "/services/ecommerce" },
                     { title: "Integrations", href: "/services/integrations" },
                     { title: "Branding Pack", href: "/services/branding" },

@@ -154,7 +154,7 @@ const SalesforceLeadForm = () => {
             >
               <option value="">--None--</option>
               <option value="1">Web Application Development</option>
-              <option value="2">CRM integration</option>
+              <option value="2">Business systems integration</option>
               <option value="3">E-commerce Solutions</option>
               <option value="4">Cloud Hosting and Infrastructure</option>
               <option value="5">Mobile Application Development</option>

@@ -20,7 +20,6 @@ const steps = ["Vision & goals", "Your details", "Budget & scope", "Review & lau
 const products = [
   "Web Development",
   "Mobile App Development",
-  "CRM Development",
   "Printing Services",
   "Integration Services",
   "Digital Marketing",
@@ -34,7 +33,6 @@ const products = [
 
 const productInterestMap: Record<string, string> = {
   "Web Development": "1",
-  "CRM Development": "2",
   "E-commerce Solutions": "3",
   "Printing Services": "4",
   "Integration Services": "5",
@@ -778,7 +776,7 @@ export default function NewProductFlow() {
           <p className="text-xs font-semibold uppercase text-blue-600">Flow overview</p>
           <ol className="list-decimal space-y-2 pl-5">
             <li>Share your idea + timeline. Navigator suggests next steps across the site map.</li>
-            <li>Confirm contact details so your CRM + Cloudus stay in sync.</li>
+            <li>Confirm contact details so your systems + Cloudus stay in sync.</li>
             <li>Set the total budget. A deposit order (50% minimum) is generated automatically.</li>
             <li>Review, submit, and head to /projects/{`{id}`}/payment to pay and activate tasks.</li>
           </ol>
