@@ -47,7 +47,7 @@ export default async function RoomsPage() {
                 )}
                 <div className="relative h-48 w-full overflow-hidden">
                   <img
-                    src={room.coverImage ?? room.gallery[0] ?? "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"}
+                    src={room.coverImage ?? room.gallery[0] ?? "/cloudus-logo-final.png"}
                     alt={room.title}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />

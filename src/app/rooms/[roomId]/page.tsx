@@ -76,7 +76,7 @@ export default async function RoomDetailPage({
             <div className="lg:col-span-2 space-y-4">
               <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
                 <img
-                  src={room.coverImage ?? gallery[0] ?? "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"}
+                  src={room.coverImage ?? gallery[0] ?? "/cloudus-logo-final.png"}
                   alt={room.title}
                   className="h-72 w-full object-cover"
                 />
@@ -144,7 +144,7 @@ export default async function RoomDetailPage({
                   <img
                     src={
                       room.host?.image ??
-                      "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+                      "/cloudus-logo-final.png"
                     }
                     alt={room.host?.name ?? "Host"}
                     className="h-10 w-10 rounded-full"

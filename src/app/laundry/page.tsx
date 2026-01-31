@@ -28,7 +28,7 @@ export default async function LaundryPage() {
     name: session?.user?.name ?? "Guest",
     image:
       session?.user?.image ??
-      "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf",
+      "/cloudus-logo-final.png",
     email: session?.user?.email ?? "",
   };
 
@@ -77,7 +77,7 @@ export default async function LaundryPage() {
                 <Link href="/">
                   <img
                     alt="Cloudus"
-                    src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+                    src="/cloudus-logo-final.png"
                     className="h-10 w-10 rounded-full"
                   />
                 </Link>

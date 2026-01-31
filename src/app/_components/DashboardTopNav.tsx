@@ -90,7 +90,7 @@ export default function DashboardTopNav({ user, session }: DashboardTopNavProps)
             <Link href="/" className="flex items-center gap-2 shrink-0">
               <img
                 alt="Cloudus"
-                src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+                src="/cloudus-logo-final.png"
                 className="h-8 w-8 rounded-full bg-gray-700 object-cover"
               />
               <span className="hidden sm:block text-lg font-semibold text-blue-700">

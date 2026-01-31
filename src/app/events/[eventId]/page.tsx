@@ -361,7 +361,7 @@ export default function EventDetailPage() {
                   event.shopItems.map((item) => (
                     <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-sm">
                       <img
-                        src={item.image ?? "https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"}
+                        src={item.image ?? "/cloudus-logo-final.png"}
                         alt={item.name}
                         className="h-12 w-12 rounded-xl object-cover"
                       />

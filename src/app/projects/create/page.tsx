@@ -82,7 +82,7 @@ export default async function Home() {
                 <Link href="../">
                   <img
                     alt="Cloudus"
-                    src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+                    src="/cloudus-logo-final.png"
                     className="h-10 w-10 rounded-full"
                   />
                 </Link>

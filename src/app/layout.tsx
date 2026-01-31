@@ -10,8 +10,8 @@ import { FloatingPortalLinks } from "./_components/FloatingPortalLinks";
 
 export const metadata: Metadata = {
   title: "cloudus",
-  description: "Cloudus Open Source, Our very own creative background",
-  icons: [{ rel: "icon", url: "/logo" }],
+  description: "Cloudus — launch digital products, automate ops, and scale service delivery.",
+  icons: [{ rel: "icon", url: "/cloudus-logo-final.png" }],
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
             {children}
             <div className="fixed bottom-4 left-4 z-[60] flex items-center gap-2 rounded-full bg-blue-50/80 px-3 py-2 shadow-lg ring-1 ring-blue-100 backdrop-blur">
               <img
-                src="https://utfs.io/f/zFJP5UraSTwK07wECkD6zpt79ehTVJxMrYIoKdqLl2gOj1Zf"
+                src="/cloudus-logo-final.png"
                 alt="Cloudus"
                 className="h-8 w-8 rounded-full"
               />

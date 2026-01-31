@@ -7,8 +7,8 @@ import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "cloudus",
-  description: "Cloudus Open Source, Our very own creative background",
-  icons: [{ rel: "icon", url: "/logo" }],
+  description: "Cloudus — launch digital products, automate ops, and scale service delivery.",
+  icons: [{ rel: "icon", url: "/cloudus-logo-final.png" }],
 };
 
 export default function RootLayout({
