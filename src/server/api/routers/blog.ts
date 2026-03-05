@@ -81,11 +81,10 @@ export const blogRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 24;
-      const latestPublished = await ctx.db.blogPost.findMany({
+      const recentPublished = await ctx.db.blogPost.findMany({
         where: { status: BlogPostStatus.PUBLISHED },
         orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-        distinct: ["blogId"],
-        take: limit,
+        take: limit * 6,
         select: {
           id: true,
           blogId: true,
@@ -106,6 +105,15 @@ export const blogRouter = createTRPCRouter({
         },
       });
 
+      const latestByBlog = new Map<string, (typeof recentPublished)[number]>();
+      for (const item of recentPublished) {
+        if (!latestByBlog.has(item.blogId)) {
+          latestByBlog.set(item.blogId, item);
+        }
+        if (latestByBlog.size >= limit) break;
+      }
+
+      const latestPublished = Array.from(latestByBlog.values());
       const blogIds = latestPublished.map((item) => item.blogId);
       const publishedCounts =
         blogIds.length > 0
