@@ -89,6 +89,12 @@ enum Role {
   DRIVER
 }
 
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum ProjectBidStatus {
   PENDING
   APPROVED
@@ -231,6 +237,43 @@ model Post {
   createdBy   User   @relation("PostCreatedBy", fields: [createdById], references: [id])
 
   @@index([name])
+}
+
+model Blog {
+  id          String   @id @default(cuid())
+  ownerId     String   @unique
+  userName    String   @unique
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner User       @relation("BlogOwner", fields: [ownerId], references: [id])
+  posts BlogPost[]
+
+  @@index([userName])
+}
+
+model BlogPost {
+  id          String         @id @default(cuid())
+  blogId      String
+  authorId    String
+  slug        String
+  title       String
+  excerpt     String?
+  content     String
+  coverImage  String?
+  status      BlogPostStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  blog   Blog @relation(fields: [blogId], references: [id])
+  author User @relation("BlogPostAuthor", fields: [authorId], references: [id])
+
+  @@unique([blogId, slug])
+  @@index([blogId, status, publishedAt])
+  @@index([authorId, createdAt])
 }
 
 // =====================
@@ -814,6 +857,8 @@ model User {
 
   // Addresses
   addresses         UserAddress[]
+  blogOwned         Blog?                @relation("BlogOwner")
+  blogPosts         BlogPost[]           @relation("BlogPostAuthor")
   // back-rel for posts authored by this user
   posts             Post[]              @relation("PostCreatedBy")
   eventPosts        EventPost[]
