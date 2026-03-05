@@ -71,6 +71,71 @@ async function buildUniqueSlug(
 }
 
 export const blogRouter = createTRPCRouter({
+  listPublicBlogs: publicProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().int().positive().max(60).optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 24;
+      const latestPublished = await ctx.db.blogPost.findMany({
+        where: { status: BlogPostStatus.PUBLISHED },
+        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        distinct: ["blogId"],
+        take: limit,
+        select: {
+          id: true,
+          blogId: true,
+          slug: true,
+          title: true,
+          excerpt: true,
+          publishedAt: true,
+          createdAt: true,
+          blog: {
+            select: {
+              id: true,
+              userName: true,
+              title: true,
+              description: true,
+              owner: { select: { id: true, name: true, image: true } },
+            },
+          },
+        },
+      });
+
+      const blogIds = latestPublished.map((item) => item.blogId);
+      const publishedCounts =
+        blogIds.length > 0
+          ? await ctx.db.blogPost.groupBy({
+              by: ["blogId"],
+              where: {
+                blogId: { in: blogIds },
+                status: BlogPostStatus.PUBLISHED,
+              },
+              _count: { _all: true },
+            })
+          : [];
+
+      const countByBlogId = new Map(
+        publishedCounts.map((item) => [item.blogId, item._count._all]),
+      );
+
+      return latestPublished.map((item) => ({
+        blog: item.blog,
+        latestPost: {
+          id: item.id,
+          slug: item.slug,
+          title: item.title,
+          excerpt: item.excerpt,
+          publishedAt: item.publishedAt ?? item.createdAt,
+        },
+        publishedPostCount: countByBlogId.get(item.blogId) ?? 0,
+      }));
+    }),
+
   profile: publicProcedure
     .input(
       z.object({

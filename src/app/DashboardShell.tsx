@@ -36,6 +36,7 @@ import type { RouterOutputs } from "~/trpc/react";
 const navigation = [
   { name: "Dashboard", href: "/" },
   { name: "Feed", href: "/feed" },
+  { name: "Blog", href: "/Blog" },
   { name: "Projects", href: "/projects" },
   { name: "Shop", href: "/shop" },
   { name: "Rentals", href: "/rooms" },

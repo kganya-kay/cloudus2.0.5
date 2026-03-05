@@ -25,6 +25,7 @@ const navigation = [
   { name: "Drivers", href: "/drivers/dashboard" },
   { name: "Creators", href: "/creators/dashboard" },
   { name: "Team", href: "/team" },
+    { name: "Blog", href: "/Blog" },
   { name: "Calendar", href: "/calendar" },
   { name: "Careers", href: "/careers" },
 ];
