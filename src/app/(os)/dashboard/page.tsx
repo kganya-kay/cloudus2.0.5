@@ -1,5 +1,5 @@
-import { OsHome } from "../_components/os-home";
+import { redirect } from "next/navigation";
 
-export default function DashboardPage() {
-  return <OsHome />;
+export default function DashboardRedirectPage() {
+  redirect("/");
 }

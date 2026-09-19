@@ -30,5 +30,8 @@ describe("isNavActive", () => {
   it("matches nested routes", () => {
     assert.equal(isNavActive("/studio/session", "/studio"), true);
     assert.equal(isNavActive("/dashboard", "/build"), false);
+    assert.equal(isNavActive("/", "/"), true);
+    assert.equal(isNavActive("/dashboard", "/"), true);
+    assert.equal(isNavActive("/projects", "/"), false);
   });
 });

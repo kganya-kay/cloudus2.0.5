@@ -1,12 +1,12 @@
-// src/app/apply/page.tsx
 "use client";
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { UploadButton } from "~/utils/uploadthing";
+import { Button, Card, PageHeader } from "~/components/os/primitives";
 
 const TYPES = ["SUPPLIER", "DRIVER", "CARETAKER", "ADMIN", "CUSTOMER", "APPLICANT"] as const;
-type ApplyType = typeof TYPES[number];
+type ApplyType = (typeof TYPES)[number];
 
 export default function UnifiedApplyPage() {
   const [type, setType] = useState<ApplyType>("APPLICANT");
@@ -19,68 +19,67 @@ export default function UnifiedApplyPage() {
 
   const submit = () => {
     if (!name || !email) return;
-    const answers: Record<string, unknown> = { notes };
-    apply.mutate({ type, name, email, phone: phone || undefined, resumeUrl: resumeUrl || undefined, answers, source: "unified-apply" });
+    apply.mutate({
+      type,
+      name,
+      email,
+      phone: phone || undefined,
+      resumeUrl: resumeUrl || undefined,
+      answers: { notes },
+      source: "unified-apply",
+    });
   };
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-2 text-2xl font-bold">Apply / Onboard</h1>
-      <p className="mb-4 text-sm text-gray-600">Choose your path and submit your details. We will reach out.</p>
-      <div className="rounded-lg border bg-white p-4">
-        <div className="mb-3 grid gap-3 md:grid-cols-2">
-          <div>
-            <label className="text-xs text-gray-600">I am a</label>
-            <select value={type} onChange={(e) => setType(e.target.value as ApplyType)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm">
-              {TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Join"
+        title="Apply"
+        description="Choose a path. Existing application and review workflows stay the same."
+      />
+      <Card>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="text-xs text-os-muted">
+            I am a
+            <select value={type} onChange={(e) => setType(e.target.value as ApplyType)} className="os-field">
+              {TYPES.map((item) => (
+                <option key={item} value={item}>{item}</option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-600">Phone</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
-          </div>
+          </label>
+          <label className="text-xs text-os-muted">
+            Name
+            <input value={name} onChange={(e) => setName(e.target.value)} className="os-field" />
+          </label>
+          <label className="text-xs text-os-muted">
+            Email
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="os-field" />
+          </label>
+          <label className="text-xs text-os-muted">
+            Phone
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="os-field" />
+          </label>
           <div className="md:col-span-2">
-            <label className="text-xs text-gray-600">Resume (optional)</label>
-            <div className="mt-1">
-              <UploadButton
-                endpoint="resumeUploader"
-                onClientUploadComplete={(res) => {
-                  try {
-                    const url = Array.isArray(res) && res[0]?.url ? String(res[0].url) : undefined;
-                    if (url) setResumeUrl(url);
-                  } catch {}
-                }}
-                onUploadError={(e: Error) => alert(e.message)}
-              />
-              {resumeUrl && (
-                <p className="mt-1 truncate text-xs text-gray-600">{resumeUrl}</p>
-              )}
-            </div>
+            <p className="text-xs text-os-muted">Resume (optional)</p>
+            <UploadButton
+              endpoint="resumeUploader"
+              onClientUploadComplete={(res) => {
+                const url = Array.isArray(res) && res[0]?.url ? String(res[0].url) : undefined;
+                if (url) setResumeUrl(url);
+              }}
+              onUploadError={(error: Error) => alert(error.message)}
+            />
           </div>
-          <div className="md:col-span-2">
-            <label className="text-xs text-gray-600">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
-          </div>
+          <label className="text-xs text-os-muted md:col-span-2">
+            Notes
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className="os-field" />
+          </label>
         </div>
-        <div className="flex justify-end">
-          <button onClick={submit} disabled={apply.isPending || !name || !email} className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-            {apply.isPending ? "Submitting…" : "Submit"}
-          </button>
-        </div>
-        {apply.isSuccess && (
-          <p className="mt-2 text-sm text-green-700">Thanks! Your application has been received.</p>
-        )}
-      </div>
-    </main>
+        <Button className="mt-4" onClick={submit} disabled={apply.isPending || !name || !email}>
+          {apply.isPending ? "Submitting…" : "Submit"}
+        </Button>
+        {apply.isSuccess ? <p className="mt-3 text-sm text-os-success">Received. We’ll be in touch.</p> : null}
+      </Card>
+    </div>
   );
 }

@@ -6,19 +6,8 @@ export type OsNavItem = {
   mobile?: boolean;
 };
 
-export const OS_ROUTE_PREFIXES = [
-  "/dashboard",
-  "/build",
-  "/studio",
-  "/community",
-  "/marketplace",
-  "/learn",
-  "/founder",
-  "/settings",
-] as const;
-
 export const mobileNav: OsNavItem[] = [
-  { href: "/dashboard", label: "Home", description: "Continue building", mobile: true },
+  { href: "/", label: "Home", description: "Continue building", mobile: true },
   { href: "/build", label: "Build", description: "Notes, tasks, ideas", mobile: true },
   { href: "/community", label: "Community", description: "Creators and feed", mobile: true },
   { href: "/projects", label: "Projects", description: "Software and client work", mobile: true },
@@ -26,7 +15,7 @@ export const mobileNav: OsNavItem[] = [
 ];
 
 export const desktopNav: OsNavItem[] = [
-  { href: "/dashboard", label: "Dashboard", description: "Your operating home", shortcut: "G D" },
+  { href: "/", label: "Home", description: "Your operating home", shortcut: "G H" },
   { href: "/build", label: "Build", description: "Capture and ship work", shortcut: "G B" },
   { href: "/projects", label: "Projects", description: "Briefs, bids, and tasks", shortcut: "G P" },
   { href: "/studio", label: "Studio", description: "Music, design, sessions", shortcut: "G S" },
@@ -54,8 +43,9 @@ export const commandRoutes: OsNavItem[] = [
   { href: "/admin", label: "Admin", description: "Operations console" },
 ];
 
-export const isOsRoute = (pathname: string) =>
-  OS_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-
-export const isNavActive = (pathname: string, href: string) =>
-  pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+export const isNavActive = (pathname: string, href: string) => {
+  if (href === "/") {
+    return pathname === "/" || pathname === "/dashboard";
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+};

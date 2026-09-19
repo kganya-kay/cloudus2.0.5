@@ -16,7 +16,7 @@ export default function LoginPage() {
     const res = await signIn("credentials", {
       email,
       password,
-      callbackUrl: "/dashboard",
+      callbackUrl: "/",
       redirect: true,
     });
     setBusy(false);
@@ -61,7 +61,7 @@ export default function LoginPage() {
             {busy ? "Signing in…" : "Sign in"}
           </button>
           <button
-            onClick={() => signIn("discord", { callbackUrl: "/dashboard" })}
+            onClick={() => signIn("discord", { callbackUrl: "/" })}
             className="min-h-11 rounded-full border border-os-border px-4 py-2 text-sm"
           >
             Sign in with Discord

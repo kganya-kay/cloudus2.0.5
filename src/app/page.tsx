@@ -1,44 +1,22 @@
-// ===== app/(dashboard)/page.tsx — SERVER COMPONENT =====
-import { auth } from "~/server/auth";
-export const dynamic = "force-dynamic";
-import { api, HydrateClient } from "~/trpc/server";
-import DashboardShell from "./DashboardShell";
+import { OsHome } from "./(os)/_components/os-home";
 import ToastBanner from "./_components/ToastBanner";
 
-export default async function Page(props: any) {
-  const session = await auth();
-  const user = {
-    name: session?.user?.name ?? "Guest",
-    image:
-      session?.user?.image ??
-      "https://utfs.io/f/zFJP5UraSTwKBuHG8YfZ251G9IiAMecW3arLHdOuYKx6EClV",
-    email: session?.user?.email ?? "",
-  };
+export const dynamic = "force-dynamic";
 
-  // Optional: server-side prefetch to warm tRPC cache
-  if (session?.user) {
-    await api.post.getLatest.prefetch();
-  }
-
-  const [featuredCreators, announcements] = await Promise.all([
-    api.creator.featured().catch(() => []),
-    api.platform.announcements({ limit: 3 }).catch(() => []),
-  ]);
-
-  const toastKey = (props?.searchParams?.toast as string) ?? null;
+export default async function HomePage(props: {
+  searchParams?: Promise<{ toast?: string }> | { toast?: string };
+}) {
+  const params = await Promise.resolve(props.searchParams ?? {});
+  const toastKey = params.toast ?? null;
 
   return (
-    <HydrateClient>
-      {toastKey === "login_required" && (
-        <ToastBanner variant="warning" message="You need to log in to see your profile." />
-      )}
-      <DashboardShell
-        user={user}
-        session={!!session}
-        featuredCreators={featuredCreators}
-        announcements={announcements}
-      />
-    </HydrateClient>
+    <>
+      {toastKey === "login_required" ? (
+        <div className="mb-4">
+          <ToastBanner variant="warning" message="Sign in to see your profile." />
+        </div>
+      ) : null}
+      <OsHome />
+    </>
   );
 }
-

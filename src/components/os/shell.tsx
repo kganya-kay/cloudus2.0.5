@@ -68,7 +68,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   ].filter(Boolean) as { href: string; label: string }[];
 
   return (
-    <div className="min-h-screen bg-os-bg text-os-fg">
+    <div className="os-app min-h-screen bg-os-bg text-os-fg">
       <a
         href="#os-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[90] focus:rounded-full focus:bg-os-card focus:px-4 focus:py-2"
@@ -77,7 +77,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       </a>
 
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-os-border bg-os-elevated/80 px-4 py-6 backdrop-blur lg:flex">
-        <Link href="/dashboard" className="mb-8 flex items-center gap-3 px-2">
+        <Link href="/" className="mb-8 flex items-center gap-3 px-2">
           <img src="/cloudus-logo-final.png" alt="" className="h-9 w-9 rounded-full object-cover" />
           <div>
             <p className="text-sm font-semibold">Cloudus OS</p>
@@ -113,7 +113,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-72">
         <header className="sticky top-0 z-40 border-b border-os-border bg-os-bg/85 backdrop-blur">
           <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
-            <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
+            <Link href="/" className="flex items-center gap-2 lg:hidden">
               <img src="/cloudus-logo-final.png" alt="Cloudus" className="h-8 w-8 rounded-full object-cover" />
             </Link>
             <button
