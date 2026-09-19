@@ -9,8 +9,8 @@ import { api } from "~/trpc/react";
 export function MarketplaceTasksPanel({
   role,
   limit,
-  title = "Available tasks",
-  subtitle = "Claim or bid to earn from Cloudus projects",
+  title = "Tasks",
+  subtitle,
   defaultOpen = true,
   showBrowseLink = true,
 }: {
@@ -45,7 +45,7 @@ export function MarketplaceTasksPanel({
         </div>
         <div className="flex shrink-0 items-center gap-3 text-right">
           <p className="text-lg font-semibold tracking-tight">
-            {isLoading ? "…" : `${potLabel} available`}
+            {isLoading ? "…" : potLabel}
           </p>
           <span
             aria-hidden
@@ -65,15 +65,9 @@ export function MarketplaceTasksPanel({
           </div>
         ) : null}
         {isLoading ? (
-          <p className="os-muted">Loading tasks…</p>
+          <p className="os-muted">…</p>
         ) : tasks.length === 0 ? (
-          <p className="os-muted">
-            No unassigned tasks right now. Check back soon or browse{" "}
-            <Link href="/feed" className="font-semibold text-os-accent">
-              the feed
-            </Link>
-            .
-          </p>
+          <p className="os-muted">None.</p>
         ) : (
           tasks.map((task) => (
             <article key={task.id} className="rounded-2xl bg-os-elevated p-3 text-sm">
@@ -99,13 +93,13 @@ export function MarketplaceTasksPanel({
                   href={`/projects/${task.project.id}`}
                   className="inline-flex min-h-9 items-center rounded-full bg-os-fg px-3 text-xs font-semibold text-os-bg"
                 >
-                  View project
+                  Open
                 </Link>
                 <Link
                   href={`/projects/${task.project.id}#tasks`}
                   className="inline-flex min-h-9 items-center rounded-full border border-os-border px-3 text-xs font-semibold"
                 >
-                  Claim or bid
+                  Bid
                 </Link>
               </div>
             </article>

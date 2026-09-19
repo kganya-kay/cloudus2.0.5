@@ -156,21 +156,21 @@ export function EmptyState({
   action,
 }: {
   title: string;
-  description: string;
+  description?: string;
   action?: ReactNode;
 }) {
   return (
     <div className="os-card flex flex-col items-start gap-3 p-6">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="os-muted">{description}</p>
+      {description ? <p className="os-muted">{description}</p> : null}
       {action}
     </div>
   );
 }
 
 export function ErrorState({
-  title = "Something went quiet",
-  description = "The network or session could not complete this request. Existing Cloudus services are still available.",
+  title = "Failed",
+  description,
   onRetry,
 }: {
   title?: string;
@@ -180,7 +180,7 @@ export function ErrorState({
   return (
     <div className="os-card border-os-danger/30 p-6">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="os-muted mt-2">{description}</p>
+      {description ? <p className="os-muted mt-2">{description}</p> : null}
       {onRetry ? (
         <Button className="mt-4" variant="secondary" onClick={onRetry}>
           Try again
@@ -197,7 +197,7 @@ export function OfflineBanner({ online }: { online: boolean }) {
       role="status"
       className="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-os-warning"
     >
-      You are offline. Captures stay on this device until Cloudus reconnects.
+      Offline.
     </div>
   );
 }

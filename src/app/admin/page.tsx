@@ -49,11 +49,7 @@ export default async function AdminHome() {
         <div className="os-card p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="os-kicker">Ops</p>
-              <h1 className="os-title mt-2">Admin</h1>
-              <p className="os-muted mt-2">
-                Review posts, publish announcements, and keep suppliers and drivers moving.
-              </p>
+              <h1 className="os-title">Admin</h1>
             </div>
             <Link
               href="/feed"

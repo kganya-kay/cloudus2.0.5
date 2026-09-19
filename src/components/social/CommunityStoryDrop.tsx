@@ -40,8 +40,7 @@ export function CommunityStoryDrop() {
   if (status !== "authenticated") {
     return (
       <Card>
-        <h2 className="text-lg font-semibold">Drop a story</h2>
-        <p className="os-muted mt-2">Sign in, connect one social, then drop your latest picture, video, or sound.</p>
+        <h2 className="text-lg font-semibold">Drop</h2>
         <Button href="/auth/login?callbackUrl=/community" className="mt-4" size="sm">
           Sign in
         </Button>
@@ -52,8 +51,7 @@ export function CommunityStoryDrop() {
   return (
     <Card className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Drop a story into the community</h2>
-        <p className="os-muted mt-1">Same social drop used on blogs and studio. Connect one account on first run.</p>
+        <h2 className="text-lg font-semibold">Drop</h2>
       </div>
       <label className="text-xs text-os-muted">
         Title
@@ -82,7 +80,7 @@ export function CommunityStoryDrop() {
           })
         }
       >
-        {createPost.isPending ? "Publishing…" : "Publish to my blog"}
+        {createPost.isPending ? "Publishing…" : "Publish"}
       </Button>
       {createPost.error ? <p className="text-sm text-os-danger">{createPost.error.message}</p> : null}
     </Card>

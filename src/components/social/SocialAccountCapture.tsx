@@ -42,15 +42,7 @@ export function SocialAccountCapture({ onSaved, compact }: SocialAccountCaptureP
         });
       }}
     >
-      {!compact ? (
-        <div>
-          <p className="os-kicker">First run</p>
-          <h3 className="mt-1 text-lg font-semibold">Connect one social</h3>
-          <p className="os-muted mt-1">
-            Handle or profile URL is enough. A public post URL helps Instagram, TikTok, and X keep dropping.
-          </p>
-        </div>
-      ) : null}
+      {!compact ? <h3 className="text-lg font-semibold">Connect</h3> : null}
 
       <label className="text-xs text-os-muted">
         Platform
@@ -88,10 +80,10 @@ export function SocialAccountCapture({ onSaved, compact }: SocialAccountCaptureP
       </label>
 
       <label className="text-xs text-os-muted">
-        Latest public post URL (optional, recommended)
+        Post URL
         <input
           className="os-field"
-          placeholder="Paste one public post, reel, or track"
+          placeholder="https://…"
           value={seedPostUrl}
           onChange={(event) => setSeedPostUrl(event.target.value)}
         />
@@ -100,7 +92,7 @@ export function SocialAccountCapture({ onSaved, compact }: SocialAccountCaptureP
       {save.error ? <p className="text-sm text-os-danger">{save.error.message}</p> : null}
 
       <Button type="submit" size="sm" disabled={save.isPending || (!handle.trim() && !profileUrl.trim())}>
-        {save.isPending ? "Saving…" : "Save social"}
+        {save.isPending ? "Saving…" : "Save"}
       </Button>
     </form>
   );

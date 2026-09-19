@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { BlogPostStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 
@@ -92,9 +91,7 @@ export default function BlogComposer({
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Stories"
-        title={blog?.title ?? `${routeUserName}'s blog`}
-        description={blog?.description ?? "Pictures, video, and sound in one story."}
+        title={blog?.title ?? routeUserName}
         actions={<BloggerNav current={canManage ? "mine" : "community"} />}
       />
 
@@ -121,11 +118,7 @@ export default function BlogComposer({
 
       {canManage ? (
         <Card>
-          <p className="os-kicker">Write</p>
-          <h2 className="mt-1 text-xl font-semibold">New story</h2>
-          <p className="os-muted mt-1">
-            Tell it with words, then drop a picture, a video, and sound from your socials or uploads.
-          </p>
+          <h2 className="text-xl font-semibold">New</h2>
 
           <form
             className="mt-4 space-y-4"
@@ -150,7 +143,7 @@ export default function BlogComposer({
                 className="os-field"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="What happened"
+                placeholder="Title"
               />
             </label>
             <label className="text-xs text-os-muted">
@@ -159,7 +152,7 @@ export default function BlogComposer({
                 className="os-field"
                 value={excerpt}
                 onChange={(event) => setExcerpt(event.target.value)}
-                placeholder="One line people can scan"
+                placeholder="One line"
               />
             </label>
             <label className="text-xs text-os-muted">
@@ -169,7 +162,7 @@ export default function BlogComposer({
                 rows={6}
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                placeholder="Write the night, the room, the feeling."
+                placeholder="Story"
               />
             </label>
 
@@ -193,7 +186,7 @@ export default function BlogComposer({
                   (!content.trim() && !media.imageUrl && !media.videoUrl && !media.audioUrl)
                 }
               >
-                {createPost.isPending ? "Saving…" : "Publish story"}
+                {createPost.isPending ? "Saving…" : "Publish"}
               </Button>
             </div>
             {createPost.error ? <p className="text-sm text-os-danger">{createPost.error.message}</p> : null}
@@ -201,21 +194,16 @@ export default function BlogComposer({
         </Card>
       ) : !isSignedIn ? (
         <Card>
-          <p className="font-semibold">This is a public blog</p>
-          <p className="os-muted mt-1">Sign in to write your own stories. You can still read everything here.</p>
-          <Button href={`/auth/login?callbackUrl=/Blog/${routeUserName}`} className="mt-3" size="sm">
+          <Button href={`/auth/login?callbackUrl=/Blog/${routeUserName}`} size="sm">
             Sign in
           </Button>
         </Card>
       ) : null}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{canManage ? "Your stories" : "Stories"}</h2>
+        <h2 className="text-lg font-semibold">Stories</h2>
         {items.length === 0 ? (
-          <EmptyState
-            title="No stories yet"
-            description={canManage ? "Drop a picture, a clip, or a voice note and publish." : "This blogger has not published yet."}
-          />
+          <EmptyState title="Empty" />
         ) : (
           items.map((post) => (
             <article key={post.id} className="os-card space-y-3 p-5">
@@ -233,16 +221,13 @@ export default function BlogComposer({
               />
               {post.content ? <p className="whitespace-pre-wrap text-sm leading-6">{post.content}</p> : null}
               <Button href={`/Blog/${routeUserName}/${post.slug}`} size="sm" variant="secondary">
-                Open story
+                Open
               </Button>
             </article>
           ))
         )}
       </section>
 
-      <p className="os-muted">
-        Browse the community on <Link href="/Blog" className="font-semibold text-os-accent">public blogs</Link>.
-      </p>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function FounderPage() {
   if (snapshot.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Founder console" description="Loading operating numbers." />
+        <PageHeader title="Founder" />
         <SkeletonGrid />
       </div>
     );
@@ -25,8 +25,7 @@ export default function FounderPage() {
   if (snapshot.error) {
     return (
       <ErrorState
-        title="Session expired or request failed"
-        description="Sign in again if your session ended. Founder numbers stay behind existing role checks."
+        title="Failed"
         onRetry={() => void snapshot.refetch()}
       />
     );
@@ -35,11 +34,10 @@ export default function FounderPage() {
   if (!snapshot.data?.allowed) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Founder console" description="This room is for Cloudus operators." />
+        <PageHeader title="Founder" />
         <EmptyState
-          title="Permission required"
-          description="Admin and caretaker roles keep using the existing /admin console. Nothing here bypasses RBAC."
-          action={<Button href="/admin">Open admin</Button>}
+          title="Locked"
+          action={<Button href="/admin">Admin</Button>}
         />
       </div>
     );
@@ -60,10 +58,8 @@ export default function FounderPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Founder mode"
-        title="Operating console"
-        description="A calm view of community, commerce, and launches. Fulfilment still happens in admin, shop, and project payment routes."
-        actions={<Button href="/admin" variant="secondary">Admin ops</Button>}
+        title="Founder"
+        actions={<Button href="/admin" variant="secondary">Admin</Button>}
       />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((item) => (

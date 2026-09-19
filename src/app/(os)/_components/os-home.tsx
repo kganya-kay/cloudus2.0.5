@@ -25,7 +25,7 @@ export function OsHome() {
   if (overview.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Home" description="Warming up your Cloudus home." />
+        <PageHeader title="Home" />
         <SkeletonGrid count={6} />
       </div>
     );
@@ -34,7 +34,7 @@ export function OsHome() {
   if (overview.error) {
     return (
       <ErrorState
-        title="Home could not load"
+        title="Failed"
         onRetry={() => void overview.refetch()}
       />
     );
@@ -48,14 +48,12 @@ export function OsHome() {
     <div className="space-y-6">
       <OfflineBanner online={online} />
       <PageHeader
-        eyebrow="Cloudus OS"
-        title={status === "authenticated" ? "Continue building" : "Welcome to Cloudus"}
-        description="A calm home for software, music, community, and the services that keep Cloudus running."
+        title={status === "authenticated" ? "Home" : "Cloudus"}
         actions={
           <>
-            <Button href="/build">Open Build</Button>
+            <Button href="/build">Build</Button>
             <Button href="/studio/session" variant="secondary">
-              Start a session
+              Session
             </Button>
           </>
         }
@@ -63,35 +61,29 @@ export function OsHome() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
-          <p className="os-kicker">Continue</p>
-          <h2 className="mt-2 text-lg font-semibold">Your next move</h2>
+          <h2 className="text-lg font-semibold">Next</h2>
           {data?.assignedTasks[0] ? (
             <div className="mt-3 space-y-2">
               <p className="text-sm">{data.assignedTasks[0].title}</p>
               <p className="os-muted">{data.assignedTasks[0].project.name}</p>
               <Button href={`/projects/${data.assignedTasks[0].project.id}`} size="sm">
-                Resume task
+                Open
               </Button>
             </div>
           ) : recentCaptures[0] ? (
             <div className="mt-3 space-y-2">
               <p className="text-sm">{parseCapture(recentCaptures[0].name).text}</p>
               <Button href="/build" size="sm" variant="secondary">
-                Open capture
+                Open
               </Button>
             </div>
           ) : (
-            <EmptyState
-              title="Nothing in motion yet"
-              description="Capture an idea or claim a project task. One shipped thing is enough."
-              action={<Button href="/projects" size="sm">Browse projects</Button>}
-            />
+            <EmptyState title="Idle" action={<Button href="/projects" size="sm">Projects</Button>} />
           )}
         </Card>
 
         <Card>
-          <p className="os-kicker">Build Night</p>
-          <h2 className="mt-2 text-lg font-semibold">Upcoming session</h2>
+          <h2 className="text-lg font-semibold">Tonight</h2>
           {nextEvent ? (
             <div className="mt-3 space-y-2">
               <p className="text-sm font-medium">{nextEvent.name}</p>
@@ -100,30 +92,21 @@ export function OsHome() {
               </p>
               <div className="flex gap-2">
                 <Button href={`/events/${nextEvent.id}`} size="sm">
-                  Event details
+                  Event
                 </Button>
                 <Button href="/studio/session" size="sm" variant="ghost">
-                  Open room
+                  Room
                 </Button>
               </div>
             </div>
           ) : (
-            <EmptyState
-              title="No session on the calendar"
-              description="Host a Friday Build Night. Everyone leaves with something shipped."
-              action={<Button href="/events" size="sm" variant="secondary">See events</Button>}
-            />
+            <EmptyState title="No session" action={<Button href="/events" size="sm" variant="secondary">Events</Button>} />
           )}
         </Card>
 
         <Card>
-          <p className="os-kicker">Streak</p>
-          <h2 className="mt-2 text-lg font-semibold">Keep the hour</h2>
-          <p className="os-muted mt-3">
-            {recentCaptures.length > 0
-              ? `${recentCaptures.length} captures in your workspace.`
-              : "Protect one hour. Code, music, or a message to a collaborator."}
-          </p>
+          <h2 className="text-lg font-semibold">Pulse</h2>
+          <p className="os-muted mt-3">{recentCaptures.length} notes</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Badge tone="accent">{data?.projects.length ?? 0} projects</Badge>
             <Badge>{data?.creators.length ?? 0} creators</Badge>
@@ -134,9 +117,9 @@ export function OsHome() {
       <section className="grid gap-4 lg:grid-cols-[1.4fr,0.8fr]">
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent projects</h2>
+            <h2 className="text-lg font-semibold">Projects</h2>
             <Link href="/projects" className="text-sm font-semibold text-os-accent">
-              All projects
+              All
             </Link>
           </div>
           {data?.projects.length ? (
@@ -155,17 +138,13 @@ export function OsHome() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="No public projects yet"
-              description="Create a brief or publish a weekend tool."
-              action={<Button href="/projects/create" size="sm">Create project</Button>}
-            />
+            <EmptyState title="None yet" action={<Button href="/projects/create" size="sm">New</Button>} />
           )}
         </Card>
 
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Community</h2>
+            <h2 className="text-lg font-semibold">Room</h2>
             <Link href="/community" className="text-sm font-semibold text-os-accent">
               Open
             </Link>
@@ -186,7 +165,7 @@ export function OsHome() {
             ))}
           </ul>
           {!data?.feed.length ? (
-            <p className="os-muted">The feed is quiet. Share a shipped update.</p>
+            <p className="os-muted">Quiet.</p>
           ) : null}
         </Card>
       </section>

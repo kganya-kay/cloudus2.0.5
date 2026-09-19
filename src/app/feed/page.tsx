@@ -13,20 +13,18 @@ export default async function FeedPage() {
     <HydrateClient>
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Community"
           title="Feed"
-          description="Shipped work, drops, and collabs. Publish from the creator hub."
           actions={
             <>
               <Button href="/creators/dashboard">Publish</Button>
-              <Button href="/community" variant="secondary">Creators</Button>
+              <Button href="/community" variant="secondary">Room</Button>
             </>
           }
         />
 
         {announcements.length > 0 ? (
           <Card>
-            <p className="os-kicker">Studio updates</p>
+            <p className="os-kicker">Updates</p>
             <div className="mt-3 space-y-3">
               {announcements.map((announcement) => (
                 <div key={announcement.id}>

@@ -19,9 +19,7 @@ export default async function CreatorDashboardPage() {
     <HydrateClient>
       <div className="space-y-6">
         <header className="os-card p-5">
-          <p className="os-kicker">Creator hub</p>
-          <h1 className="os-title mt-2">Your work, in one place</h1>
-          <p className="os-muted mt-2">Publish updates, manage tasks, and keep the feed moving.</p>
+          <h1 className="os-title">Studio</h1>
         </header>
         <CreatorDashboardClient
           initialProfile={profile}

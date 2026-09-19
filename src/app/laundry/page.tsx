@@ -25,35 +25,23 @@ export default async function LaundryPage() {
   return (
     <HydrateClient>
       <div className="space-y-6">
-        <PageHeader
-          eyebrow="Service"
-          title="Laundry"
-          description="Share pickup details, pay securely, and track the order. Supplier and driver assignment is unchanged."
-        />
+        <PageHeader title="Laundry" />
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
-            <h2 className="font-semibold">What’s included</h2>
-            <ul className="os-muted mt-3 space-y-2">
-              <li>Wash, dry, fold, optional pressing</li>
-              <li>Driver pickup and drop-off</li>
-              <li>Status updates through the order</li>
-            </ul>
-          </Card>
-          <Card>
             <h2 className="font-semibold">Partners</h2>
-            <p className="os-muted mt-2">{suppliers.length} nearby suppliers</p>
+            <p className="os-muted mt-2">{suppliers.length}</p>
             <ul className="mt-3 space-y-2">
               {suppliers.slice(0, 4).map((supplier) => (
                 <li key={supplier.id} className="text-sm">
                   {supplier.name}
-                  <span className="os-muted"> · {[supplier.suburb, supplier.city].filter(Boolean).join(", ") || "Area pending"}</span>
+                  <span className="os-muted"> · {[supplier.suburb, supplier.city].filter(Boolean).join(", ") || "—"}</span>
                 </li>
               ))}
             </ul>
           </Card>
         </div>
         <Card>
-          <h2 className="text-lg font-semibold">Place an order</h2>
+          <h2 className="text-lg font-semibold">Order</h2>
           <div className="mt-4">
             <LaundryOrderClient defaultName={session?.user?.name} defaultEmail={session?.user?.email} />
           </div>

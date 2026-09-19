@@ -10,15 +10,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow="Account"
-        title="Settings"
-        description="Cloudus OS keeps theme and navigation here. Passwords, roles, and ops stay on the existing profile and admin routes."
-      />
+      <PageHeader title="Settings" />
 
       <Card>
-        <h2 className="text-lg font-semibold">Appearance</h2>
-        <p className="os-muted mt-2">Dark mode is designed to feel quiet and premium, not neon.</p>
+        <h2 className="text-lg font-semibold">Theme</h2>
         <div className="mt-4 flex gap-2">
           <Button variant={theme === "light" ? "primary" : "secondary"} onClick={() => setTheme("light")}>
             Light
@@ -34,7 +29,7 @@ export default function SettingsPage() {
         <p className="os-muted mt-2">
           {status === "authenticated"
             ? `${data?.user?.name ?? "Member"} · ${data?.user?.email ?? ""}`
-            : "You are browsing as a guest."}
+            : "Guest"}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button href={data?.user?.email ? `/profile/${data.user.email}` : "/profile"} variant="secondary">

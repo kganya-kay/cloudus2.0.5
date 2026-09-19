@@ -55,15 +55,13 @@ Next: invite two builders back next Friday.`;
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Build Night"
-        title="Live room"
-        description="People join. They leave having shipped something. The recap becomes the story."
-        actions={<Button href="/events" variant="secondary">Link an event</Button>}
+        title="Room"
+        actions={<Button href="/events" variant="secondary">Events</Button>}
       />
 
       <div className="grid gap-4 lg:grid-cols-[0.9fr,1.1fr]">
         <Card className="text-center">
-          <p className="os-kicker">Session timer</p>
+          <p className="os-kicker">Timer</p>
           <p className="mt-4 font-display text-5xl font-semibold tracking-tight">{clock}</p>
           <div className="mt-6 flex justify-center gap-2">
             <Button onClick={() => setRunning((value) => !value)}>{running ? "Pause" : "Start"}</Button>
@@ -74,7 +72,7 @@ Next: invite two builders back next Friday.`;
         </Card>
 
         <Card>
-          <h2 className="text-lg font-semibold">Shared checklist</h2>
+          <h2 className="text-lg font-semibold">List</h2>
           <ul className="mt-4 space-y-2">
             {items.map((item) => (
               <li key={item.id}>
@@ -104,17 +102,17 @@ Next: invite two builders back next Friday.`;
           <input
             value={deliverable}
             onChange={(event) => setDeliverable(event.target.value)}
-            placeholder="A beat, a logo, a website, a reel, an AI tool"
+            placeholder="What ships"
             className="mt-4 w-full rounded-2xl border border-os-border bg-os-elevated px-4 py-3 text-sm outline-none"
           />
         </Card>
         <Card>
-          <h2 className="text-lg font-semibold">Demo notes</h2>
+          <h2 className="text-lg font-semibold">Demo</h2>
           <textarea
             value={demo}
             onChange={(event) => setDemo(event.target.value)}
             rows={3}
-            placeholder="What shipped, what was learned, who to invite next."
+            placeholder="Note"
             className="mt-4 w-full rounded-2xl border border-os-border bg-os-elevated px-4 py-3 text-sm outline-none"
           />
         </Card>
@@ -122,8 +120,8 @@ Next: invite two builders back next Friday.`;
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Auto recap</h2>
-          <Button onClick={() => void copyRecap()}>{copied ? "Copied" : "Copy story"}</Button>
+          <h2 className="text-lg font-semibold">Recap</h2>
+          <Button onClick={() => void copyRecap()}>{copied ? "Copied" : "Copy"}</Button>
         </div>
         <pre className="os-muted mt-4 whitespace-pre-wrap font-sans text-sm">{recap}</pre>
       </Card>

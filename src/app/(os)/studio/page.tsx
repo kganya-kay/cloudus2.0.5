@@ -21,7 +21,7 @@ export default function StudioPage() {
   if (overview.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Studio" description="Loading sessions and collaborators." />
+        <PageHeader title="Studio" />
         <SkeletonGrid />
       </div>
     );
@@ -36,14 +36,12 @@ export default function StudioPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Creative workspace"
         title="Studio"
-        description="Music, design, video, and AI experiments share one room. Sessions first. Assets and collaborators next."
         actions={
           <>
-            <Button href="/studio/session">Start Build Night</Button>
+            <Button href="/studio/session">Session</Button>
             <Button href="/events" variant="secondary">
-              All events
+              Events
             </Button>
           </>
         }
@@ -53,7 +51,7 @@ export default function StudioPage() {
         <Card>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Sessions</h2>
-            <Badge tone="accent">Live-ready</Badge>
+            <Badge tone="accent">Live</Badge>
           </div>
           {data?.events.length ? (
             <ul className="mt-4 space-y-3">
@@ -75,11 +73,7 @@ export default function StudioPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="No sessions scheduled"
-              description="Use the room anyway. The recap becomes this week's story."
-              action={<Button href="/studio/session" size="sm">Open empty room</Button>}
-            />
+            <EmptyState title="None" action={<Button href="/studio/session" size="sm">Room</Button>} />
           )}
         </Card>
 
@@ -98,26 +92,22 @@ export default function StudioPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="Invite two people"
-              description="That is enough for a Friday Build Night."
-              action={<Button href="/community" size="sm" variant="secondary">Find builders</Button>}
-            />
+            <EmptyState title="None" action={<Button href="/community" size="sm" variant="secondary">People</Button>} />
           )}
         </Card>
       </section>
 
       <SocialMediaDrop
         kind="IMAGE"
-        label="Drop latest social image"
-        description="Reusable Cloudus drop. Connect one social on first run, then fetch the latest public post in the background."
+        label="Drop"
+        compact
       />
 
       <Card>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Inspiration</h2>
           <Link href="/feed" className="text-sm font-semibold text-os-accent">
-            Open feed
+            Feed
           </Link>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -129,7 +119,7 @@ export default function StudioPage() {
           ))}
         </div>
         {!data?.feed.length ? (
-          <p className="os-muted mt-4">Share a snippet from FL Studio or a weekend tool.</p>
+          <p className="os-muted mt-4">Quiet.</p>
         ) : null}
       </Card>
     </div>

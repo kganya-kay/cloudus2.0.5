@@ -11,16 +11,13 @@ export default async function RoomsPage() {
     <HydrateClient>
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Stay"
-          title="Rentals"
-          description="Approved rooms with nightly rates. Booking and Paystack stay on the existing room flow."
-          actions={<Button href="/rooms/create">List a room</Button>}
+          title="Rooms"
+          actions={<Button href="/rooms/create">List</Button>}
         />
         {rooms.length === 0 ? (
           <EmptyState
-            title="No rooms listed"
-            description="Hosts submit a listing. Admin approval publishes it here."
-            action={<Button href="/rooms/create" size="sm">List your space</Button>}
+            title="None"
+            action={<Button href="/rooms/create" size="sm">List</Button>}
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">

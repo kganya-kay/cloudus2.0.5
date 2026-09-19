@@ -13,29 +13,23 @@ export default async function BlogDirectoryPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Community"
         title="Blogs"
-        description="Stories told with pictures, video, and sound. Read everyone. Write yours after you sign in."
         actions={<BloggerNav current="community" />}
       />
 
       {session?.user ? (
         <Card className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="font-semibold">You are in as {session.user.name ?? "a blogger"}</p>
-            <p className="os-muted">Your profile, your stories, and this public list stay in one place.</p>
-          </div>
+          <p className="font-semibold">{session.user.name ?? "You"}</p>
           <Button href="/Blog/me" size="sm">
-            Open my blog
+            Mine
           </Button>
         </Card>
       ) : null}
 
       {items.length === 0 ? (
         <EmptyState
-          title="No public stories yet"
-          description="Be the first to drop a picture, a clip, or a voice note."
-          action={<Button href={session?.user ? "/Blog/me" : "/auth/login?callbackUrl=/Blog/me"} size="sm">Write a story</Button>}
+          title="Empty"
+          action={<Button href={session?.user ? "/Blog/me" : "/auth/login?callbackUrl=/Blog/me"} size="sm">Write</Button>}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -44,7 +38,7 @@ export default async function BlogDirectoryPage() {
               <Card className="h-full space-y-3 hover:bg-os-elevated">
                 <p className="os-kicker">@{item.blog.userName}</p>
                 <h2 className="font-semibold">{item.latestPost.title}</h2>
-                <p className="os-muted line-clamp-2">{item.latestPost.excerpt ?? item.blog.description ?? "A Cloudus story."}</p>
+                {item.latestPost.excerpt ? <p className="os-muted line-clamp-1">{item.latestPost.excerpt}</p> : null}
                 <StoryMediaPlayer
                   imageUrl={item.latestPost.coverImage}
                   videoUrl={item.latestPost.videoUrl}

@@ -21,7 +21,7 @@ export default function CommunityPage() {
   if (overview.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Community" description="Loading builders." />
+        <PageHeader title="Community" />
         <SkeletonGrid />
       </div>
     );
@@ -36,14 +36,12 @@ export default function CommunityPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Builders"
         title="Community"
-        description="Creator profiles, the activity feed, Build Nights, and collaboration requests. Start with two people."
         actions={
           <>
-            <Button href="/Blog">Public blogs</Button>
+            <Button href="/Blog">Blogs</Button>
             <Button href="/feed" variant="secondary">
-              Open feed
+              Feed
             </Button>
           </>
         }
@@ -54,9 +52,9 @@ export default function CommunityPage() {
       {data?.blogs.length ? (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Latest stories</h2>
+            <h2 className="text-lg font-semibold">Stories</h2>
             <Link href="/Blog" className="text-sm font-semibold text-os-accent">
-              All blogs
+              All
             </Link>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -64,7 +62,7 @@ export default function CommunityPage() {
               <Card key={post.id} className="space-y-3">
                 <p className="os-kicker">@{post.blog.userName}</p>
                 <h3 className="font-semibold">{post.title}</h3>
-                <p className="os-muted line-clamp-2">{post.excerpt ?? "A Cloudus story."}</p>
+                {post.excerpt ? <p className="os-muted line-clamp-1">{post.excerpt}</p> : null}
                 <StoryMediaPlayer
                   imageUrl={post.coverImage}
                   videoUrl={post.videoUrl}
@@ -101,11 +99,7 @@ export default function CommunityPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="No creator profiles yet"
-              description="Your GitHub-meets-Behance layer starts when the first profile is published."
-              action={<Button href="/creators/dashboard" size="sm">Create profile</Button>}
-            />
+            <EmptyState title="None" action={<Button href="/creators/dashboard" size="sm">Create</Button>} />
           )}
         </Card>
 
@@ -113,7 +107,7 @@ export default function CommunityPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Activity</h2>
             <Link href="/feed" className="text-sm font-semibold text-os-accent">
-              Full feed
+              All
             </Link>
           </div>
           {data?.feed.length ? (
@@ -126,21 +120,17 @@ export default function CommunityPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="The room is quiet"
-              description="Ship something and post the recap. The product should generate the story."
-            />
+            <EmptyState title="Quiet" />
           )}
         </Card>
       </section>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <h2 className="text-lg font-semibold">Build Nights</h2>
-          <p className="os-muted mt-2">Friday 19:00–22:00. Catch-up, build, demo. No endless talking.</p>
+          <h2 className="text-lg font-semibold">Nights</h2>
           <div className="mt-4 flex gap-2">
             <Button href="/studio/session" size="sm">
-              Open room
+              Room
             </Button>
             <Button href="/events" size="sm" variant="secondary">
               Events
@@ -148,12 +138,9 @@ export default function CommunityPage() {
           </div>
         </Card>
         <Card>
-          <h2 className="text-lg font-semibold">Collaboration</h2>
-          <p className="os-muted mt-2">
-            Request work through existing project bids and tasks. Cloudus does not replace those workflows.
-          </p>
+          <h2 className="text-lg font-semibold">Work</h2>
           <Button href="/projects" className="mt-4" size="sm" variant="secondary">
-            View open work
+            Projects
           </Button>
         </Card>
       </div>
