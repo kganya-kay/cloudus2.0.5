@@ -139,6 +139,21 @@
     color: #1c1915;
   }
 
+  .os-newsprint-sheet {
+    @apply overflow-hidden rounded-[2rem] border border-[var(--os-border)] shadow-[var(--os-shadow)];
+    background-color: #f3eee4;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(40, 32, 18, 0.045) 28px
+      ),
+      radial-gradient(rgba(40, 32, 18, 0.08) 0.7px, transparent 0.7px);
+    background-size: 100% 28px, 3px 3px;
+    color: #1c1915;
+  }
+
   .dark .os-newsprint {
     background-color: #1a1814;
     background-image:

@@ -7,6 +7,8 @@ import {
   pickMediaFromSources,
 } from "./extract";
 import { iframeSrcForUrl, youtubeIdFromUrl } from "./embed";
+import { fallbackSocialCaption } from "./caption";
+import { instagramComposerUrl, isMobileUserAgent } from "./instagram";
 import {
   buildProfileUrl,
   detectPlatform,
@@ -84,5 +86,25 @@ describe("social extractors", () => {
     });
     assert.equal(picked?.url, "https://cdn.example/latest.jpg");
     assert.equal(picked?.kind, "IMAGE");
+  });
+
+  it("crafts a fallback caption from the long story", () => {
+    const caption = fallbackSocialCaption({
+      title: "The room stayed open",
+      content: "We wrote until the street went quiet.\nThen we shipped.",
+      permalink: "https://cloudus.africa/Blog/machatizo/the-room",
+    });
+    assert.match(caption, /The room stayed open/);
+    assert.match(caption, /We wrote until the street went quiet/);
+    assert.match(caption, /Blog\/machatizo/);
+  });
+
+  it("opens Instagram via login so a signed-in session lands on filters", () => {
+    assert.equal(
+      instagramComposerUrl(),
+      "https://www.instagram.com/accounts/login/?next=%2Fcreate%2Fstyle%2F",
+    );
+    assert.equal(isMobileUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"), true);
+    assert.equal(isMobileUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)"), false);
   });
 });
