@@ -71,16 +71,34 @@ function LiveTile({ seat, featured }: { seat: Seat; featured?: boolean }) {
   );
 }
 
+function guestKey() {
+  const key = "cloudus-live-guest";
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing && /^g_[a-zA-Z0-9_-]{8,80}$/.test(existing)) return existing;
+    const next = `g_${crypto.randomUUID().replace(/-/g, "")}`;
+    sessionStorage.setItem(key, next);
+    return next;
+  } catch {
+    return `g_${Math.random().toString(36).slice(2, 12)}${Date.now().toString(36)}`;
+  }
+}
+
 export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) {
   const { data: session } = useSession();
   const userId = session?.user?.id ?? "";
-  const myName = session?.user?.name ?? "You";
+  const myName = session?.user?.name ?? "Guest";
+  const [peerId, setPeerId] = useState(userId);
   const streamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef(new Map<string, RTCPeerConnection>());
   const seenRef = useRef(new Set<string>());
   const metersRef = useRef(new Map<string, { ctx: AudioContext; timer: number }>());
   const liveSinceRef = useRef<number>(0);
-  const joinedRef = useRef(false);
+  const watchingRef = useRef(false);
+
+  useEffect(() => {
+    setPeerId(userId || guestKey());
+  }, [userId]);
   const [facing, setFacing] = useState<"user" | "environment">("user");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,11 +109,11 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
 
   const camera = api.live.camera.useQuery(
     { scope, scopeId },
-    { retry: false, refetchInterval: 1500 },
+    { enabled: Boolean(scopeId), retry: false, refetchInterval: 1500 },
   );
   const signals = api.live.signals.useQuery(
     { scope, scopeId, take: 80 },
-    { retry: false, refetchInterval: cameraOn || camera.data?.live ? 1200 : false },
+    { enabled: Boolean(scopeId), retry: false, refetchInterval: cameraOn || camera.data?.live ? 1200 : false },
   );
   const chat = api.live.chat.useQuery(
     { scope, scopeId },
@@ -104,8 +122,13 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
   const signal = api.live.signal.useMutation();
 
   const send = (next: LiveSignal) => {
-    if (!userId) return;
-    signal.mutate({ scope, scopeId, signal: next });
+    if (!peerId) return;
+    signal.mutate({
+      scope,
+      scopeId,
+      signal: next,
+      guestId: userId ? undefined : peerId,
+    });
   };
 
   const watchTalk = (id: string, stream: MediaStream) => {
@@ -166,34 +189,39 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
     setCameraOn(false);
   };
 
-  const attachPeer = (peerId: string) => {
-    const existing = peersRef.current.get(peerId);
+  const attachPeer = (remoteId: string) => {
+    const existing = peersRef.current.get(remoteId);
     if (existing) return existing;
     const peer = new RTCPeerConnection(ICE_SERVERS);
-    streamRef.current?.getTracks().forEach((track) => peer.addTrack(track, streamRef.current!));
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => peer.addTrack(track, streamRef.current!));
+    } else {
+      peer.addTransceiver("video", { direction: "recvonly" });
+      peer.addTransceiver("audio", { direction: "recvonly" });
+    }
     peer.onicecandidate = (event) => {
-      if (event.candidate) send({ k: "ice", to: peerId, candidate: event.candidate.toJSON() });
+      if (event.candidate) send({ k: "ice", to: remoteId, candidate: event.candidate.toJSON() });
     };
     peer.ontrack = (event) => {
       const [remote] = event.streams;
       if (!remote) return;
-      setRemoteStreams((current) => (current[peerId] === remote ? current : { ...current, [peerId]: remote }));
-      watchTalk(peerId, remote);
+      setRemoteStreams((current) => (current[remoteId] === remote ? current : { ...current, [remoteId]: remote }));
+      watchTalk(remoteId, remote);
     };
-    peersRef.current.set(peerId, peer);
+    peersRef.current.set(remoteId, peer);
     return peer;
   };
 
-  const callPeer = async (peerId: string) => {
-    const peer = attachPeer(peerId);
+  const callPeer = async (remoteId: string) => {
+    const peer = attachPeer(remoteId);
     if (peer.signalingState !== "stable") return;
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
-    if (offer.sdp) send({ k: "offer", to: peerId, sdp: offer.sdp });
+    if (offer.sdp) send({ k: "offer", to: remoteId, sdp: offer.sdp });
   };
 
   const startCamera = async (mode: "user" | "environment" = facing) => {
-    if (!userId) return;
+    if (!peerId) return;
     setBusy(true);
     setError(null);
     try {
@@ -205,7 +233,7 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
       previous?.getTracks().forEach((track) => track.stop());
       streamRef.current = stream;
       setLocalStream(stream);
-      watchTalk(userId, stream);
+      watchTalk(peerId, stream);
       for (const peer of peersRef.current.values()) {
         for (const track of stream.getTracks()) {
           const sender = peer.getSenders().find((item) => item.track?.kind === track.kind);
@@ -215,9 +243,9 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
       }
       liveSinceRef.current = Date.now();
       setCameraOn(true);
-      if (canHost) send({ k: "on", hostId: userId });
+      if (canHost && userId) send({ k: "on", hostId: userId });
       send({ k: "join", name: myName });
-      joinedRef.current = true;
+      watchingRef.current = true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Camera blocked.");
     } finally {
@@ -226,12 +254,10 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
   };
 
   const endLive = () => {
-    if (userId) {
-      if (canHost) send({ k: "off", hostId: userId });
-      send({ k: "leave" });
-    }
+    if (canHost && userId) send({ k: "off", hostId: userId });
+    if (peerId) send({ k: "leave" });
     stopCamera();
-    joinedRef.current = false;
+    watchingRef.current = false;
   };
 
   useEffect(() => {
@@ -248,39 +274,41 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
   }, []);
 
   useEffect(() => {
-    if (!cameraOn || !userId) return;
+    if (!cameraOn || !peerId) return;
     const beat = window.setInterval(() => send({ k: "join", name: myName }), 8000);
     return () => window.clearInterval(beat);
-  }, [cameraOn, myName, userId]);
+  }, [cameraOn, myName, peerId]);
 
   useEffect(() => {
-    if (!camera.data?.live) joinedRef.current = false;
-    if (canHost || cameraOn || !userId || !camera.data?.live || joinedRef.current) return;
-    joinedRef.current = true;
-    void startCamera();
-  }, [camera.data?.live, cameraOn, canHost, userId]);
+    if (!camera.data?.live) watchingRef.current = false;
+    const hostId = camera.data?.hostId;
+    if (canHost || !peerId || !hostId || hostId === peerId || !camera.data?.live || watchingRef.current) return;
+    watchingRef.current = true;
+    liveSinceRef.current = Date.now();
+    void callPeer(hostId);
+  }, [camera.data?.hostId, camera.data?.live, canHost, peerId]);
 
   const targets = useMemo(() => {
     const hostId = camera.data?.hostId;
     const seats = camera.data?.seats ?? [];
-    const ids = seats.map((seat) => seat.userId).filter((id) => id && id !== userId);
-    const ordered = hostId && hostId !== userId ? [hostId, ...ids.filter((id) => id !== hostId)] : ids;
+    const ids = seats.map((seat) => seat.userId).filter((id) => id && id !== peerId);
+    const ordered = hostId && hostId !== peerId ? [hostId, ...ids.filter((id) => id !== hostId)] : ids;
     return [...new Set(ordered)].slice(0, MESH);
-  }, [camera.data?.hostId, camera.data?.seats, userId]);
+  }, [camera.data?.hostId, camera.data?.seats, peerId]);
 
   useEffect(() => {
-    if (!cameraOn || !userId || !streamRef.current) return;
-    for (const peerId of targets) {
-      if (peersRef.current.has(peerId)) continue;
-      if (userId < peerId) void callPeer(peerId);
+    if (!cameraOn || !peerId || !streamRef.current) return;
+    for (const remoteId of targets) {
+      if (peersRef.current.has(remoteId)) continue;
+      if (peerId < remoteId) void callPeer(remoteId);
     }
     for (const id of peersRef.current.keys()) {
       if (!targets.includes(id)) dropPeer(id);
     }
-  }, [cameraOn, targets, userId]);
+  }, [cameraOn, targets, peerId]);
 
   useEffect(() => {
-    if (!cameraOn || !userId) return;
+    if (!peerId) return;
     const items = signals.data ?? [];
     for (const item of items) {
       if (seenRef.current.has(item.id)) continue;
@@ -296,7 +324,7 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
         dropPeer(item.userId);
         continue;
       }
-      if (next.to !== userId) continue;
+      if (next.to !== peerId) continue;
       seenRef.current.add(item.id);
 
       if (next.k === "offer") {
@@ -320,7 +348,7 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
         if (peer && next.candidate) void peer.addIceCandidate(next.candidate);
       }
     }
-  }, [cameraOn, signals.data, userId]);
+  }, [signals.data, peerId]);
 
   useEffect(() => {
     if (canHost) return;
@@ -338,16 +366,16 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
 
   const seats = useMemo<Seat[]>(() => {
     const roster = new Map<string, Seat>();
-    if (userId && (cameraOn || localStream)) {
-      roster.set(userId, {
-        userId,
+    if (peerId && (cameraOn || localStream)) {
+      roster.set(peerId, {
+        userId: peerId,
         name: myName,
         image: session?.user?.image,
         stream: localStream,
         self: true,
-        talk: talk[userId] ?? 0,
-        chat: chatScore[userId] ?? 0,
-        host: camera.data?.hostId === userId,
+        talk: talk[peerId] ?? 0,
+        chat: chatScore[peerId] ?? 0,
+        host: camera.data?.hostId === peerId,
       });
     }
     for (const seat of camera.data?.seats ?? []) {
@@ -381,7 +409,7 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
       const score = (seat: Seat) => seat.talk + seat.chat * 10 + (seat.host ? 4 : 0) + (seat.self ? 1 : 0);
       return score(b) - score(a);
     });
-  }, [camera.data?.hostId, camera.data?.seats, cameraOn, chatScore, localStream, myName, remoteStreams, session?.user?.image, talk, userId]);
+  }, [camera.data?.hostId, camera.data?.seats, cameraOn, chatScore, localStream, myName, peerId, remoteStreams, session?.user?.image, talk]);
 
   const featured = seats[0];
   const strip = seats.filter((seat) => seat.userId !== featured?.userId).slice(0, MESH);
@@ -442,8 +470,8 @@ export function CameraLive({ scope, scopeId, canHost, title }: CameraLiveProps) 
               Leave
             </Button>
           ) : (
-            <Button type="button" size="sm" disabled={busy || !userId} onClick={() => void startCamera()}>
-              {userId ? (busy ? "…" : "Join") : "Sign in"}
+            <Button type="button" size="sm" disabled={busy || !peerId} onClick={() => void startCamera()}>
+              {busy ? "…" : "Join"}
             </Button>
           )
         ) : null}

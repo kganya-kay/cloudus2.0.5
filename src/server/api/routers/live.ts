@@ -101,14 +101,33 @@ export const liveRouter = createTRPCRouter({
         .filter((row) => row.signal);
     }),
 
-  signal: protectedProcedure
-    .input(scopeInput.extend({ signal: signalInput }))
+  signal: publicProcedure
+    .input(
+      scopeInput.extend({
+        signal: signalInput,
+        guestId: z.string().regex(/^g_[a-zA-Z0-9_-]{8,80}$/).optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
+      const signedId = ctx.session?.user.id;
+      if ((input.signal.k === "on" || input.signal.k === "off") && !signedId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+      let userId = signedId;
+      if (!userId) {
+        if (!input.guestId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        userId = input.guestId;
+        await ctx.db.user.upsert({
+          where: { id: userId },
+          update: {},
+          create: { id: userId, name: "Guest", email: `${userId}@guest.cloudus` },
+        });
+      }
       return liveDb(ctx.db).liveMessage.create({
         data: {
           scope: input.scope,
           scopeId: input.scopeId,
-          userId: ctx.session.user.id,
+          userId,
           body: encodeSignal(input.signal as LiveSignal),
         },
         include: { user: { select: { id: true, name: true, image: true } } },

@@ -33,7 +33,7 @@ function at(value: Date | string | number) {
 export function roomHref(scope: string, scopeId: string) {
   if (scope === "EVENT") return `/events/${scopeId}`;
   if (scope === "PROJECT") return `/projects/${scopeId}`;
-  return "/studio/session";
+  return `/studio/session?u=${encodeURIComponent(scopeId)}`;
 }
 
 export function roomsFromSignals(rows: SignalRow[]): OnAirRoom[] {

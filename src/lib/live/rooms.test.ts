@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { encodeSignal } from "./signal";
-import { roomsFromSignals } from "./rooms";
+import { roomHref, roomsFromSignals } from "./rooms";
 
 describe("on-air rooms", () => {
   it("ranks the room with the most seats first", () => {
@@ -69,5 +69,10 @@ describe("on-air rooms", () => {
       },
     ]);
     assert.equal(rooms.length, 0);
+  });
+
+  it("points a session at the host", () => {
+    assert.equal(roomHref("SESSION", "host-1"), "/studio/session?u=host-1");
+    assert.equal(roomHref("EVENT", "9"), "/events/9");
   });
 });

@@ -54,7 +54,7 @@ export async function composeFrontpage(db: PrismaClient): Promise<PulseFrontpage
         },
         orderBy: [{ pinned: "desc" }, { score: "desc" }, { fetchedAt: "desc" }],
       }),
-      collectOnAirStories(db),
+      collectOnAirStories(db).catch(() => [] as PulseStory[]),
       collectLiveStories(db),
       collectWireStories(),
     ]);

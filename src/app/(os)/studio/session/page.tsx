@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { LiveStage } from "~/components/live/LiveStage";
@@ -13,7 +14,17 @@ function asUrl(value: string) {
 }
 
 export default function StudioSessionPage() {
+  return (
+    <Suspense>
+      <StudioSessionRoom />
+    </Suspense>
+  );
+}
+
+function StudioSessionRoom() {
   const { data: session } = useSession();
+  const search = useSearchParams();
+  const watchUser = search.get("u");
   const [projectId, setProjectId] = useState<number | "">("");
   const [eventId, setEventId] = useState<number | "">("");
   const utils = api.useUtils();
@@ -40,13 +51,21 @@ export default function StudioSessionPage() {
 
   const project = selectedProject.data;
   const event = selectedEvent.data;
+  const ownSession = Boolean(session?.user?.id && !project && !event && (!watchUser || watchUser === session.user.id));
   const canHost = Boolean(
     session?.user?.id &&
-      (project?.viewerContext?.isOwner || event?.viewerContext?.isHost || event?.viewerContext?.isOwner),
+      (project?.viewerContext?.isOwner ||
+        event?.viewerContext?.isHost ||
+        event?.viewerContext?.isOwner ||
+        ownSession),
   );
   const streamUrl = event?.streamUrl ?? project?.heroVideo ?? null;
-  const scope = event ? "EVENT" : "PROJECT";
-  const scopeId = event ? String(event.id) : project ? String(project.id) : "";
+  const scope = event ? "EVENT" : project ? "PROJECT" : "SESSION";
+  const scopeId = event
+    ? String(event.id)
+    : project
+      ? String(project.id)
+      : watchUser || session?.user?.id || "";
 
   const projectOptions = useMemo(() => {
     const seen = new Map<number, { id: number; name: string }>();
@@ -99,11 +118,11 @@ export default function StudioSessionPage() {
 
       <LiveStage
         title={event?.name ?? project?.name ?? "Room"}
-        scope={session?.user?.id && !project ? "SESSION" : scope}
-        scopeId={session?.user?.id && !project ? session.user.id : scopeId || session?.user?.id || "room"}
+        scope={scope}
+        scopeId={scopeId}
         projectId={project?.id}
         streamUrl={streamUrl}
-        canHost={canHost || Boolean(session?.user?.id && !project)}
+        canHost={canHost}
         savingStream={goLive.isPending}
         onSaveStream={
           project
