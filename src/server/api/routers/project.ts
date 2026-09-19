@@ -195,6 +195,21 @@ const marketplaceTasksInput = z
   })
   .optional();
 
+const marketplaceTaskWhere = (input?: z.infer<typeof marketplaceTasksInput>) => {
+  const inferredTag =
+    input?.tag ??
+    (input?.role === "SUPPLIER" ? "supplier" : input?.role === "DRIVER" ? "driver" : undefined);
+
+  return {
+    status: ProjectTaskStatus.BACKLOG,
+    assignedToId: null,
+    project: {
+      visibility: "PUBLIC" as const,
+      ...(inferredTag ? { tags: { has: inferredTag } } : {}),
+    },
+  };
+};
+
 const marketplaceListInput = z
   .object({
     limit: z.number().int().min(1).max(60).optional(),
@@ -1432,22 +1447,8 @@ export const projectRouter = createTRPCRouter({
     .input(marketplaceTasksInput)
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 12;
-      const inferredTag =
-        input?.tag ??
-        (input?.role === "SUPPLIER"
-          ? "supplier"
-          : input?.role === "DRIVER"
-            ? "driver"
-            : undefined);
       const tasks = await ctx.db.projectTask.findMany({
-        where: {
-          status: ProjectTaskStatus.BACKLOG,
-          assignedToId: null,
-          project: {
-            visibility: "PUBLIC",
-            ...(inferredTag ? { tags: { has: inferredTag } } : {}),
-          },
-        },
+        where: marketplaceTaskWhere(input),
         include: {
           project: {
             select: {
@@ -1464,6 +1465,30 @@ export const projectRouter = createTRPCRouter({
         take: limit,
       });
       return tasks;
+    }),
+
+  marketplaceTaskStats: publicProcedure
+    .input(marketplaceTasksInput)
+    .query(async ({ ctx, input }) => {
+      const where = marketplaceTaskWhere(input);
+      try {
+        const [count, totals] = await Promise.all([
+          ctx.db.projectTask.count({ where }),
+          ctx.db.projectTask.aggregate({
+            where,
+            _sum: { budgetCents: true },
+          }),
+        ]);
+        return {
+          count,
+          availableCents: totals._sum.budgetCents ?? 0,
+        };
+      } catch (error) {
+        if (isDatabaseUnreachable(error)) {
+          return { count: 0, availableCents: 0 };
+        }
+        throw error;
+      }
     }),
 
   getSecretMessage: protectedProcedure.query(() => {

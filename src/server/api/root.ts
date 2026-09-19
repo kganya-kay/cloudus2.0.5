@@ -17,6 +17,7 @@ import { platformRouter } from "./routers/platform";
 import { auditRouter } from "./routers/audit";
 import { roomRouter } from "./routers/room";
 import { blogRouter } from "./routers/blog";
+import { socialRouter } from "./routers/social";
 import { workspaceRouter } from "./routers/workspace";
 
 
@@ -44,6 +45,7 @@ export const appRouter = createTRPCRouter({
   audit: auditRouter,
   room: roomRouter,
   blog: blogRouter,
+  social: socialRouter,
   workspace: workspaceRouter,
 });
 

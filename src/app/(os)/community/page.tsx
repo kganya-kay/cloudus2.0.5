@@ -12,6 +12,8 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { CommunityStoryDrop } from "~/components/social/CommunityStoryDrop";
+import { StoryMediaPlayer } from "~/components/social/StoryMediaPlayer";
 
 export default function CommunityPage() {
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
@@ -39,13 +41,44 @@ export default function CommunityPage() {
         description="Creator profiles, the activity feed, Build Nights, and collaboration requests. Start with two people."
         actions={
           <>
-            <Button href="/feed">Open feed</Button>
-            <Button href="/creators/dashboard" variant="secondary">
-              Creator hub
+            <Button href="/Blog">Public blogs</Button>
+            <Button href="/feed" variant="secondary">
+              Open feed
             </Button>
           </>
         }
       />
+
+      <CommunityStoryDrop />
+
+      {data?.blogs.length ? (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Latest stories</h2>
+            <Link href="/Blog" className="text-sm font-semibold text-os-accent">
+              All blogs
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {data.blogs.map((post) => (
+              <Card key={post.id} className="space-y-3">
+                <p className="os-kicker">@{post.blog.userName}</p>
+                <h3 className="font-semibold">{post.title}</h3>
+                <p className="os-muted line-clamp-2">{post.excerpt ?? "A Cloudus story."}</p>
+                <StoryMediaPlayer
+                  imageUrl={post.coverImage}
+                  videoUrl={post.videoUrl}
+                  audioUrl={post.audioUrl}
+                  title={post.title}
+                />
+                <Button href={`/Blog/${post.blog.userName}/${post.slug}`} size="sm" variant="secondary">
+                  Read
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="grid gap-4 lg:grid-cols-[1fr,1fr]">
         <Card>

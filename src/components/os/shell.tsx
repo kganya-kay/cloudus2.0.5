@@ -7,10 +7,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BellIcon,
   HomeIcon,
+  MagnifyingGlassIcon,
   RectangleStackIcon,
   SparklesIcon,
   UserCircleIcon,
   WrenchScrewdriverIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { desktopNav, isNavActive, mobileNav } from "~/lib/os/nav";
 import { useTheme } from "~/lib/os/theme";
@@ -25,6 +27,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [commandOpen, setCommandOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [online, setOnline] = useState(true);
   const user = session?.user;
   const notifications = api.notification.list.useQuery(undefined, {
@@ -54,6 +57,20 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener("offline", syncOnline);
     };
   }, []);
+
+  useEffect(() => {
+    setMobileSearchOpen(false);
+  }, [pathname]);
+
+  const openSearch = () => {
+    setMobileSearchOpen(true);
+    setCommandOpen(true);
+  };
+
+  const closeSearch = () => {
+    setCommandOpen(false);
+    setMobileSearchOpen(false);
+  };
 
   const roleLinks = [
     user?.role === "SUPPLIER" || user?.role === "ADMIN" || user?.role === "CARETAKER"
@@ -113,16 +130,44 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-72">
         <header className="sticky top-0 z-40 border-b border-os-border bg-os-bg/85 backdrop-blur">
           <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
-            <Link href="/" className="flex items-center gap-2 lg:hidden">
+            <Link href="/" className={`flex items-center gap-2 lg:hidden ${mobileSearchOpen ? "hidden" : ""}`}>
               <img src="/cloudus-logo-final.png" alt="Cloudus" className="h-8 w-8 rounded-full object-cover" />
             </Link>
+            {mobileSearchOpen ? (
+              <div className="flex min-w-0 flex-1 items-center gap-2 md:hidden">
+                <button
+                  type="button"
+                  onClick={openSearch}
+                  className="flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-os-border bg-os-card px-4 text-left text-sm text-os-muted"
+                >
+                  Search Cloudus
+                </button>
+                <button
+                  type="button"
+                  onClick={closeSearch}
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-os-border"
+                  aria-label="Close search"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={openSearch}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-os-border bg-os-card md:hidden"
+                aria-label="Search Cloudus"
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setCommandOpen(true)}
-              className="flex min-h-11 flex-1 items-center rounded-full border border-os-border bg-os-card px-4 text-left text-sm text-os-muted"
+              className="hidden min-h-11 flex-1 items-center rounded-full border border-os-border bg-os-card px-4 text-left text-sm text-os-muted md:flex"
             >
               Search Cloudus
-              <span className="ml-auto hidden text-[11px] sm:inline">Ctrl K</span>
+              <span className="ml-auto hidden text-[11px] lg:inline">Ctrl K</span>
             </button>
             <button
               type="button"
@@ -187,7 +232,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         </ul>
       </nav>
 
-      <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
+      <CommandPalette open={commandOpen} onClose={closeSearch} />
     </div>
   );
 }

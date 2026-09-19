@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
+import { BloggerSetup } from "../_components/BloggerSetup";
 import ProfileEditor from "../_components/ProfileEditor";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +60,8 @@ export default async function ProfilePage(props: any) {
           }}
         />
       </div>
+
+      <BloggerSetup />
     </main>
   );
 }

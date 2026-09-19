@@ -4,6 +4,12 @@ import Link from "next/link";
 import { BlogPostStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 
+import { Badge, Button, Card, EmptyState, PageHeader } from "~/components/os/primitives";
+import { BloggerNav } from "~/components/social/BloggerNav";
+import { SocialStoryFields } from "~/components/social/SocialStoryFields";
+import { StoryMediaPlayer } from "~/components/social/StoryMediaPlayer";
+import type { SocialStoryMedia } from "~/components/social/types";
+import { PLATFORM_LABELS, type SocialPlatformName } from "~/lib/social/platforms";
 import { api } from "~/trpc/react";
 
 type BlogComposerProps = {
@@ -41,180 +47,202 @@ export default function BlogComposer({
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
-  const [status, setStatus] = useState<BlogPostStatus>(BlogPostStatus.DRAFT);
+  const [media, setMedia] = useState<SocialStoryMedia>({});
+  const [status, setStatus] = useState<BlogPostStatus>(BlogPostStatus.PUBLISHED);
 
   const utils = api.useUtils();
-  const [profile] = api.blog.profile.useSuspenseQuery({ userName: routeUserName });
-  const [posts] = api.blog.listPosts.useSuspenseQuery({
-    userName: routeUserName,
-    includeDrafts: true,
-    limit: 20,
-  });
+  const profile = api.blog.profile.useQuery(
+    { userName: routeUserName },
+    { retry: false },
+  );
+  const posts = api.blog.listPosts.useQuery(
+    {
+      userName: routeUserName,
+      includeDrafts: true,
+      limit: 20,
+    },
+    { retry: false },
+  );
 
-  const canCreateForRoute = useMemo(() => {
-    if (profile.viewerCanManage) return true;
+  const canManage = useMemo(() => {
+    if (profile.data?.viewerCanManage) return true;
     if (!isSignedIn || !sessionUserName) return false;
     return normalizeName(routeUserName) === normalizeName(sessionUserName);
-  }, [isSignedIn, profile.viewerCanManage, routeUserName, sessionUserName]);
+  }, [isSignedIn, profile.data?.viewerCanManage, routeUserName, sessionUserName]);
 
   const createPost = api.blog.createPost.useMutation({
     onSuccess: async () => {
       await Promise.all([
         utils.blog.profile.invalidate({ userName: routeUserName }),
         utils.blog.listPosts.invalidate({ userName: routeUserName }),
+        utils.blog.listPublicBlogs.invalidate(),
       ]);
       setTitle("");
       setExcerpt("");
       setContent("");
-      setStatus(BlogPostStatus.DRAFT);
+      setMedia({});
+      setStatus(BlogPostStatus.PUBLISHED);
     },
   });
 
-  if (!isSignedIn) {
-    return (
-      <section className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center">
-        <h2 className="text-lg font-semibold text-gray-900">Sign in to manage this blog</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Route: <span className="font-mono">/Blog/{routeUserName}</span>
-        </p>
-        <Link
-          href="/api/auth/signin"
-          className="mt-4 inline-flex rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
-        >
-          Sign in
-        </Link>
-      </section>
-    );
-  }
-
-  if (!canCreateForRoute) {
-    return (
-      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-        <h2 className="text-lg font-semibold text-amber-900">Username mismatch</h2>
-        <p className="mt-2 text-sm text-amber-800">
-          You are signed in as <strong>{sessionUserName ?? "unknown"}</strong>, but this page is for{" "}
-          <strong>{routeUserName}</strong>.
-        </p>
-      </section>
-    );
-  }
+  const blog = profile.data?.blog;
+  const socials = blog?.owner.socialAccounts ?? [];
+  const items = posts.data?.items ?? [];
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="mb-4">
-          <p className="text-xs uppercase tracking-wide text-blue-600">Blog Studio</p>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            {profile.blog?.title ?? `${routeUserName}'s Blog`}
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Route: <span className="font-mono">/Blog/{routeUserName}</span>
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Stories"
+        title={blog?.title ?? `${routeUserName}'s blog`}
+        description={blog?.description ?? "Pictures, video, and sound in one story."}
+        actions={<BloggerNav current={canManage ? "mine" : "community"} />}
+      />
 
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!title.trim() || !content.trim()) return;
-            createPost.mutate({
-              userName: routeUserName,
-              title: title.trim(),
-              excerpt: excerpt.trim() || undefined,
-              content: content.trim(),
-              status,
-            });
-          }}
-        >
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="blog-title">
-              Title
-            </label>
-            <input
-              id="blog-title"
-              type="text"
-              placeholder="A strong post title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-900 outline-none ring-blue-500 focus:ring-2"
-            />
+      <Card>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="os-kicker">@{blog?.userName ?? routeUserName}</p>
+            <p className="mt-1 font-semibold">{blog?.owner.name ?? routeUserName}</p>
+            <p className="os-muted">{blog?.postCount ?? items.length} stories</p>
           </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="blog-excerpt">
-              Excerpt
-            </label>
-            <input
-              id="blog-excerpt"
-              type="text"
-              placeholder="One-line summary"
-              value={excerpt}
-              onChange={(event) => setExcerpt(event.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-900 outline-none ring-blue-500 focus:ring-2"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="blog-content">
-              Content
-            </label>
-            <textarea
-              id="blog-content"
-              rows={8}
-              placeholder="Write your post content here"
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-900 outline-none ring-blue-500 focus:ring-2"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="blog-status">
-              Status
-            </label>
-            <select
-              id="blog-status"
-              value={status}
-              onChange={(event) => setStatus(event.target.value as BlogPostStatus)}
-              className="rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900"
+          {socials.map((account) => (
+            <a
+              key={`${account.platform}-${account.handle}`}
+              href={account.profileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-os-elevated px-3 py-1 text-xs font-semibold"
             >
-              <option value={BlogPostStatus.DRAFT}>Draft</option>
-              <option value={BlogPostStatus.PUBLISHED}>Published</option>
-              <option value={BlogPostStatus.ARCHIVED}>Archived</option>
-            </select>
-          </div>
+              {PLATFORM_LABELS[account.platform as SocialPlatformName]} @{account.handle}
+            </a>
+          ))}
+        </div>
+      </Card>
 
-          <button
-            type="submit"
-            disabled={createPost.isPending || !title.trim() || !content.trim()}
-            className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+      {canManage ? (
+        <Card>
+          <p className="os-kicker">Write</p>
+          <h2 className="mt-1 text-xl font-semibold">New story</h2>
+          <p className="os-muted mt-1">
+            Tell it with words, then drop a picture, a video, and sound from your socials or uploads.
+          </p>
+
+          <form
+            className="mt-4 space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!title.trim()) return;
+              createPost.mutate({
+                userName: routeUserName,
+                title: title.trim(),
+                excerpt: excerpt.trim() || undefined,
+                content: content.trim() || undefined,
+                coverImage: media.imageUrl,
+                videoUrl: media.videoUrl,
+                audioUrl: media.audioUrl,
+                status,
+              });
+            }}
           >
-            {createPost.isPending ? "Saving..." : "Create post"}
-          </button>
-        </form>
-      </section>
+            <label className="text-xs text-os-muted">
+              Title
+              <input
+                className="os-field"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="What happened"
+              />
+            </label>
+            <label className="text-xs text-os-muted">
+              Excerpt
+              <input
+                className="os-field"
+                value={excerpt}
+                onChange={(event) => setExcerpt(event.target.value)}
+                placeholder="One line people can scan"
+              />
+            </label>
+            <label className="text-xs text-os-muted">
+              Story
+              <textarea
+                className="os-field"
+                rows={6}
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                placeholder="Write the night, the room, the feeling."
+              />
+            </label>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Recent posts</h2>
-        {posts.items.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-600">No posts yet. Publish your first entry above.</p>
+            <SocialStoryFields value={media} onChange={setMedia} />
+
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                className="os-field w-auto"
+                value={status}
+                onChange={(event) => setStatus(event.target.value as BlogPostStatus)}
+              >
+                <option value={BlogPostStatus.PUBLISHED}>Published</option>
+                <option value={BlogPostStatus.DRAFT}>Draft</option>
+                <option value={BlogPostStatus.ARCHIVED}>Archived</option>
+              </select>
+              <Button
+                type="submit"
+                disabled={
+                  createPost.isPending ||
+                  !title.trim() ||
+                  (!content.trim() && !media.imageUrl && !media.videoUrl && !media.audioUrl)
+                }
+              >
+                {createPost.isPending ? "Saving…" : "Publish story"}
+              </Button>
+            </div>
+            {createPost.error ? <p className="text-sm text-os-danger">{createPost.error.message}</p> : null}
+          </form>
+        </Card>
+      ) : !isSignedIn ? (
+        <Card>
+          <p className="font-semibold">This is a public blog</p>
+          <p className="os-muted mt-1">Sign in to write your own stories. You can still read everything here.</p>
+          <Button href={`/auth/login?callbackUrl=/Blog/${routeUserName}`} className="mt-3" size="sm">
+            Sign in
+          </Button>
+        </Card>
+      ) : null}
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">{canManage ? "Your stories" : "Stories"}</h2>
+        {items.length === 0 ? (
+          <EmptyState
+            title="No stories yet"
+            description={canManage ? "Drop a picture, a clip, or a voice note and publish." : "This blogger has not published yet."}
+          />
         ) : (
-          <div className="mt-4 space-y-3">
-            {posts.items.map((post: (typeof posts.items)[number]) => (
-              <article key={post.id} className="rounded-xl border border-gray-100 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-semibold text-gray-900">{post.title}</h3>
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                    {post.status}
-                  </span>
-                  <span className="text-xs text-gray-500">{formatDate(post.publishedAt)}</span>
-                </div>
-                {post.excerpt && <p className="mt-2 text-sm text-gray-700">{post.excerpt}</p>}
-              </article>
-            ))}
-          </div>
+          items.map((post) => (
+            <article key={post.id} className="os-card space-y-3 p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-semibold">{post.title}</h3>
+                <Badge tone={post.status === "PUBLISHED" ? "success" : "default"}>{post.status}</Badge>
+                <span className="text-xs text-os-muted">{formatDate(post.publishedAt)}</span>
+              </div>
+              {post.excerpt ? <p className="os-muted">{post.excerpt}</p> : null}
+              <StoryMediaPlayer
+                imageUrl={post.coverImage}
+                videoUrl={post.videoUrl}
+                audioUrl={post.audioUrl}
+                title={post.title}
+              />
+              {post.content ? <p className="whitespace-pre-wrap text-sm leading-6">{post.content}</p> : null}
+              <Button href={`/Blog/${routeUserName}/${post.slug}`} size="sm" variant="secondary">
+                Open story
+              </Button>
+            </article>
+          ))
         )}
       </section>
+
+      <p className="os-muted">
+        Browse the community on <Link href="/Blog" className="font-semibold text-os-accent">public blogs</Link>.
+      </p>
     </div>
   );
 }

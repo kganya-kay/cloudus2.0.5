@@ -1,83 +1,95 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
+import { formatZarFromCents } from "~/lib/os/format";
 import { api } from "~/trpc/react";
-
-const formatCurrency = (value?: number | null) => {
-  if (!value || Number.isNaN(value)) return "R 0";
-  try {
-    return new Intl.NumberFormat("en-ZA", {
-      style: "currency",
-      currency: "ZAR",
-      maximumFractionDigits: 0,
-    }).format(value / 100);
-  } catch {
-    return `R ${(value / 100).toFixed(0)}`;
-  }
-};
 
 export function MarketplaceTasksPanel({
   role,
   limit,
   title = "Available tasks",
   subtitle = "Claim or bid to earn from Cloudus projects",
+  defaultOpen = true,
+  showBrowseLink = true,
 }: {
   role?: "SUPPLIER" | "DRIVER" | "CREATOR";
   limit?: number;
   title?: string;
   subtitle?: string;
+  defaultOpen?: boolean;
+  showBrowseLink?: boolean;
 }) {
-  const tasksQuery = api.project.marketplaceTasks.useQuery({ limit, role });
+  const [open, setOpen] = useState(defaultOpen);
+  const tasksQuery = api.project.marketplaceTasks.useQuery({ limit, role }, { retry: false });
+  const statsQuery = api.project.marketplaceTaskStats.useQuery({ role }, { retry: false });
   const tasks = tasksQuery.data ?? [];
-  const isLoading = tasksQuery.isLoading;
+  const isLoading = tasksQuery.isLoading || statsQuery.isLoading;
+  const taskCount = statsQuery.data?.count ?? tasks.length;
+  const potLabel = formatZarFromCents(statsQuery.data?.availableCents ?? 0);
 
   return (
-    <section className="rounded-3xl border border-gray-100 bg-white/80 p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-gray-500">{title}</p>
-          <p className="text-sm text-gray-600">{subtitle}</p>
+    <details
+      className="os-card group overflow-hidden"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0">
+          <p className="os-kicker">{title}</p>
+          <p className="mt-1 text-lg font-semibold">
+            {isLoading ? "…" : `${taskCount} ${taskCount === 1 ? "task" : "tasks"}`}
+          </p>
+          {subtitle && defaultOpen ? <p className="os-muted mt-1">{subtitle}</p> : null}
         </div>
-        <Link
-          href="/projects"
-          className="rounded-full border border-blue-200 px-4 py-1.5 text-xs font-semibold text-blue-700"
-        >
-          View all
-        </Link>
-      </div>
-      {isLoading ? (
-        <p className="mt-4 text-sm text-gray-500">Loading tasks...</p>
-      ) : tasks.length === 0 ? (
-        <p className="mt-4 text-sm text-gray-500">
-          No unassigned tasks right now. Check back soon or browse{" "}
-          <Link href="/feed" className="text-blue-600 underline">
-            the feed
-          </Link>{" "}
-          for new drops.
-        </p>
-      ) : (
-        <div className="mt-4 space-y-3">
-          {tasks.map((task) => (
-            <article
-              key={task.id}
-              className="rounded-2xl border border-blue-50 bg-blue-50/60 p-3 text-sm text-gray-700"
-            >
+        <div className="flex shrink-0 items-center gap-3 text-right">
+          <p className="text-lg font-semibold tracking-tight">
+            {isLoading ? "…" : `${potLabel} available`}
+          </p>
+          <span
+            aria-hidden
+            className="grid h-8 w-8 place-items-center rounded-full bg-os-elevated text-sm transition group-open:rotate-180"
+          >
+            ▾
+          </span>
+        </div>
+      </summary>
+
+      <div className="space-y-3 border-t border-[var(--os-border)] px-5 pb-5 pt-4">
+        {showBrowseLink ? (
+          <div className="flex justify-end">
+            <Link href="/projects" className="text-xs font-semibold text-os-accent">
+              View all
+            </Link>
+          </div>
+        ) : null}
+        {isLoading ? (
+          <p className="os-muted">Loading tasks…</p>
+        ) : tasks.length === 0 ? (
+          <p className="os-muted">
+            No unassigned tasks right now. Check back soon or browse{" "}
+            <Link href="/feed" className="font-semibold text-os-accent">
+              the feed
+            </Link>
+            .
+          </p>
+        ) : (
+          tasks.map((task) => (
+            <article key={task.id} className="rounded-2xl bg-os-elevated p-3 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-gray-900">{task.title}</p>
-                  <p className="text-xs text-gray-500">{task.project.name}</p>
+                  <p className="font-semibold">{task.title}</p>
+                  <p className="os-muted text-xs">{task.project.name}</p>
                 </div>
-                <p className="text-xs font-semibold text-blue-700">
-                  {formatCurrency(task.budgetCents)}
-                </p>
+                <p className="text-xs font-semibold">{formatZarFromCents(task.budgetCents)}</p>
               </div>
-              {task.description && (
-                <p className="mt-1 text-xs text-gray-600 line-clamp-2">{task.description}</p>
-              )}
-              <div className="mt-2 flex flex-wrap gap-1 text-[10px] uppercase text-blue-700">
+              {task.description ? (
+                <p className="os-muted mt-1 line-clamp-2 text-xs">{task.description}</p>
+              ) : null}
+              <div className="mt-2 flex flex-wrap gap-1 text-[10px] uppercase text-os-muted">
                 {(task.skills ?? []).slice(0, 3).map((skill) => (
-                  <span key={skill} className="rounded-full bg-white px-2 py-0.5">
+                  <span key={skill} className="rounded-full bg-[var(--os-card)] px-2 py-0.5">
                     {skill}
                   </span>
                 ))}
@@ -85,21 +97,21 @@ export function MarketplaceTasksPanel({
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href={`/projects/${task.project.id}`}
-                  className="inline-flex rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white"
+                  className="inline-flex min-h-9 items-center rounded-full bg-os-fg px-3 text-xs font-semibold text-os-bg"
                 >
                   View project
                 </Link>
                 <Link
                   href={`/projects/${task.project.id}#tasks`}
-                  className="inline-flex rounded-full border border-blue-600 px-3 py-1 text-xs font-semibold text-blue-700"
+                  className="inline-flex min-h-9 items-center rounded-full border border-os-border px-3 text-xs font-semibold"
                 >
                   Claim or bid
                 </Link>
               </div>
             </article>
-          ))}
-        </div>
-      )}
-    </section>
+          ))
+        )}
+      </div>
+    </details>
   );
 }
