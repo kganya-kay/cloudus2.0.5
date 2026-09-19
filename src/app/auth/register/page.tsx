@@ -1,4 +1,3 @@
-// src/app/auth/register/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -21,7 +20,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ name, email, password }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
+        const j = await res.json().catch(() => ({})) as { error?: string };
         setErr(j?.error ?? "Registration failed");
       } else {
         setMsg("Registration successful. You can sign in now.");
@@ -34,31 +33,32 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="mx-auto max-w-sm p-6">
-      <h1 className="mb-2 text-2xl font-bold">Register</h1>
-      <div className="rounded-lg border bg-white p-4">
+    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
+      <p className="os-kicker">Cloudus OS</p>
+      <h1 className="os-title mt-2">Create an account</h1>
+      <p className="os-muted mt-2">Join as a builder. Existing registration and roles are unchanged.</p>
+      <div className="os-card mt-6 p-5">
         <div className="grid gap-3">
           <div>
-            <label className="text-xs text-gray-600">Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
+            <label className="text-xs text-os-muted" htmlFor="reg-name">Name</label>
+            <input id="reg-name" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-full border border-os-border bg-os-elevated px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-gray-600">Email</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
+            <label className="text-xs text-os-muted" htmlFor="reg-email">Email</label>
+            <input id="reg-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="mt-1 w-full rounded-full border border-os-border bg-os-elevated px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-gray-600">Password</label>
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="mt-1 w-full rounded-full border px-3 py-2 text-sm" />
+            <label className="text-xs text-os-muted" htmlFor="reg-password">Password</label>
+            <input id="reg-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="mt-1 w-full rounded-full border border-os-border bg-os-elevated px-3 py-2 text-sm" />
           </div>
-          {err && <p className="text-sm text-red-600">{err}</p>}
-          {msg && <p className="text-sm text-green-700">{msg}</p>}
-          <button onClick={submit} disabled={busy || !name || !email || !password} className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          {err && <p className="text-sm text-os-danger">{err}</p>}
+          {msg && <p className="text-sm text-os-success">{msg}</p>}
+          <button onClick={submit} disabled={busy || !name || !email || !password} className="min-h-11 rounded-full bg-os-fg px-4 py-2 text-sm font-semibold text-os-bg disabled:opacity-50 dark:bg-white dark:text-zinc-950">
             {busy ? "Registering…" : "Register"}
           </button>
-          <p className="text-xs text-gray-600">Already have an account? <Link href="/auth/login" className="text-blue-700 hover:underline">Sign in</Link></p>
+          <p className="text-xs text-os-muted">Already have an account? <Link href="/auth/login" className="text-os-accent hover:underline">Sign in</Link></p>
         </div>
       </div>
     </main>
   );
 }
-

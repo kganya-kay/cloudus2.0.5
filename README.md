@@ -1,8 +1,8 @@
-
 Hosted on https://cloudus2-0-5.vercel.app/
 
-to-do
-[] = Shop Page
+Cloudus OS lives at `/dashboard`. Classic marketplace home remains `/`.
+
+See `docs/route-map.md` for the Creative Operating System routes.
 
 
 # Create T3 App

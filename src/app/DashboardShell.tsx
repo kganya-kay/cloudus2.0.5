@@ -117,6 +117,19 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-gray-900">
+      <div className="border-b border-blue-100 bg-white/90 px-4 py-3 text-sm sm:px-6">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-gray-700">
+            Cloudus OS is live — dashboard, studio, community, and marketplace without replacing this home.
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-blue-600 px-4 font-semibold text-white"
+          >
+            Enter Cloudus OS
+          </Link>
+        </div>
+      </div>
       {/* ===== Top App Bar (YouTube-style) ===== */}
       <Disclosure
         as="nav"
