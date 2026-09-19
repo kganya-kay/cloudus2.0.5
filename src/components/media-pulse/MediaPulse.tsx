@@ -15,7 +15,7 @@ const LEAD_MS = 10000;
 const RAIL_MS = 3500;
 
 function liveStories(stories: PulseStory[]) {
-  return stories.filter((story) => pickLiveMedia(story));
+  return stories.filter((story) => story.kind === "LIVE" || pickLiveMedia(story));
 }
 
 export function MediaPulse({ initial }: { initial?: PulseFrontpage | null }) {
@@ -27,6 +27,7 @@ export function MediaPulse({ initial }: { initial?: PulseFrontpage | null }) {
     {},
     {
       retry: false,
+      refetchInterval: 8000,
       initialData: initial ?? undefined,
       placeholderData: (previous) => previous,
     },
@@ -69,6 +70,11 @@ export function MediaPulse({ initial }: { initial?: PulseFrontpage | null }) {
       {current ? (
         <article className="space-y-3 p-5 sm:p-6">
           <NewspaperMedia story={current} featured onPlayingChange={setPlaying} />
+          {current.kind === "LIVE" ? (
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-os-burgundy">
+              Live{current.viewers ? ` · ${current.viewers}` : ""}
+            </p>
+          ) : null}
           <h3 className="os-paper-headline text-2xl sm:text-4xl">{current.title}</h3>
           <p className="os-muted line-clamp-1">{current.dek}</p>
           <a

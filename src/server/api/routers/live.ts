@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { roomsFromSignals } from "~/lib/live/rooms";
 import { decodeSignal, encodeSignal, LIVE_SIG, type LiveSignal } from "~/lib/live/signal";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
@@ -70,49 +71,11 @@ export const liveRouter = createTRPCRouter({
       take: 80,
       include: { user: { select: { id: true, name: true, image: true } } },
     });
-    let live = false;
-    let hostId: string | null = null;
-    let startedAt = 0;
-    for (const row of rows) {
-      const next = decodeSignal(row.body);
-      if (next?.k === "on") {
-        live = true;
-        hostId = next.hostId;
-        startedAt = new Date(row.createdAt).getTime();
-        break;
-      }
-      if (next?.k === "off") {
-        return { live: false as const, hostId: next.hostId, seats: [] as Array<{ userId: string; name: string | null; image: string | null }> };
-      }
-    }
-    if (!live) return { live: false as const, hostId: null, seats: [] };
-
-    const seats = new Map<string, { userId: string; name: string | null; image: string | null }>();
-    for (const row of [...rows].reverse()) {
-      if (new Date(row.createdAt).getTime() < startedAt) continue;
-      const next = decodeSignal(row.body);
-      if (!next) continue;
-      if (next.k === "leave") {
-        seats.delete(row.userId);
-        continue;
-      }
-      if (next.k === "on" || next.k === "join") {
-        seats.set(row.userId, {
-          userId: row.userId,
-          name: (next.k === "join" ? next.name : null) ?? row.user.name,
-          image: row.user.image,
-        });
-      }
-    }
-    if (hostId && !seats.has(hostId)) {
-      const hostRow = rows.find((row) => row.userId === hostId);
-      seats.set(hostId, {
-        userId: hostId,
-        name: hostRow?.user.name ?? null,
-        image: hostRow?.user.image ?? null,
-      });
-    }
-    return { live: true as const, hostId, seats: [...seats.values()] };
+    const room = roomsFromSignals(
+      rows.map((row) => ({ ...row, scope: input.scope, scopeId: input.scopeId })),
+    )[0];
+    if (!room) return { live: false as const, hostId: null, seats: [] as Array<{ userId: string; name: string | null; image: string | null }> };
+    return { live: true as const, hostId: room.hostId, seats: room.seats };
   }),
 
   signals: publicProcedure

@@ -15,6 +15,7 @@ export type PulseStory = {
   interestCount: number;
   score: number;
   shared: boolean;
+  viewers?: number;
 };
 
 export type PulseFrontpage = {

@@ -162,7 +162,7 @@ export async function collectLiveStories(db: PrismaClient): Promise<PulseStory[]
     const item = story({
       id: `event-${event.id}`,
       topic: slugTopic(event.name),
-      kind: event.streamUrl ? "LIVE" : "EVENT",
+      kind: event.status === "Live" ? "LIVE" : event.streamUrl ? "VIDEO" : "EVENT",
       title: event.name,
       dek: event.description ?? event.venue ?? event.location ?? event.name,
       sourceName: event.venue ?? "Event",
