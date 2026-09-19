@@ -91,6 +91,9 @@ export const blogRouter = createTRPCRouter({
           slug: true,
           title: true,
           excerpt: true,
+          coverImage: true,
+          videoUrl: true,
+          audioUrl: true,
           publishedAt: true,
           createdAt: true,
           blog: {
@@ -138,6 +141,9 @@ export const blogRouter = createTRPCRouter({
           slug: item.slug,
           title: item.title,
           excerpt: item.excerpt,
+          coverImage: item.coverImage,
+          videoUrl: item.videoUrl,
+          audioUrl: item.audioUrl,
           publishedAt: item.publishedAt ?? item.createdAt,
         },
         publishedPostCount: countByBlogId.get(item.blogId) ?? 0,
@@ -160,7 +166,22 @@ export const blogRouter = createTRPCRouter({
           title: true,
           description: true,
           ownerId: true,
-          owner: { select: { id: true, name: true, image: true } },
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              socialAccounts: {
+                select: {
+                  platform: true,
+                  handle: true,
+                  profileUrl: true,
+                  latestImageUrl: true,
+                },
+                orderBy: [{ isPrimary: "desc" }, { updatedAt: "desc" }],
+              },
+            },
+          },
           _count: { select: { posts: true } },
         },
       });
@@ -296,17 +317,49 @@ export const blogRouter = createTRPCRouter({
     });
   }),
 
+  mine: protectedProcedure.query(async ({ ctx }) => {
+    const blog = await ctx.db.blog.findUnique({
+      where: { ownerId: ctx.session.user.id },
+      include: {
+        posts: {
+          orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+          take: 40,
+        },
+      },
+    });
+    return {
+      blog,
+      user: {
+        id: ctx.session.user.id,
+        name: ctx.session.user.name,
+        image: ctx.session.user.image,
+        email: ctx.session.user.email,
+      },
+    };
+  }),
+
   createPost: protectedProcedure
     .input(
-      z.object({
-        userName: userNameSchema,
-        title: z.string().trim().min(3).max(160),
-        content: z.string().trim().min(1).max(50000),
-        excerpt: z.string().trim().max(320).optional(),
-        coverImage: z.string().url().max(2048).optional(),
-        slug: z.string().trim().max(160).optional(),
-        status: z.nativeEnum(BlogPostStatus).optional(),
-      }),
+      z
+        .object({
+          userName: userNameSchema,
+          title: z.string().trim().min(3).max(160),
+          content: z.string().max(50000).optional(),
+          excerpt: z.string().trim().max(320).optional(),
+          coverImage: z.string().url().max(2048).optional(),
+          videoUrl: z.string().url().max(2048).optional(),
+          audioUrl: z.string().url().max(2048).optional(),
+          slug: z.string().trim().max(160).optional(),
+          status: z.nativeEnum(BlogPostStatus).optional(),
+        })
+        .refine(
+          (value) =>
+            Boolean(value.content?.trim()) ||
+            Boolean(value.coverImage) ||
+            Boolean(value.videoUrl) ||
+            Boolean(value.audioUrl),
+          { message: "Add a story, picture, video, or sound." },
+        ),
     )
     .mutation(async ({ ctx, input }) => {
       const normalizedUserName = assertNormalized(normalizeUserName(input.userName));
@@ -344,9 +397,11 @@ export const blogRouter = createTRPCRouter({
           authorId: ctx.session.user.id,
           slug,
           title: input.title,
-          content: input.content,
+          content: input.content?.trim() || "",
           excerpt: input.excerpt,
           coverImage: input.coverImage,
+          videoUrl: input.videoUrl,
+          audioUrl: input.audioUrl,
           status,
           publishedAt: status === BlogPostStatus.PUBLISHED ? new Date() : null,
         },
@@ -358,9 +413,11 @@ export const blogRouter = createTRPCRouter({
       z.object({
         postId: z.string().cuid(),
         title: z.string().trim().min(3).max(160).optional(),
-        content: z.string().trim().min(1).max(50000).optional(),
+        content: z.string().max(50000).optional(),
         excerpt: z.string().trim().max(320).optional(),
         coverImage: z.string().url().max(2048).nullable().optional(),
+        videoUrl: z.string().url().max(2048).nullable().optional(),
+        audioUrl: z.string().url().max(2048).nullable().optional(),
         slug: z.string().trim().max(160).optional(),
         status: z.nativeEnum(BlogPostStatus).optional(),
       }),
@@ -391,9 +448,11 @@ export const blogRouter = createTRPCRouter({
         where: { id: existing.id },
         data: {
           title: input.title ?? existing.title,
-          content: input.content ?? existing.content,
+          content: input.content === undefined ? existing.content : input.content,
           excerpt: input.excerpt ?? existing.excerpt,
           coverImage: input.coverImage === undefined ? existing.coverImage : input.coverImage,
+          videoUrl: input.videoUrl === undefined ? existing.videoUrl : input.videoUrl,
+          audioUrl: input.audioUrl === undefined ? existing.audioUrl : input.audioUrl,
           slug: nextSlug,
           status: nextStatus,
           publishedAt: nextPublishedAt,

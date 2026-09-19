@@ -52,6 +52,32 @@ export const ourFileRouter = {
       console.log("Resume upload for userId:", metadata.userId, file.url);
       return { uploadedBy: metadata.userId };
     }),
+  videoUploader: f({
+    video: {
+      maxFileSize: "64MB",
+      maxFileCount: 1,
+    },
+  })
+    .middleware(async ({ req }) => {
+      const user = auth(req);
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, url: file.url };
+    }),
+  audioUploader: f({
+    audio: {
+      maxFileSize: "16MB",
+      maxFileCount: 1,
+    },
+  })
+    .middleware(async ({ req }) => {
+      const user = auth(req);
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, url: file.url };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

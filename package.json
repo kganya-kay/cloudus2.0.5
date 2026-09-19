@@ -19,7 +19,7 @@
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/os/format.test.ts"
+    "test": "tsx --test src/lib/os/format.test.ts src/lib/social/platforms.test.ts"
   },
   "dependencies": {
     "@auth/core": "^0.40.0",

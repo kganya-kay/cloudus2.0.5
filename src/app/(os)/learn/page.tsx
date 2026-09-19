@@ -35,8 +35,15 @@ export default function LearnPage() {
       <PageHeader
         eyebrow="Knowledge"
         title="Learn"
-        description="Engineering notes, creative tutorials, and playbooks. Writing lives in the existing Cloudus blog."
-        actions={<Button href="/Blog">Open blog</Button>}
+        description="Engineering notes and story blogs with picture, video, and sound."
+        actions={
+          <>
+            <Button href="/Blog">Public blogs</Button>
+            <Button href="/Blog/me" variant="secondary">
+              My stories
+            </Button>
+          </>
+        }
       />
 
       <div className="grid gap-3 sm:grid-cols-3">

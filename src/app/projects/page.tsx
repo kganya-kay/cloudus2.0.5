@@ -18,7 +18,13 @@ export default async function ProjectsPage() {
           actions={<Button href="/projects/create">New project</Button>}
         />
 
-        <MarketplaceTasksPanel role="CREATOR" title="Open tasks" />
+        <MarketplaceTasksPanel
+          role="CREATOR"
+          title="Open tasks"
+          limit={50}
+          defaultOpen={false}
+          showBrowseLink={false}
+        />
 
         {projects.length === 0 ? (
           <EmptyState
