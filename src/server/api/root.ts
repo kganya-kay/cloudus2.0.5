@@ -19,6 +19,7 @@ import { roomRouter } from "./routers/room";
 import { blogRouter } from "./routers/blog";
 import { socialRouter } from "./routers/social";
 import { mediaPulseRouter } from "./routers/mediaPulse";
+import { liveRouter } from "./routers/live";
 import { workspaceRouter } from "./routers/workspace";
 
 
@@ -48,6 +49,7 @@ export const appRouter = createTRPCRouter({
   blog: blogRouter,
   social: socialRouter,
   mediaPulse: mediaPulseRouter,
+  live: liveRouter,
   workspace: workspaceRouter,
 });
 

@@ -18,7 +18,6 @@ export type PulseStory = {
 };
 
 export type PulseFrontpage = {
-  lead: PulseStory;
-  rail: PulseStory[];
+  stories: PulseStory[];
   kinds: MediaPulseKindName[];
 };

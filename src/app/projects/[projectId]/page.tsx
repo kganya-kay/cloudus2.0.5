@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { OurFileRouter } from "~/app/api/uploadthing/core";
+import { LiveStage } from "~/components/live/LiveStage";
 import { api } from "~/trpc/react";
 import { IconButton } from "@mui/material";
 import {
@@ -884,6 +885,23 @@ export default function LatestProject() {
                 {formatCurrency(projectBudgetCents)}
               </p>
             </div>
+          </div>
+
+          <div className="mt-6">
+            <LiveStage
+              title={p.name}
+              scope="PROJECT"
+              scopeId={String(p.id)}
+              projectId={p.id}
+              streamUrl={p.heroVideo}
+              canHost={Boolean(p.viewerContext?.isOwner)}
+              onSaveStream={(url) =>
+                updateProject.mutate({
+                  id: p.id,
+                  data: { heroVideo: /^https?:\/\//i.test(url) ? url : `https://${url}` },
+                })
+              }
+            />
           </div>
 
           <div className="mt-6 hidden rounded-full border border-slate-200 bg-white p-2 shadow-sm md:block">

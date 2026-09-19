@@ -9,8 +9,13 @@ export type OsNavItem = {
 export const mobileNav: OsNavItem[] = [
   { href: "/", label: "Home", description: "Home", mobile: true },
   { href: "/build", label: "Build", description: "Build", mobile: true },
-  { href: "/community", label: "Community", description: "Community", mobile: true },
+  { href: "/community", label: "Room", description: "Community", mobile: true },
   { href: "/projects", label: "Projects", description: "Projects", mobile: true },
+  { href: "/studio", label: "Studio", description: "Studio", mobile: true },
+  { href: "/studio/session", label: "Live", description: "Live", mobile: true },
+  { href: "/marketplace", label: "Market", description: "Marketplace", mobile: true },
+  { href: "/Blog", label: "Blogs", description: "Blogs", mobile: true },
+  { href: "/events", label: "Events", description: "Events", mobile: true },
   { href: "/profile", label: "Profile", description: "Profile", mobile: true },
 ];
 
@@ -43,6 +48,7 @@ export const commandRoutes: OsNavItem[] = [
   { href: "/studio/session", label: "Room", description: "Room" },
   { href: "/founder", label: "Founder", description: "Founder" },
   { href: "/admin", label: "Admin", description: "Admin" },
+  { href: "/admin/daily", label: "Daily", description: "Daily" },
 ];
 
 export const isNavActive = (pathname: string, href: string) => {

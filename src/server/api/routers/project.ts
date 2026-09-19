@@ -85,6 +85,7 @@ const updatableFields = z
     openSource: z.boolean().optional(),
     completed: z.boolean().optional(),
     image: z.string().optional(),
+    heroVideo: z.string().optional(),
     // If you store gallery links in DB:
     links: z.array(z.string()).optional(),
   })

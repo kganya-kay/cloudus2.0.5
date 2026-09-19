@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 
+import { liveUrl } from "~/lib/media-pulse/media";
 import { iframeSrcForUrl, isDirectFileUrl } from "~/lib/social/embed";
 
 type PlayableMediaProps = {
@@ -25,7 +26,7 @@ export function PlayableMedia({
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
-  const poster = failed || !imageUrl ? "/cloudus-logo-final.png" : imageUrl;
+  const poster = failed ? undefined : (liveUrl(imageUrl) ?? undefined);
   const iframe = videoUrl ? iframeSrcForUrl(videoUrl) : audioUrl ? iframeSrcForUrl(audioUrl) : null;
 
   const setPlay = (next: boolean) => {
@@ -77,7 +78,11 @@ export function PlayableMedia({
           </>
         ) : audioUrl ? (
           <>
-            <img src={poster} alt={title ?? ""} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+            {poster ? (
+              <img src={poster} alt={title ?? ""} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+            ) : (
+              <div className="h-full w-full bg-[var(--os-bg-elevated)]" />
+            )}
             <audio
               ref={audioRef}
               src={audioUrl}
@@ -95,8 +100,10 @@ export function PlayableMedia({
               {playing ? <PauseGlyph /> : <PlayGlyph />}
             </button>
           </>
-        ) : (
+        ) : poster ? (
           <img src={poster} alt={title ?? ""} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+        ) : (
+          <div className="h-full w-full bg-[var(--os-bg-elevated)]" />
         )}
       </div>
     </div>

@@ -1,130 +1,122 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Button, Card, PageHeader } from "~/components/os/primitives";
+import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 
-type ChecklistItem = { id: string; label: string; done: boolean };
+import { LiveStage } from "~/components/live/LiveStage";
+import { Button, PageHeader } from "~/components/os/primitives";
+import { api } from "~/trpc/react";
 
-const defaultItems: ChecklistItem[] = [
-  { id: "1", label: "20 min catch-up", done: false },
-  { id: "2", label: "Choose one deliverable", done: false },
-  { id: "3", label: "Build for two hours", done: false },
-  { id: "4", label: "20 min demo", done: false },
-  { id: "5", label: "Write the recap", done: false },
-];
+function asUrl(value: string) {
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
 
 export default function StudioSessionPage() {
-  const [seconds, setSeconds] = useState(2 * 60 * 60);
-  const [running, setRunning] = useState(false);
-  const [items, setItems] = useState(defaultItems);
-  const [deliverable, setDeliverable] = useState("");
-  const [demo, setDemo] = useState("");
-  const [copied, setCopied] = useState(false);
+  const { data: session } = useSession();
+  const [projectId, setProjectId] = useState<number | "">("");
+  const [eventId, setEventId] = useState<number | "">("");
+  const utils = api.useUtils();
+  const mine = api.project.getAll.useQuery(undefined, { retry: false, enabled: Boolean(session?.user) });
+  const projects = api.project.marketplace.useQuery({ limit: 40 }, { retry: false });
+  const events = api.event.list.useQuery(
+    { projectId: typeof projectId === "number" ? projectId : undefined, take: 20 },
+    { retry: false },
+  );
+  const selectedEvent = api.event.select.useQuery(
+    { id: typeof eventId === "number" ? eventId : 0 },
+    { enabled: typeof eventId === "number", retry: false },
+  );
+  const selectedProject = api.project.select.useQuery(
+    { id: typeof projectId === "number" ? projectId : 0 },
+    { enabled: typeof projectId === "number", retry: false },
+  );
+  const goLive = api.live.goLive.useMutation({
+    onSuccess: async () => {
+      if (typeof eventId === "number") await utils.event.select.invalidate({ id: eventId });
+      if (typeof projectId === "number") await utils.project.select.invalidate({ id: projectId });
+    },
+  });
 
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => {
-      setSeconds((value) => (value > 0 ? value - 1 : 0));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [running]);
+  const project = selectedProject.data;
+  const event = selectedEvent.data;
+  const canHost = Boolean(
+    session?.user?.id &&
+      (project?.viewerContext?.isOwner || event?.viewerContext?.isHost || event?.viewerContext?.isOwner),
+  );
+  const streamUrl = event?.streamUrl ?? project?.heroVideo ?? null;
+  const scope = event ? "EVENT" : "PROJECT";
+  const scopeId = event ? String(event.id) : project ? String(project.id) : "";
 
-  const clock = useMemo(() => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return [hrs, mins, secs].map((part) => String(part).padStart(2, "0")).join(":");
-  }, [seconds]);
-
-  const recap = `Cloudus Build Night recap
-Deliverable: ${deliverable || "Not named yet"}
-Shipped checklist: ${items.filter((item) => item.done).length}/${items.length}
-Demo: ${demo || "Add a one-line demo note"}
-Next: invite two builders back next Friday.`;
-
-  const copyRecap = async () => {
-    try {
-      await navigator.clipboard.writeText(recap);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
+  const projectOptions = useMemo(() => {
+    const seen = new Map<number, { id: number; name: string }>();
+    for (const item of [...(mine.data ?? []), ...(projects.data ?? [])]) {
+      seen.set(item.id, { id: item.id, name: item.name });
     }
-  };
+    return [...seen.values()];
+  }, [mine.data, projects.data]);
+  const eventOptions = events.data?.items ?? [];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Room"
-        actions={<Button href="/events" variant="secondary">Events</Button>}
-      />
+      <PageHeader title="Room" actions={<Button href="/events" variant="secondary">Events</Button>} />
 
-      <div className="grid gap-4 lg:grid-cols-[0.9fr,1.1fr]">
-        <Card className="text-center">
-          <p className="os-kicker">Timer</p>
-          <p className="mt-4 font-display text-5xl font-semibold tracking-tight">{clock}</p>
-          <div className="mt-6 flex justify-center gap-2">
-            <Button onClick={() => setRunning((value) => !value)}>{running ? "Pause" : "Start"}</Button>
-            <Button variant="secondary" onClick={() => { setRunning(false); setSeconds(2 * 60 * 60); }}>
-              Reset
-            </Button>
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="text-lg font-semibold">List</h2>
-          <ul className="mt-4 space-y-2">
-            {items.map((item) => (
-              <li key={item.id}>
-                <label className="flex min-h-11 items-center gap-3 rounded-2xl bg-os-elevated px-4">
-                  <input
-                    type="checkbox"
-                    checked={item.done}
-                    onChange={() =>
-                      setItems((current) =>
-                        current.map((entry) =>
-                          entry.id === item.id ? { ...entry, done: !entry.done } : entry,
-                        ),
-                      )
-                    }
-                  />
-                  <span className={item.done ? "text-os-muted line-through" : ""}>{item.label}</span>
-                </label>
-              </li>
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="text-xs text-os-muted">
+          Project
+          <select
+            className="os-field"
+            value={projectId}
+            onChange={(event) => {
+              setProjectId(event.target.value ? Number(event.target.value) : "");
+              setEventId("");
+            }}
+          >
+            <option value="">Select</option>
+            {projectOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
             ))}
-          </ul>
-        </Card>
+          </select>
+        </label>
+        <label className="text-xs text-os-muted">
+          Event
+          <select
+            className="os-field"
+            value={eventId}
+            onChange={(event) => setEventId(event.target.value ? Number(event.target.value) : "")}
+          >
+            <option value="">None</option>
+            {eventOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <h2 className="text-lg font-semibold">Deliverable</h2>
-          <input
-            value={deliverable}
-            onChange={(event) => setDeliverable(event.target.value)}
-            placeholder="What ships"
-            className="mt-4 w-full rounded-2xl border border-os-border bg-os-elevated px-4 py-3 text-sm outline-none"
-          />
-        </Card>
-        <Card>
-          <h2 className="text-lg font-semibold">Demo</h2>
-          <textarea
-            value={demo}
-            onChange={(event) => setDemo(event.target.value)}
-            rows={3}
-            placeholder="Note"
-            className="mt-4 w-full rounded-2xl border border-os-border bg-os-elevated px-4 py-3 text-sm outline-none"
-          />
-        </Card>
-      </div>
-
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Recap</h2>
-          <Button onClick={() => void copyRecap()}>{copied ? "Copied" : "Copy"}</Button>
-        </div>
-        <pre className="os-muted mt-4 whitespace-pre-wrap font-sans text-sm">{recap}</pre>
-      </Card>
+      {project ? (
+        <LiveStage
+          title={event?.name ?? project.name}
+          scope={scope}
+          scopeId={scopeId}
+          projectId={project.id}
+          streamUrl={streamUrl}
+          canHost={canHost}
+          savingStream={goLive.isPending}
+          onSaveStream={(url) =>
+            goLive.mutate({
+              streamUrl: asUrl(url),
+              eventId: event?.id,
+              projectId: event ? undefined : project.id,
+            })
+          }
+        />
+      ) : (
+        <p className="os-muted">Pick a project to go live.</p>
+      )}
     </div>
   );
 }
