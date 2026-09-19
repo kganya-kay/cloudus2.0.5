@@ -1,4 +1,5 @@
-import { extractFirstRssEntry, extractOpenGraph } from "~/lib/social/extract";
+import { extractRssEntries, youtubeIdsInText } from "~/lib/social/extract";
+import { youtubeIdFromUrl } from "~/lib/social/embed";
 
 import type { MediaPulseKindName } from "./kinds";
 
@@ -92,30 +93,79 @@ export async function fetchItunes(term: string): Promise<FetchedMedia | null> {
   }
 }
 
-export async function fetchNews(term: string): Promise<FetchedMedia | null> {
+export async function fetchYoutubeOembed(watchUrl: string): Promise<FetchedMedia | null> {
   try {
-    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(`${term} when:14d`)}&hl=en-ZA&gl=ZA&ceid=ZA:en`;
-    const xml = await fetchText(url);
-    const entry = extractFirstRssEntry(xml);
-    if (!entry?.link || !entry.title) return null;
-    let image = entry.image;
-    try {
-      const html = await fetchText(entry.link, 4000);
-      image = extractOpenGraph(html).image ?? image;
-    } catch {
-      // keep rss image
-    }
+    const id = youtubeIdFromUrl(watchUrl);
+    const url = id ? `https://www.youtube.com/watch?v=${id}` : watchUrl;
+    const data = JSON.parse(
+      await fetchText(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`, 5000),
+    ) as { title?: string; author_name?: string; thumbnail_url?: string };
+    if (!data.title) return null;
     return {
-      kind: "ARTICLE",
-      title: entry.title,
-      dek: term,
-      sourceName: "News",
-      sourceUrl: entry.link,
-      imageUrl: image,
+      kind: "VIDEO",
+      title: data.title,
+      dek: data.author_name ?? "YouTube",
+      sourceName: "YouTube",
+      sourceUrl: url,
+      imageUrl: data.thumbnail_url ?? (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : undefined),
+      videoUrl: url,
     };
+  } catch {
+    const id = youtubeIdFromUrl(watchUrl);
+    if (!id) return null;
+    return {
+      kind: "VIDEO",
+      title: "YouTube",
+      dek: "YouTube",
+      sourceName: "YouTube",
+      sourceUrl: `https://www.youtube.com/watch?v=${id}`,
+      imageUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+      videoUrl: `https://www.youtube.com/watch?v=${id}`,
+    };
+  }
+}
+
+export async function fetchYouTube(term: string): Promise<FetchedMedia | null> {
+  try {
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(`${term} site:youtube.com when:30d`)}&hl=en-ZA&gl=ZA&ceid=ZA:en`;
+    const xml = await fetchText(url);
+    const ids = youtubeIdsInText(xml);
+    if (ids[0]) {
+      return fetchYoutubeOembed(`https://www.youtube.com/watch?v=${ids[0]}`);
+    }
+    const entry = extractRssEntries(xml, 1)[0];
+    if (entry?.link) {
+      const fromLink = youtubeIdFromUrl(entry.link);
+      if (fromLink) return fetchYoutubeOembed(`https://www.youtube.com/watch?v=${fromLink}`);
+    }
+    return null;
   } catch {
     return null;
   }
+}
+
+export async function fetchNewsMany(term: string, limit = 2): Promise<FetchedMedia[]> {
+  try {
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(`${term} when:14d`)}&hl=en-ZA&gl=ZA&ceid=ZA:en`;
+    const xml = await fetchText(url);
+    return extractRssEntries(xml, limit)
+      .filter((entry) => entry.link && entry.title)
+      .map((entry) => ({
+        kind: "ARTICLE" as const,
+        title: entry.title!,
+        dek: term,
+        sourceName: "News",
+        sourceUrl: entry.link!,
+        imageUrl: entry.image,
+        videoUrl: entry.video,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchNews(term: string): Promise<FetchedMedia | null> {
+  return (await fetchNewsMany(term, 1))[0] ?? null;
 }
 
 export async function fetchEasiestMedia(label: string): Promise<FetchedMedia[]> {

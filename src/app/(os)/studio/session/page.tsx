@@ -97,26 +97,25 @@ export default function StudioSessionPage() {
         </label>
       </div>
 
-      {project ? (
-        <LiveStage
-          title={event?.name ?? project.name}
-          scope={scope}
-          scopeId={scopeId}
-          projectId={project.id}
-          streamUrl={streamUrl}
-          canHost={canHost}
-          savingStream={goLive.isPending}
-          onSaveStream={(url) =>
-            goLive.mutate({
-              streamUrl: asUrl(url),
-              eventId: event?.id,
-              projectId: event ? undefined : project.id,
-            })
-          }
-        />
-      ) : (
-        <p className="os-muted">Pick a project to go live.</p>
-      )}
+      <LiveStage
+        title={event?.name ?? project?.name ?? "Room"}
+        scope={session?.user?.id && !project ? "SESSION" : scope}
+        scopeId={session?.user?.id && !project ? session.user.id : scopeId || session?.user?.id || "room"}
+        projectId={project?.id}
+        streamUrl={streamUrl}
+        canHost={canHost || Boolean(session?.user?.id && !project)}
+        savingStream={goLive.isPending}
+        onSaveStream={
+          project
+            ? (url) =>
+                goLive.mutate({
+                  streamUrl: asUrl(url),
+                  eventId: event?.id,
+                  projectId: event ? undefined : project.id,
+                })
+            : undefined
+        }
+      />
     </div>
   );
 }

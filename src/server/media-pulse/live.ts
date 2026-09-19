@@ -50,7 +50,6 @@ export async function collectLiveStories(db: PrismaClient): Promise<PulseStory[]
   const [
     blogs,
     projects,
-    shop,
     feed,
     events,
     rooms,
@@ -68,11 +67,6 @@ export async function collectLiveStories(db: PrismaClient): Promise<PulseStory[]
       take: 40,
       orderBy: { updatedAt: "desc" },
       include: { _count: { select: { likes: true, followers: true } } },
-    }),
-    db.shopItem.findMany({
-      take: 40,
-      orderBy: { updatedAt: "desc" },
-      include: { _count: { select: { orders: true, likes: true } } },
     }),
     db.feedPost.findMany({
       where: { visibility: "PUBLIC" },
@@ -142,25 +136,6 @@ export async function collectLiveStories(db: PrismaClient): Promise<PulseStory[]
         Math.min(project._count.likes + project._count.followers, 20),
     });
     if (item) collected.push(item);
-  }
-
-  const shopRanked = [...shop].sort(
-    (a, b) => b._count.orders + b._count.likes - (a._count.orders + a._count.likes),
-  );
-  for (const item of shopRanked) {
-    const next = story({
-      id: `shop-${item.id}`,
-      topic: slugTopic(item.name),
-      kind: "POST",
-      title: item.name,
-      dek: item.description,
-      sourceName: "Shop",
-      sourceUrl: `/shop/${item.id}`,
-      imageUrl: item.image,
-      interestCount: item._count.orders,
-      score: 80 + Math.min(item._count.orders * 4, 40) + Math.min(item._count.likes, 10),
-    });
-    if (next) collected.push(next);
   }
 
   for (const post of feed) {

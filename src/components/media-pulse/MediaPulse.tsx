@@ -6,6 +6,8 @@ import { pickLiveMedia } from "~/lib/media-pulse/media";
 import type { PulseFrontpage, PulseStory } from "~/lib/media-pulse/types";
 import { api } from "~/trpc/react";
 
+import { Hint } from "~/components/os/hint";
+
 import { DailyEar } from "./DailyEar";
 import { NewspaperMedia } from "./NewspaperMedia";
 
@@ -51,13 +53,16 @@ export function MediaPulse({ initial }: { initial?: PulseFrontpage | null }) {
 
   return (
     <section
-      className={`os-newsprint transition duration-300 ${hovered ? "z-10 scale-[1.03] shadow-os" : ""}`}
+      className={`os-newsprint os-rise transition duration-300 ${hovered ? "z-10 scale-[1.03] shadow-os" : ""}`}
       aria-label="Cloudus Daily"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div className="flex items-center justify-between gap-3 px-5 pt-4 sm:px-6">
-        <p className="os-kicker shrink-0">Daily</p>
+      <div className="flex items-center justify-between gap-3 border-b border-os-gold/35 px-5 pt-4 sm:px-6">
+        <div className="flex items-center gap-2 pb-3">
+          <p className="font-display text-xl font-semibold text-os-burgundy">The Daily</p>
+          <Hint>Live wire. Hover to hold.</Hint>
+        </div>
         <DailyEar />
       </div>
 
@@ -71,7 +76,7 @@ export function MediaPulse({ initial }: { initial?: PulseFrontpage | null }) {
             target={current.sourceUrl.startsWith("/") ? undefined : "_blank"}
             rel={current.sourceUrl.startsWith("/") ? undefined : "noreferrer"}
             onClick={() => mark.mutate({ topic: current.topic, source: "STORY" })}
-            className="inline-flex min-h-10 items-center rounded-full bg-os-fg px-4 text-xs font-semibold text-os-bg"
+            className="inline-flex min-h-10 items-center rounded-full bg-os-burgundy px-4 text-xs font-semibold text-[#f7f1e6]"
           >
             Open
           </a>

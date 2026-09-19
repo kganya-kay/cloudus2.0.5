@@ -1,47 +1,63 @@
 :root {
   color-scheme: light;
-  --os-bg: #f6f4f1;
-  --os-bg-elevated: #fffdfb;
-  --os-fg: #141414;
-  --os-fg-muted: #5c5854;
-  --os-card: #ffffff;
-  --os-border: #e6e1da;
-  --os-accent: #2563eb;
-  --os-accent-soft: #dbeafe;
-  --os-success: #059669;
-  --os-warning: #d97706;
-  --os-danger: #e11d48;
-  --os-shadow: 0 18px 40px -24px rgba(20, 20, 20, 0.28);
+  --os-bg: #f0e4cc;
+  --os-bg-elevated: #f8f1e2;
+  --os-fg: #2a2118;
+  --os-fg-muted: #6b5d4a;
+  --os-card: #f6edd9;
+  --os-border: #d4c4a8;
+  --os-accent: #1e4d8c;
+  --os-accent-soft: #e8d7b8;
+  --os-ink: #2a2118;
+  --os-navy: #12263f;
+  --os-gold: #c4a35a;
+  --os-bronze: #8c6a3a;
+  --os-rust: #b4532a;
+  --os-burgundy: #6b1f33;
+  --os-forest: #2f5d50;
+  --os-ochre: #c47a2c;
+  --os-success: #2f5d50;
+  --os-warning: #c47a2c;
+  --os-danger: #9b2c2c;
+  --os-shadow: 0 18px 40px -22px rgba(90, 62, 24, 0.28);
   --cloudus-bg: var(--os-bg);
   --cloudus-foreground: var(--os-fg);
   --cloudus-card: var(--os-card);
   --cloudus-border: var(--os-border);
   --cloudus-accent: var(--os-accent);
-  --cloudus-gradient-from: #dbeafe;
-  --cloudus-gradient-to: #f8fafc;
+  --cloudus-gradient-from: #ead7a8;
+  --cloudus-gradient-to: #e4c9b4;
 }
 
 .dark {
   color-scheme: dark;
-  --os-bg: #0b0b0d;
-  --os-bg-elevated: #141418;
-  --os-fg: #f4f1ea;
-  --os-fg-muted: #a8a29a;
-  --os-card: #121216;
-  --os-border: #26262c;
-  --os-accent: #60a5fa;
-  --os-accent-soft: #1d2a44;
-  --os-success: #34d399;
-  --os-warning: #fbbf24;
+  --os-bg: #14110e;
+  --os-bg-elevated: #1c1814;
+  --os-fg: #f4efe4;
+  --os-fg-muted: #c2b6a3;
+  --os-card: #1a1814;
+  --os-border: #3a3228;
+  --os-accent: #7eafd9;
+  --os-accent-soft: #24364a;
+  --os-ink: #f4efe4;
+  --os-navy: #8fb0d4;
+  --os-gold: #d4b56a;
+  --os-bronze: #c4a06a;
+  --os-rust: #e08a4f;
+  --os-burgundy: #d07a86;
+  --os-forest: #6fbfa8;
+  --os-ochre: #e0a45a;
+  --os-success: #6fbfa8;
+  --os-warning: #e0a45a;
   --os-danger: #fb7185;
-  --os-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.7);
+  --os-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.72);
   --cloudus-bg: var(--os-bg);
   --cloudus-foreground: var(--os-fg);
   --cloudus-card: var(--os-card);
   --cloudus-border: var(--os-border);
   --cloudus-accent: var(--os-accent);
-  --cloudus-gradient-from: #111827;
-  --cloudus-gradient-to: #0b0b0d;
+  --cloudus-gradient-from: #2a2118;
+  --cloudus-gradient-to: #14110e;
 }
 
 @tailwind base;
@@ -54,7 +70,12 @@
   }
 
   body {
-    @apply bg-[var(--os-bg)] text-[var(--os-fg)] antialiased;
+    @apply text-[var(--os-fg)] antialiased;
+    background-color: var(--os-bg);
+    background-image:
+      radial-gradient(ellipse 70% 45% at 0% 0%, rgba(196, 163, 90, 0.18), transparent 55%),
+      radial-gradient(ellipse 55% 40% at 100% 8%, rgba(107, 31, 51, 0.08), transparent 50%),
+      radial-gradient(ellipse 50% 35% at 80% 100%, rgba(18, 38, 63, 0.06), transparent 55%);
   }
 
   :focus-visible {
@@ -82,15 +103,31 @@
   }
 
   .os-title {
-    @apply text-2xl font-semibold tracking-tight sm:text-3xl;
+    @apply font-display text-2xl font-semibold tracking-tight sm:text-3xl;
   }
 
   .os-kicker {
-    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--os-fg-muted)];
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--os-burgundy)];
   }
 
   .os-card {
-    @apply rounded-3xl border border-[var(--os-border)] bg-[var(--os-card)] shadow-[var(--os-shadow)];
+    @apply os-rise rounded-3xl border border-[var(--os-border)] shadow-[var(--os-shadow)];
+    background-color: var(--os-card);
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(90, 62, 24, 0.05) 28px
+      ),
+      radial-gradient(rgba(196, 163, 90, 0.12) 0.65px, transparent 0.65px);
+    background-size: 100% 28px, 3px 3px;
+    transition: transform 280ms ease, box-shadow 280ms ease;
+  }
+
+  .os-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 48px -24px rgba(107, 31, 51, 0.28);
   }
 
   .os-muted {
@@ -117,7 +154,8 @@
   }
 
   .os-field {
-    @apply mt-1 w-full rounded-2xl border border-[var(--os-border)] bg-[var(--os-bg-elevated)] px-3 py-2.5 text-sm outline-none;
+    @apply mt-1 w-full rounded-2xl bg-[var(--os-bg-elevated)] px-3 py-2.5 text-sm outline-none;
+    border: 1px solid var(--os-border);
   }
 
   .os-paper {
@@ -125,33 +163,33 @@
   }
 
   .os-newsprint {
-    @apply overflow-hidden rounded-[2rem] border border-[var(--os-border)] shadow-[var(--os-shadow)];
-    background-color: #f3eee4;
+    @apply os-ink-edge overflow-hidden rounded-[2rem] shadow-[var(--os-shadow)];
+    background-color: #f4ead6;
     background-image:
       repeating-linear-gradient(
         0deg,
         transparent,
         transparent 27px,
-        rgba(40, 32, 18, 0.045) 28px
+        rgba(90, 62, 24, 0.055) 28px
       ),
-      radial-gradient(rgba(40, 32, 18, 0.08) 0.7px, transparent 0.7px);
+      radial-gradient(rgba(196, 163, 90, 0.14) 0.7px, transparent 0.7px);
     background-size: 100% 28px, 3px 3px;
-    color: #1c1915;
+    color: #2a2118;
   }
 
   .os-newsprint-sheet {
     @apply overflow-hidden rounded-[2rem] border border-[var(--os-border)] shadow-[var(--os-shadow)];
-    background-color: #f3eee4;
+    background-color: #f4ead6;
     background-image:
       repeating-linear-gradient(
         0deg,
         transparent,
         transparent 27px,
-        rgba(40, 32, 18, 0.045) 28px
+        rgba(90, 62, 24, 0.055) 28px
       ),
-      radial-gradient(rgba(40, 32, 18, 0.08) 0.7px, transparent 0.7px);
+      radial-gradient(rgba(196, 163, 90, 0.14) 0.7px, transparent 0.7px);
     background-size: 100% 28px, 3px 3px;
-    color: #1c1915;
+    color: #2a2118;
   }
 
   .dark .os-newsprint {
@@ -173,6 +211,74 @@
 
   .os-paper-standfirst {
     @apply text-base leading-7 text-[var(--os-fg-muted)] sm:text-lg;
+  }
+
+  .os-rise {
+    animation: os-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .os-ink-edge {
+    position: relative;
+    isolation: isolate;
+    border: 1px solid color-mix(in srgb, var(--os-gold) 62%, var(--os-burgundy));
+  }
+
+  .os-ink-edge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1.5px;
+    pointer-events: none;
+    background: linear-gradient(
+      120deg,
+      var(--os-gold),
+      var(--os-burgundy),
+      var(--os-bronze),
+      var(--os-ochre),
+      var(--os-gold)
+    );
+    background-size: 260% 260%;
+    animation: os-ink-drift 9s ease-in-out infinite;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+
+  .os-hint-mark {
+    @apply grid h-7 w-7 place-items-center rounded-full text-[11px] font-semibold;
+    border: 1px solid var(--os-border);
+    background: var(--os-bg-elevated);
+    color: var(--os-ink);
+  }
+
+  .os-pop {
+    @apply rounded-2xl border border-[var(--os-border)] px-3.5 py-3 text-sm leading-6 shadow-os;
+    background-color: #f6edd9;
+    color: #2a2118;
+    animation: os-pop 220ms ease both;
+  }
+
+  .dark .os-card {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(244, 241, 234, 0.035) 28px
+      ),
+      radial-gradient(rgba(244, 241, 234, 0.05) 0.65px, transparent 0.65px);
+  }
+
+  .dark .os-pop {
+    background-color: #1a1814;
+    color: var(--os-fg);
   }
 
   .os-app main#os-main nav.sticky,
@@ -224,5 +330,39 @@
   .os-app main#os-main .bg-blue-600 {
     background-color: var(--os-fg) !important;
     color: var(--os-bg) !important;
+  }
+}
+
+@keyframes os-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes os-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes os-ink-drift {
+  0% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 60%;
+  }
+  100% {
+    background-position: 0% 40%;
   }
 }

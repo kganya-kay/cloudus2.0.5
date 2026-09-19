@@ -14,6 +14,7 @@ export default async function BlogDirectoryPage() {
     <div className="space-y-6">
       <PageHeader
         title="Blogs"
+        hint="The long story stays here."
         actions={<BloggerNav current="community" />}
       />
 

@@ -4,7 +4,9 @@ import { describe, it } from "node:test";
 import {
   extractFirstRssEntry,
   extractOpenGraph,
+  extractRssEntries,
   pickMediaFromSources,
+  youtubeIdsInText,
 } from "./extract";
 import { iframeSrcForUrl, youtubeIdFromUrl } from "./embed";
 import { fallbackSocialCaption } from "./caption";
@@ -72,6 +74,14 @@ describe("social extractors", () => {
     assert.equal(entry?.title, "Latest drop");
     assert.equal(entry?.video, "https://www.youtube.com/watch?v=abc");
     assert.equal(entry?.image, "https://i.ytimg.com/vi/abc/hqdefault.jpg");
+    assert.equal(extractRssEntries(`<rss><channel>
+      <item><title>One</title><link>https://a.example</link></item>
+      <item><title>Two</title><link>https://b.example</link></item>
+    </channel></rss>`, 2).length, 2);
+    assert.deepEqual(youtubeIdsInText("watch?v=oaYJbNkIrNk and youtu.be/XoiOOiuH8iI"), [
+      "oaYJbNkIrNk",
+      "XoiOOiuH8iI",
+    ]);
   });
 
   it("builds a YouTube embed", () => {

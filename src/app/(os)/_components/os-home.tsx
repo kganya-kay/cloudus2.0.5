@@ -15,6 +15,8 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { Hint } from "~/components/os/hint";
+
 import { useOnline } from "./use-online";
 
 export function OsHome() {
@@ -49,6 +51,7 @@ export function OsHome() {
       <OfflineBanner online={online} />
       <PageHeader
         title={status === "authenticated" ? "Home" : "Cloudus"}
+        hint="Build, then open tonight’s room."
         actions={
           <>
             <Button href="/build">Build</Button>
@@ -61,7 +64,10 @@ export function OsHome() {
 
       <section className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
-          <h2 className="text-lg font-semibold">Next</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">Next</h2>
+            <Hint>Your next open task.</Hint>
+          </div>
           {data?.assignedTasks[0] ? (
             <div className="mt-3 space-y-2">
               <p className="text-sm">{data.assignedTasks[0].title}</p>
@@ -83,7 +89,10 @@ export function OsHome() {
         </Card>
 
         <Card>
-          <h2 className="text-lg font-semibold">Tonight</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">Tonight</h2>
+            <Hint>The next session on the floor.</Hint>
+          </div>
           {nextEvent ? (
             <div className="mt-3 space-y-2">
               <p className="text-sm font-medium">{nextEvent.name}</p>
@@ -105,11 +114,13 @@ export function OsHome() {
         </Card>
 
         <Card>
-          <h2 className="text-lg font-semibold">Pulse</h2>
-          <p className="os-muted mt-3">{recentCaptures.length} notes</p>
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">Pulse</h2>
+            <Hint>{recentCaptures.length} notes in the room.</Hint>
+          </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Badge tone="accent">{data?.projects.length ?? 0} projects</Badge>
-            <Badge>{data?.creators.length ?? 0} creators</Badge>
+            <Badge tone="accent">{data?.projects.length ?? 0}</Badge>
+            <Badge>{data?.creators.length ?? 0}</Badge>
           </div>
         </Card>
       </section>

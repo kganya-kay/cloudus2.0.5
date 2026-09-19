@@ -37,6 +37,7 @@ export default function CommunityPage() {
     <div className="space-y-6">
       <PageHeader
         title="Community"
+        hint="Write here. We dress it for the wire."
         actions={
           <>
             <Button href="/Blog">Blogs</Button>
@@ -52,7 +53,7 @@ export default function CommunityPage() {
       {data?.blogs.length ? (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Stories</h2>
+            <h2 className="font-display text-lg font-semibold">Stories</h2>
             <Link href="/Blog" className="text-sm font-semibold text-os-accent">
               All
             </Link>
@@ -80,7 +81,7 @@ export default function CommunityPage() {
 
       <section className="grid gap-4 lg:grid-cols-[1fr,1fr]">
         <Card>
-          <h2 className="text-lg font-semibold">Creators</h2>
+          <h2 className="font-display text-lg font-semibold">Creators</h2>
           {data?.creators.length ? (
             <ul className="mt-4 space-y-3">
               {data.creators.map((creator) => (
@@ -105,7 +106,7 @@ export default function CommunityPage() {
 
         <Card>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Activity</h2>
+            <h2 className="font-display text-lg font-semibold">Activity</h2>
             <Link href="/feed" className="text-sm font-semibold text-os-accent">
               All
             </Link>

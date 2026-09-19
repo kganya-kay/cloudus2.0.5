@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { PlayableMedia } from "~/components/media/PlayableMedia";
 import { Button } from "~/components/os/primitives";
+import { CameraLive } from "./CameraLive";
 import { formatZarFromCents } from "~/lib/os/format";
 import { api } from "~/trpc/react";
 
@@ -74,35 +75,35 @@ export function LiveStage({
           <p className="os-kicker">Live</p>
           <h2 className="truncate text-lg font-semibold">{title}</h2>
         </div>
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${liveUrl ? "bg-os-soft text-os-accent" : "bg-os-elevated text-os-muted"}`}>
-          {liveUrl ? "On" : "Off"}
+        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${liveUrl ? "bg-os-burgundy text-[#f6edd9]" : "bg-os-elevated text-os-muted"}`}>
+          {liveUrl ? "Link" : "Cam"}
         </span>
       </div>
 
       <div className="p-4">
+        <CameraLive scope={scope} scopeId={scopeId} canHost={canHost} title={title} />
         {liveUrl ? (
-          <PlayableMedia videoUrl={liveUrl} title={title} featured />
-        ) : (
-          <div className="grid aspect-video place-items-center rounded-[1.6rem] bg-os-elevated text-sm text-os-muted">
-            Paste a stream.
+          <div className="mt-3">
+            <PlayableMedia videoUrl={liveUrl} title={title} featured />
           </div>
-        )}
+        ) : null}
       </div>
 
-      {canHost ? (
+      {canHost && onSaveStream ? (
         <div className="flex gap-2 px-4 pb-4">
           <input
             className="os-field mt-0"
-            placeholder="YouTube, Twitch, file…"
+            placeholder="https://…"
             value={streamDraft}
             onChange={(event) => setStreamDraft(event.target.value)}
           />
           <Button
             size="sm"
+            variant="secondary"
             disabled={!streamDraft.trim() || savingStream}
-            onClick={() => onSaveStream?.(streamDraft.trim())}
+            onClick={() => onSaveStream(streamDraft.trim())}
           >
-            {savingStream ? "…" : "Go live"}
+            {savingStream ? "…" : "Link"}
           </Button>
         </div>
       ) : null}

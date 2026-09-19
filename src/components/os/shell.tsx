@@ -24,6 +24,7 @@ import {
 import { desktopNav, isNavActive, mobileNav } from "~/lib/os/nav";
 import { useTheme } from "~/lib/os/theme";
 import { api } from "~/trpc/react";
+import { Hint, HoverPop } from "./hint";
 import { Avatar, Button } from "./primitives";
 import { CommandPalette } from "./command-palette";
 
@@ -133,10 +134,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         <div className="mb-8 flex items-start justify-between gap-2 px-2">
           <Link href="/" className="flex items-center gap-3">
             <img src="/cloudus-logo-final.png" alt="" className="h-9 w-9 rounded-full object-cover" />
-            <div>
-              <p className="text-sm font-semibold">Cloudus OS</p>
-              <p className="text-xs text-os-muted">The place where builders build</p>
-            </div>
+            <p className="font-display text-lg font-semibold text-os-burgundy">Cloudus</p>
           </Link>
           <button
             type="button"
@@ -147,29 +145,31 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
         </div>
-        <nav aria-label="Cloudus" className="flex-1 space-y-1 overflow-y-auto">
+        <nav aria-label="Cloudus" className="flex-1 space-y-1 overflow-visible">
           {desktopNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`block rounded-2xl px-3 py-2.5 ${
-                isNavActive(pathname, item.href)
-                  ? "bg-os-fg text-os-bg dark:bg-white dark:text-zinc-950"
-                  : "text-os-muted hover:bg-os-card hover:text-os-fg"
-              }`}
-            >
-              <span className="block text-sm font-semibold">{item.label}</span>
-              <span className="block text-[11px] opacity-80">{item.description}</span>
-            </Link>
+            <HoverPop key={item.href} label={item.description}>
+              <Link
+                href={item.href}
+                className={`block w-full rounded-2xl px-3 py-2.5 text-sm font-semibold ${
+                  isNavActive(pathname, item.href)
+                    ? "bg-os-burgundy text-os-bg"
+                    : "text-os-muted hover:bg-os-gold/15 hover:text-os-ink"
+                }`}
+              >
+                {item.label}
+              </Link>
+            </HoverPop>
           ))}
         </nav>
         <div className="mt-4 space-y-2 border-t border-os-border pt-4">
           {roleLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="block rounded-2xl px-3 py-2 text-sm text-os-muted hover:bg-os-card">
-              {link.label} portal
+            <Link key={link.href} href={link.href} className="block rounded-2xl px-3 py-2 text-sm text-os-muted hover:bg-os-gold/15">
+              {link.label}
             </Link>
           ))}
-          <p className="px-3 text-[11px] text-os-muted">Press Ctrl/Cmd + K</p>
+          <div className="flex items-center justify-between px-3">
+            <Hint label="Search">Ctrl K</Hint>
+          </div>
         </div>
       </aside>
 

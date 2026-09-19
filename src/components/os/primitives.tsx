@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
 
+import { Hint } from "./hint";
+
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -70,10 +72,10 @@ export function Badge({
   tone?: "default" | "accent" | "success" | "warning";
 }) {
   const tones = {
-    default: "bg-os-elevated text-os-muted",
+    default: "bg-os-gold/15 text-os-ink",
     accent: "bg-os-soft text-os-accent",
-    success: "bg-emerald-500/10 text-os-success",
-    warning: "bg-amber-500/10 text-os-warning",
+    success: "bg-os-forest/10 text-os-forest",
+    warning: "bg-os-ochre/15 text-os-ochre",
   };
   return (
     <span className={cx("rounded-full px-2.5 py-1 text-[11px] font-semibold", tones[tone])}>
@@ -119,19 +121,23 @@ export function PageHeader({
   eyebrow,
   title,
   description,
+  hint,
   actions,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
+  hint?: ReactNode;
   actions?: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="space-y-2">
-        {eyebrow ? <p className="os-kicker">{eyebrow}</p> : null}
-        <h1 className="os-title">{title}</h1>
-        {description ? <p className="os-muted max-w-2xl">{description}</p> : null}
+      <div className="flex items-start gap-2">
+        <div className="space-y-2">
+          {eyebrow ? <p className="os-kicker">{eyebrow}</p> : null}
+          <h1 className="os-title">{title}</h1>
+        </div>
+        {hint ? <Hint>{hint}</Hint> : description ? <Hint>{description}</Hint> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
     </div>
@@ -161,8 +167,10 @@ export function EmptyState({
 }) {
   return (
     <div className="os-card flex flex-col items-start gap-3 p-6">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {description ? <p className="os-muted">{description}</p> : null}
+      <div className="flex items-center gap-2">
+        <h2 className="font-display text-lg font-semibold">{title}</h2>
+        {description ? <Hint>{description}</Hint> : null}
+      </div>
       {action}
     </div>
   );

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { decodeSignal, encodeSignal, LIVE_SIG, type LiveSignal } from "~/lib/live/signal";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 const scopeInput = z.object({
@@ -11,17 +12,25 @@ const scopeInput = z.object({
 type LiveStore = {
   liveMessage: {
     findMany: (args: {
-      where: { scope: string; scopeId: string };
+      where: Record<string, unknown>;
       orderBy: { createdAt: "desc" };
       take: number;
       include: { user: { select: { id: true; name: true; image: true } } };
-    }) => Promise<Array<{ id: string; body: string; createdAt: Date; user: { id: string; name: string | null; image: string | null } }>>;
+    }) => Promise<Array<{ id: string; userId: string; body: string; createdAt: Date; user: { id: string; name: string | null; image: string | null } }>>;
     create: (args: {
       data: { scope: string; scopeId: string; userId: string; body: string };
       include: { user: { select: { id: true; name: true; image: true } } };
-    }) => Promise<{ id: string; body: string; createdAt: Date; user: { id: string; name: string | null; image: string | null } }>;
+    }) => Promise<{ id: string; userId: string; body: string; createdAt: Date; user: { id: string; name: string | null; image: string | null } }>;
   };
 };
+
+const signalInput = z.object({
+  k: z.enum(["on", "off", "offer", "answer", "ice"]),
+  hostId: z.string().optional(),
+  to: z.string().optional(),
+  sdp: z.string().optional(),
+  candidate: z.any().optional(),
+});
 
 const liveDb = (db: unknown) => db as LiveStore;
 
@@ -30,9 +39,69 @@ export const liveRouter = createTRPCRouter({
     .input(scopeInput.extend({ take: z.number().int().min(1).max(80).optional() }))
     .query(async ({ ctx, input }) => {
       return liveDb(ctx.db).liveMessage.findMany({
-        where: { scope: input.scope, scopeId: input.scopeId },
+        where: {
+          scope: input.scope,
+          scopeId: input.scopeId,
+          NOT: { body: { startsWith: LIVE_SIG } },
+        },
         orderBy: { createdAt: "desc" },
         take: input.take ?? 40,
+        include: { user: { select: { id: true, name: true, image: true } } },
+      });
+    }),
+
+  camera: publicProcedure.input(scopeInput).query(async ({ ctx, input }) => {
+    const rows = await liveDb(ctx.db).liveMessage.findMany({
+      where: {
+        scope: input.scope,
+        scopeId: input.scopeId,
+        body: { startsWith: LIVE_SIG },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 24,
+      include: { user: { select: { id: true, name: true, image: true } } },
+    });
+    for (const row of rows) {
+      const next = decodeSignal(row.body);
+      if (next?.k === "on") return { live: true as const, hostId: next.hostId };
+      if (next?.k === "off") return { live: false as const, hostId: next.hostId };
+    }
+    return { live: false as const, hostId: null };
+  }),
+
+  signals: publicProcedure
+    .input(scopeInput.extend({ take: z.number().int().min(1).max(80).optional() }))
+    .query(async ({ ctx, input }) => {
+      const rows = await liveDb(ctx.db).liveMessage.findMany({
+        where: {
+          scope: input.scope,
+          scopeId: input.scopeId,
+          body: { startsWith: LIVE_SIG },
+        },
+        orderBy: { createdAt: "desc" },
+        take: input.take ?? 60,
+        include: { user: { select: { id: true, name: true, image: true } } },
+      });
+      return rows
+        .map((row) => ({
+          id: row.id,
+          userId: row.userId,
+          createdAt: row.createdAt,
+          signal: decodeSignal(row.body),
+        }))
+        .filter((row) => row.signal);
+    }),
+
+  signal: protectedProcedure
+    .input(scopeInput.extend({ signal: signalInput }))
+    .mutation(async ({ ctx, input }) => {
+      return liveDb(ctx.db).liveMessage.create({
+        data: {
+          scope: input.scope,
+          scopeId: input.scopeId,
+          userId: ctx.session.user.id,
+          body: encodeSignal(input.signal as LiveSignal),
+        },
         include: { user: { select: { id: true, name: true, image: true } } },
       });
     }),

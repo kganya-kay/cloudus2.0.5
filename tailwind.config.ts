@@ -9,7 +9,7 @@ export default withUt({
     extend: {
       fontFamily: {
         sans: ["var(--font-geist-sans)", ...fontFamily.sans],
-        display: ["var(--font-geist-sans)", ...fontFamily.sans],
+        display: ["var(--font-newsreader)", "Iowan Old Style", "Palatino", "Georgia", ...fontFamily.serif],
       },
       spacing: {
         18: "4.5rem",
@@ -35,6 +35,14 @@ export default withUt({
           success: "var(--os-success)",
           warning: "var(--os-warning)",
           danger: "var(--os-danger)",
+          ink: "var(--os-ink)",
+          navy: "var(--os-navy)",
+          gold: "var(--os-gold)",
+          bronze: "var(--os-bronze)",
+          rust: "var(--os-rust)",
+          burgundy: "var(--os-burgundy)",
+          forest: "var(--os-forest)",
+          ochre: "var(--os-ochre)",
         },
       },
       boxShadow: {

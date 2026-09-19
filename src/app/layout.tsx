@@ -1,8 +1,15 @@
 import "~/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
+import { Newsreader } from "next/font/google";
 import { type Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
+
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-newsreader",
+  display: "swap",
+});
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { ThemeProvider } from "~/lib/os/theme";
@@ -27,7 +34,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} h-full`}>
+    <html lang="en" className={`${GeistSans.variable} ${newsreader.variable} h-full`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

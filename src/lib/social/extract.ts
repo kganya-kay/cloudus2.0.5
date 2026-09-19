@@ -77,10 +77,7 @@ export function extractRssAlternate(html: string) {
   return match?.[1];
 }
 
-export function extractFirstRssEntry(xml: string): ParsedRssEntry | null {
-  const entry = xml.match(/<(?:entry|item)\b[\s\S]*?<\/(?:entry|item)>/i)?.[0];
-  if (!entry) return null;
-
+function parseRssEntry(entry: string): ParsedRssEntry {
   const title = entry.match(/<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i)?.[1]?.trim();
   const link =
     entry.match(/<link[^>]+href=["']([^"']+)["'][^>]*>/i)?.[1] ??
@@ -100,6 +97,25 @@ export function extractFirstRssEntry(xml: string): ParsedRssEntry | null {
     video: video && !video.startsWith("http") ? `https://www.youtube.com/watch?v=${video}` : video,
     audio,
   };
+}
+
+export function extractRssEntries(xml: string, limit = 8): ParsedRssEntry[] {
+  const blocks = xml.match(/<(?:entry|item)\b[\s\S]*?<\/(?:entry|item)>/gi) ?? [];
+  return blocks.slice(0, limit).map(parseRssEntry).filter((item) => item.title || item.link);
+}
+
+export function extractFirstRssEntry(xml: string): ParsedRssEntry | null {
+  return extractRssEntries(xml, 1)[0] ?? null;
+}
+
+export function youtubeIdsInText(value: string) {
+  const ids = new Set<string>();
+  const pattern = /(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([\w-]{11})/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(value))) {
+    ids.add(match[1]!);
+  }
+  return [...ids];
 }
 
 export function pickMediaFromSources(args: {

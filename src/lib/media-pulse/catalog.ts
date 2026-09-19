@@ -1,134 +1,40 @@
 import type { MediaPulseKindName } from "./kinds";
 
-export type EditorialWireItem = {
+export type WireSeed = {
   topic: string;
-  label: string;
+  query: string;
   kind: MediaPulseKindName;
-  title: string;
-  dek: string;
-  sourceName: string;
-  sourceUrl: string;
-  imageUrl: string;
-  videoUrl?: string;
-  audioUrl?: string;
-  wikiTitle?: string;
-  itunesTerm?: string;
+  take?: number;
+  youtube?: string;
 };
 
-const POSTER = "/cloudus-logo-final.png";
-
-export const EDITORIAL_WIRE: EditorialWireItem[] = [
-  {
-    topic: "amapiano",
-    label: "Amapiano",
-    kind: "ARTICLE",
-    title: "Amapiano",
-    dek: "Pretoria piano.",
-    sourceName: "Wikipedia",
-    sourceUrl: "https://en.wikipedia.org/wiki/Amapiano",
-    imageUrl: POSTER,
-    wikiTitle: "Amapiano",
-    itunesTerm: "amapiano",
-  },
-  {
-    topic: "maphorisa",
-    label: "DJ Maphorisa",
-    kind: "PERSON",
-    title: "DJ Maphorisa",
-    dek: "Soweto Baby.",
-    sourceName: "YouTube",
-    sourceUrl: "https://www.youtube.com/watch?v=oaYJbNkIrNk",
-    imageUrl: POSTER,
-    videoUrl: "https://www.youtube.com/watch?v=oaYJbNkIrNk",
-    wikiTitle: "DJ Maphorisa",
-    itunesTerm: "DJ Maphorisa",
-  },
-  {
-    topic: "johannesburg",
-    label: "Johannesburg",
-    kind: "PHOTO",
-    title: "Johannesburg",
-    dek: "The brief.",
-    sourceName: "Wikipedia",
-    sourceUrl: "https://en.wikipedia.org/wiki/Johannesburg",
-    imageUrl: POSTER,
-    wikiTitle: "Johannesburg",
-  },
-  {
-    topic: "fl-studio",
-    label: "FL Studio",
-    kind: "CLIP",
-    title: "FL Studio",
-    dek: "The desk.",
-    sourceName: "Wikipedia",
-    sourceUrl: "https://en.wikipedia.org/wiki/FL_Studio",
-    imageUrl: POSTER,
-    wikiTitle: "FL Studio",
-    itunesTerm: "amapiano instrumental",
-  },
-  {
-    topic: "tyla",
-    label: "Tyla",
-    kind: "SONG",
-    title: "Tyla",
-    dek: "Water.",
-    sourceName: "YouTube",
-    sourceUrl: "https://www.youtube.com/watch?v=XoiOOiuH8iI",
-    imageUrl: POSTER,
-    videoUrl: "https://www.youtube.com/watch?v=XoiOOiuH8iI",
-    wikiTitle: "Tyla (singer)",
-    itunesTerm: "Tyla Water",
-  },
-  {
-    topic: "soweto",
-    label: "Soweto",
-    kind: "EVENT",
-    title: "Soweto",
-    dek: "Stage.",
-    sourceName: "Wikipedia",
-    sourceUrl: "https://en.wikipedia.org/wiki/Soweto",
-    imageUrl: POSTER,
-    wikiTitle: "Soweto",
-  },
-  {
-    topic: "paystack",
-    label: "Paystack",
-    kind: "ARTICLE",
-    title: "Paystack",
-    dek: "Paid.",
-    sourceName: "Wikipedia",
-    sourceUrl: "https://en.wikipedia.org/wiki/Paystack",
-    imageUrl: POSTER,
-    wikiTitle: "Paystack",
-  },
-  {
-    topic: "hackathon",
-    label: "Build Night",
-    kind: "EVENT",
-    title: "Build Night",
-    dek: "Ship.",
-    sourceName: "Wikipedia",
-    sourceUrl: "https://en.wikipedia.org/wiki/Hackathon",
-    imageUrl: POSTER,
-    wikiTitle: "Hackathon",
-  },
+export const WIRE_DESK: WireSeed[] = [
+  { topic: "maphorisa", query: "DJ Maphorisa", kind: "VIDEO", take: 2, youtube: "https://www.youtube.com/watch?v=oaYJbNkIrNk" },
+  { topic: "madlanga", query: "Madlanga Commission", kind: "ARTICLE", take: 3 },
+  { topic: "amapiano", query: "Amapiano", kind: "VIDEO" },
+  { topic: "tyla", query: "Tyla", kind: "VIDEO", youtube: "https://www.youtube.com/watch?v=XoiOOiuH8iI" },
+  { topic: "kabza", query: "Kabza De Small", kind: "VIDEO" },
+  { topic: "waffles", query: "Uncle Waffles", kind: "VIDEO" },
+  { topic: "kelvin-momo", query: "Kelvin Momo", kind: "VIDEO" },
+  { topic: "gqom", query: "Gqom", kind: "VIDEO" },
+  { topic: "johannesburg", query: "Johannesburg news", kind: "ARTICLE" },
+  { topic: "soweto", query: "Soweto", kind: "ARTICLE" },
+  { topic: "parliament", query: "South Africa parliament", kind: "ARTICLE", take: 2 },
+  { topic: "mzansi", query: "Mzansi news today", kind: "ARTICLE" },
+  { topic: "sa-music", query: "South African music", kind: "VIDEO" },
+  { topic: "african-builders", query: "African startup creators", kind: "ARTICLE" },
+  { topic: "paystack", query: "Paystack Africa", kind: "ARTICLE" },
 ];
 
-export function editorialAsStories() {
-  return EDITORIAL_WIRE.map((item, index) => ({
-    id: `editorial-${item.topic}`,
-    topic: item.topic,
-    kind: item.kind,
-    title: item.title,
-    dek: item.dek,
-    sourceName: item.sourceName,
-    sourceUrl: item.sourceUrl,
-    imageUrl: item.imageUrl,
-    videoUrl: item.videoUrl ?? null,
-    audioUrl: item.audioUrl ?? null,
-    embedHtml: null as string | null,
-    interestCount: Math.max(2, 8 - index),
-    score: 80 - index * 6,
-    shared: index < 3,
-  }));
-}
+/** @deprecated Use WIRE_DESK + live fetch. Kept for older imports. */
+export const EDITORIAL_WIRE = WIRE_DESK.map((item) => ({
+  topic: item.topic,
+  label: item.query,
+  kind: item.kind,
+  title: item.query,
+  dek: item.query,
+  sourceName: item.kind === "VIDEO" ? "YouTube" : "News",
+  sourceUrl: item.youtube ?? `https://news.google.com/search?q=${encodeURIComponent(item.query)}`,
+  imageUrl: "",
+  videoUrl: item.youtube,
+}));

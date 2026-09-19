@@ -6,6 +6,7 @@ import type { PulseFrontpage, PulseStory } from "~/lib/media-pulse/types";
 import { isDatabaseUnreachable } from "~/server/db-errors";
 
 import { collectLiveStories } from "./live";
+import { collectWireStories } from "./wire";
 
 function fromRecord(item: {
   id: string;
@@ -44,7 +45,7 @@ function fromRecord(item: {
 export async function composeFrontpage(db: PrismaClient): Promise<PulseFrontpage> {
   try {
     const { start, end } = editionBounds();
-    const [adminRows, live] = await Promise.all([
+    const [adminRows, live, wire] = await Promise.all([
       db.mediaPulseStory.findMany({
         where: {
           origin: "ADMIN",
@@ -53,6 +54,7 @@ export async function composeFrontpage(db: PrismaClient): Promise<PulseFrontpage
         orderBy: [{ pinned: "desc" }, { score: "desc" }, { fetchedAt: "desc" }],
       }),
       collectLiveStories(db),
+      collectWireStories(),
     ]);
 
     const adminStories = adminRows
@@ -66,11 +68,11 @@ export async function composeFrontpage(db: PrismaClient): Promise<PulseFrontpage
       .filter((item): item is PulseStory => Boolean(item));
 
     const unique = new Map<string, PulseStory>();
-    for (const item of [...adminStories, ...live]) {
+    for (const item of [...adminStories, ...wire, ...live]) {
       if (!unique.has(item.sourceUrl)) unique.set(item.sourceUrl, item);
     }
 
-    const stories = [...unique.values()].sort((a, b) => b.score - a.score).slice(0, 12);
+    const stories = [...unique.values()].sort((a, b) => b.score - a.score).slice(0, 15);
     return {
       stories,
       kinds: [...new Set(stories.map((item) => item.kind))],

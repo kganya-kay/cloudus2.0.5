@@ -22,8 +22,8 @@ export function DailyEar() {
       className="flex min-h-8 min-w-0 flex-1 items-center justify-end"
       aria-label="Make the Daily"
     >
-      <span className="inline-flex max-w-full items-center gap-2 rounded-full bg-os-fg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-os-bg">
-        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-os-bg/70" />
+      <span className="inline-flex max-w-full items-center gap-2 rounded-full bg-os-rust px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#f7f1e6]">
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[#f7f1e6]/80" />
         <span className="truncate">{HOOKS[index]}</span>
       </span>
     </Link>
