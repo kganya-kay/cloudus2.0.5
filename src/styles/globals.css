@@ -115,4 +115,59 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .os-field {
+    @apply mt-1 w-full rounded-2xl border border-[var(--os-border)] bg-[var(--os-bg-elevated)] px-3 py-2.5 text-sm outline-none;
+  }
+
+  .os-app main#os-main nav.sticky,
+  .os-app main#os-main header.sticky {
+    display: none !important;
+  }
+
+  .os-app main#os-main .bg-gray-100,
+  .os-app main#os-main .bg-slate-50,
+  .os-app main#os-main .bg-slate-950,
+  .os-app main#os-main .min-h-screen,
+  .os-app main#os-main .min-h-full {
+    background-color: transparent !important;
+  }
+
+  .os-app main#os-main .text-white {
+    color: var(--os-fg) !important;
+  }
+
+  .os-app main#os-main .text-gray-900,
+  .os-app main#os-main .text-slate-900 {
+    color: var(--os-fg) !important;
+  }
+
+  .os-app main#os-main .text-gray-600,
+  .os-app main#os-main .text-gray-500,
+  .os-app main#os-main .text-slate-600 {
+    color: var(--os-fg-muted) !important;
+  }
+
+  .os-app main#os-main .bg-white,
+  .os-app main#os-main .bg-white\/80 {
+    background-color: var(--os-card) !important;
+    border-color: var(--os-border);
+  }
+
+  .os-app main#os-main .border-blue-100,
+  .os-app main#os-main .border-blue-200,
+  .os-app main#os-main .border-gray-100,
+  .os-app main#os-main .border-gray-200 {
+    border-color: var(--os-border) !important;
+  }
+
+  .os-app main#os-main .text-blue-600,
+  .os-app main#os-main .text-blue-700 {
+    color: var(--os-accent) !important;
+  }
+
+  .os-app main#os-main .bg-blue-600 {
+    background-color: var(--os-fg) !important;
+    color: var(--os-bg) !important;
+  }
 }

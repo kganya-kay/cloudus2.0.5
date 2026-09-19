@@ -25,7 +25,7 @@ export function OsHome() {
   if (overview.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Dashboard" description="Warming up your Cloudus home." />
+        <PageHeader title="Home" description="Warming up your Cloudus home." />
         <SkeletonGrid count={6} />
       </div>
     );
@@ -34,7 +34,7 @@ export function OsHome() {
   if (overview.error) {
     return (
       <ErrorState
-        title="Dashboard could not load"
+        title="Home could not load"
         onRetry={() => void overview.refetch()}
       />
     );

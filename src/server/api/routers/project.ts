@@ -9,6 +9,7 @@ import {
   PaymentStatus,
 } from "@prisma/client";
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
+import { isDatabaseUnreachable } from "~/server/db-errors";
 import {
   notifyProjectBidDecision,
   notifyProjectCollaboration,
@@ -375,12 +376,23 @@ export const projectRouter = createTRPCRouter({
   }),
 
   getOpenSource: publicProcedure.query(async ({ ctx }) => {
-    const projects = await ctx.db.project.findMany({
-      orderBy: { createdAt: "desc" },
-      where: { openSource: true },
-    });
+    try {
+      const projects = await ctx.db.project.findMany({
+        orderBy: { createdAt: "desc" },
+        where: { openSource: true },
+      });
 
-    return projects ?? null;
+      return projects ?? null;
+    } catch (error) {
+      if (isDatabaseUnreachable(error)) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            "Database is unreachable. Set DATABASE_URL to your Neon instance and restart the app.",
+        });
+      }
+      throw error;
+    }
   }),
 
   marketplace: publicProcedure

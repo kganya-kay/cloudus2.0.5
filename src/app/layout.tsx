@@ -6,7 +6,7 @@ import { SessionProvider } from "next-auth/react";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { ThemeProvider } from "~/lib/os/theme";
-import { LegacyChrome } from "./_components/LegacyChrome";
+import { AppChrome } from "~/components/os/app-chrome";
 
 export const metadata: Metadata = {
   title: "Cloudus OS",
@@ -35,8 +35,7 @@ export default function RootLayout({
         <SessionProvider>
           <TRPCReactProvider>
             <ThemeProvider>
-              {children}
-              <LegacyChrome />
+              <AppChrome>{children}</AppChrome>
             </ThemeProvider>
           </TRPCReactProvider>
         </SessionProvider>

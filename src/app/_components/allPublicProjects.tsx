@@ -37,7 +37,24 @@ function isValidImageUrl(url: string | undefined): url is string {
 }
 
 export default function AllProjects() {
-  const [allProjects] = api.project.getOpenSource.useSuspenseQuery();
+  const projectsQuery = api.project.getOpenSource.useQuery(undefined, {
+    retry: false,
+  });
+  const allProjects = projectsQuery.data ?? [];
+
+  if (projectsQuery.isError) {
+    return (
+      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto my-10 max-w-md rounded-2xl border border-dashed border-amber-300 bg-white p-8 text-center">
+          <h2 className="text-lg font-semibold text-gray-800">Database is offline</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Cloudus cannot reach Postgres. Add your Neon <code>DATABASE_URL</code> to
+            <code> .env</code> and restart the app.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">

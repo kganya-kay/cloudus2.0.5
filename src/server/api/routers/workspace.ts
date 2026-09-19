@@ -2,6 +2,7 @@ import { FulfilmentStatus, Role, RoomAdminStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
+import { isDatabaseUnreachable } from "~/server/db-errors";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 const captureKind = z.enum(["NOTE", "IDEA", "TASK"]);
@@ -12,7 +13,22 @@ const canSeeFounder = (email: string | null | undefined, role?: Role) =>
 export const workspaceRouter = createTRPCRouter({
   overview: publicProcedure.query(async ({ ctx }) => {
     const userId = ctx.session?.user.id ?? null;
+    const empty = {
+      signedIn: Boolean(userId),
+      projects: [],
+      events: [],
+      feed: [],
+      shop: [],
+      rooms: [],
+      creators: [],
+      announcements: [],
+      blogs: [],
+      captures: [],
+      assignedTasks: [],
+      nextBuildNight: null,
+    };
 
+    try {
     const [
       projects,
       events,
@@ -176,6 +192,12 @@ export const workspaceRouter = createTRPCRouter({
       assignedTasks,
       nextBuildNight: events[0] ?? null,
     };
+    } catch (error) {
+      if (isDatabaseUnreachable(error)) {
+        return empty;
+      }
+      throw error;
+    }
   }),
 
   captures: protectedProcedure.query(async ({ ctx }) => {

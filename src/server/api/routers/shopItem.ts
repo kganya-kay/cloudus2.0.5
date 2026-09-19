@@ -7,6 +7,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { notifyOrderCreated } from "../notification-service";
+import { isDatabaseUnreachable } from "~/server/db-errors";
 
 /* ----------------------- Zod Schemas ----------------------- */
 
@@ -368,40 +369,47 @@ export const shopItemRouter = createTRPCRouter({
     return { items, nextCursor };
   }),
 
-  /* GET ALL (with userLiked) */
+  /* GET ALL — public catalogue. Likes are optional and only loaded when signed in. */
   getAll: publicProcedure.query(async ({ ctx }) => {
-    const rows = await ctx.db.shopItem.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: { select: { orders: true, likes: true } },
-        supplier: { select: { id: true, name: true } },
-      },
-    });
-
-    let likedSet = new Set<number>();
-    const userId = ctx.session?.user?.id;
-    if (userId) {
-      const liked = await ctx.db.like.findMany({
-        where: {
-          createdById: userId,
-          shopItemId: { in: rows.map((i) => i.id) },
+    try {
+      const rows = await ctx.db.shopItem.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          _count: { select: { orders: true, likes: true } },
+          supplier: { select: { id: true, name: true } },
         },
-        select: { shopItemId: true },
       });
-      likedSet = new Set(liked.map((l) => l.shopItemId!).filter((v): v is number => v != null));
+
+      let likedSet = new Set<number>();
+      const userId = ctx.session?.user?.id;
+      if (userId) {
+        const liked = await ctx.db.like.findMany({
+          where: {
+            createdById: userId,
+            shopItemId: { in: rows.map((i) => i.id) },
+          },
+          select: { shopItemId: true },
+        });
+        likedSet = new Set(
+          liked.map((l) => l.shopItemId).filter((v): v is number => v != null),
+        );
+      }
+
+      return rows.map((row) => {
+        const { _count, ...rest } = row;
+        return {
+          ...rest,
+          ordersCount: _count.orders,
+          likesCount: _count.likes,
+          userLiked: likedSet.has(row.id),
+        };
+      });
+    } catch (error) {
+      if (isDatabaseUnreachable(error)) {
+        return [];
+      }
+      throw error;
     }
-
-    const items = rows.map((row) => {
-      const { _count, ...rest } = row;
-      return {
-        ...rest,
-        ordersCount: _count.orders,
-        likesCount: _count.likes,
-        userLiked: likedSet.has(row.id),
-      };
-    });
-
-    return items;
   }),
 
   /* BY ID */

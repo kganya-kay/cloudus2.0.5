@@ -45,21 +45,21 @@ export default async function AdminHome() {
 
   return (
     <HydrateClient>
-      <main className="mx-auto max-w-7xl space-y-6 p-6">
-        <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-sm">
+      <main className="space-y-6">
+        <div className="os-card p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-wide text-blue-600">Cloudus studio ops</p>
-              <h1 className="text-3xl font-bold text-gray-900">Monitor creator feed, tasks, and payouts.</h1>
-              <p className="text-sm text-gray-600">
-                Review creator posts, publish announcements, and steer suppliers/drivers across the marketplace.
+              <p className="os-kicker">Ops</p>
+              <h1 className="os-title mt-2">Admin</h1>
+              <p className="os-muted mt-2">
+                Review posts, publish announcements, and keep suppliers and drivers moving.
               </p>
             </div>
             <Link
               href="/feed"
-              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700"
+              className="inline-flex min-h-11 items-center rounded-full bg-os-fg px-4 text-sm font-semibold text-os-bg dark:bg-white dark:text-zinc-950"
             >
-              View public feed
+              View feed
             </Link>
           </div>
         </div>
