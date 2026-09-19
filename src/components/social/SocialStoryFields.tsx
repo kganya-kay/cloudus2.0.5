@@ -11,20 +11,22 @@ import type { SocialDropValue, SocialStoryMedia } from "./types";
 type SocialStoryFieldsProps = {
   value: SocialStoryMedia;
   onChange: (value: SocialStoryMedia) => void;
+  showFirstRun?: boolean;
 };
 
 function toDrop(url: string | undefined, kind: SocialDropValue["kind"]): SocialDropValue | null {
   return url ? { url, kind } : null;
 }
 
-export function SocialStoryFields({ value, onChange }: SocialStoryFieldsProps) {
+export function SocialStoryFields({ value, onChange, showFirstRun = true }: SocialStoryFieldsProps) {
   const { status } = useSession();
   const utils = api.useUtils();
   const accounts = api.social.listMine.useQuery(undefined, {
     enabled: status === "authenticated",
     retry: false,
   });
-  const needsFirstRun = status === "authenticated" && (accounts.data?.length ?? 0) === 0 && !accounts.isLoading;
+  const needsFirstRun =
+    showFirstRun && status === "authenticated" && (accounts.data?.length ?? 0) === 0 && !accounts.isLoading;
 
   return (
     <div className="space-y-4">

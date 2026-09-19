@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { Badge, Button, Card, EmptyState, PageHeader } from "~/components/os/primitives";
 import { BloggerNav } from "~/components/social/BloggerNav";
+import { PostToSocials } from "~/components/social/PostToSocials";
 import { SocialStoryFields } from "~/components/social/SocialStoryFields";
 import { StoryMediaPlayer } from "~/components/social/StoryMediaPlayer";
 import type { SocialStoryMedia } from "~/components/social/types";
@@ -117,80 +118,94 @@ export default function BlogComposer({
       </Card>
 
       {canManage ? (
-        <Card>
+        <Card className="space-y-4">
           <h2 className="text-xl font-semibold">New</h2>
 
-          <form
-            className="mt-4 space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!title.trim()) return;
-              createPost.mutate({
-                userName: routeUserName,
-                title: title.trim(),
-                excerpt: excerpt.trim() || undefined,
-                content: content.trim() || undefined,
-                coverImage: media.imageUrl,
-                videoUrl: media.videoUrl,
-                audioUrl: media.audioUrl,
-                status,
-              });
-            }}
-          >
-            <label className="text-xs text-os-muted">
-              Title
-              <input
-                className="os-field"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Title"
-              />
-            </label>
-            <label className="text-xs text-os-muted">
-              Excerpt
-              <input
-                className="os-field"
-                value={excerpt}
-                onChange={(event) => setExcerpt(event.target.value)}
-                placeholder="One line"
-              />
-            </label>
-            <label className="text-xs text-os-muted">
-              Story
-              <textarea
-                className="os-field"
-                rows={6}
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                placeholder="Story"
-              />
-            </label>
+          <label className="text-xs text-os-muted">
+            Title
+            <input
+              className="os-field"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Title"
+            />
+          </label>
+          <label className="text-xs text-os-muted">
+            Excerpt
+            <input
+              className="os-field"
+              value={excerpt}
+              onChange={(event) => setExcerpt(event.target.value)}
+              placeholder="One line"
+            />
+          </label>
+          <label className="text-xs text-os-muted">
+            Story
+            <textarea
+              className="os-field"
+              rows={6}
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              placeholder="Story"
+            />
+          </label>
 
-            <SocialStoryFields value={media} onChange={setMedia} />
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Media</p>
+            {media.imageUrl || media.videoUrl || media.audioUrl ? (
+              <StoryMediaPlayer
+                imageUrl={media.imageUrl}
+                videoUrl={media.videoUrl}
+                audioUrl={media.audioUrl}
+                title={title || "Story"}
+              />
+            ) : null}
+            <SocialStoryFields value={media} onChange={setMedia} showFirstRun={false} />
+          </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <select
-                className="os-field w-auto"
-                value={status}
-                onChange={(event) => setStatus(event.target.value as BlogPostStatus)}
-              >
-                <option value={BlogPostStatus.PUBLISHED}>Published</option>
-                <option value={BlogPostStatus.DRAFT}>Draft</option>
-                <option value={BlogPostStatus.ARCHIVED}>Archived</option>
-              </select>
-              <Button
-                type="submit"
-                disabled={
-                  createPost.isPending ||
-                  !title.trim() ||
-                  (!content.trim() && !media.imageUrl && !media.videoUrl && !media.audioUrl)
-                }
-              >
-                {createPost.isPending ? "Saving…" : "Publish"}
-              </Button>
-            </div>
-            {createPost.error ? <p className="text-sm text-os-danger">{createPost.error.message}</p> : null}
-          </form>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              className="os-field w-auto"
+              value={status}
+              onChange={(event) => setStatus(event.target.value as BlogPostStatus)}
+            >
+              <option value={BlogPostStatus.PUBLISHED}>Published</option>
+              <option value={BlogPostStatus.DRAFT}>Draft</option>
+              <option value={BlogPostStatus.ARCHIVED}>Archived</option>
+            </select>
+            <Button
+              type="button"
+              disabled={
+                createPost.isPending ||
+                !title.trim() ||
+                (!content.trim() && !media.imageUrl && !media.videoUrl && !media.audioUrl)
+              }
+              onClick={() =>
+                createPost.mutate({
+                  userName: routeUserName,
+                  title: title.trim(),
+                  excerpt: excerpt.trim() || undefined,
+                  content: content.trim() || undefined,
+                  coverImage: media.imageUrl,
+                  videoUrl: media.videoUrl,
+                  audioUrl: media.audioUrl,
+                  status,
+                })
+              }
+            >
+              {createPost.isPending ? "Saving…" : "Publish"}
+            </Button>
+            <PostToSocials
+              title={title}
+              excerpt={excerpt}
+              content={content}
+              imageUrl={media.imageUrl}
+              videoUrl={media.videoUrl}
+              audioUrl={media.audioUrl}
+              permalink={`/Blog/${routeUserName}`}
+            />
+          </div>
+          {createPost.error ? <p className="text-sm text-os-danger">{createPost.error.message}</p> : null}
         </Card>
       ) : !isSignedIn ? (
         <Card>
@@ -220,9 +235,23 @@ export default function BlogComposer({
                 title={post.title}
               />
               {post.content ? <p className="whitespace-pre-wrap text-sm leading-6">{post.content}</p> : null}
-              <Button href={`/Blog/${routeUserName}/${post.slug}`} size="sm" variant="secondary">
-                Open
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button href={`/Blog/${routeUserName}/${post.slug}`} size="sm" variant="secondary">
+                  Open
+                </Button>
+                {canManage ? (
+                  <PostToSocials
+                    title={post.title}
+                    excerpt={post.excerpt}
+                    content={post.content}
+                    imageUrl={post.coverImage}
+                    videoUrl={post.videoUrl}
+                    audioUrl={post.audioUrl}
+                    permalink={`/Blog/${routeUserName}/${post.slug}`}
+                    prefetch
+                  />
+                ) : null}
+              </div>
             </article>
           ))
         )}

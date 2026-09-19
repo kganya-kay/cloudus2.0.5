@@ -5,8 +5,16 @@ import { z } from "zod";
 import { isDatabaseUnreachable } from "~/server/db-errors";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
+import { craftSocialCaption } from "~/server/social/craft-caption";
 import { runSocialImportJob } from "~/server/social/run-job";
 import { resolveSocialIdentity, SOCIAL_PLATFORMS } from "~/lib/social/platforms";
+
+const craftInput = z.object({
+  title: z.string().trim().min(3).max(160),
+  excerpt: z.string().trim().max(320).optional(),
+  content: z.string().max(50000).optional(),
+  permalink: z.string().trim().max(2048).optional(),
+});
 
 const platformSchema = z.enum(SOCIAL_PLATFORMS);
 const kindSchema = z.nativeEnum(SocialMediaKind);
@@ -179,6 +187,18 @@ export const socialRouter = createTRPCRouter({
       });
 
       return (await runSocialImportJob(ctx.db, job.id)) ?? job;
+    }),
+
+  craftPreview: protectedProcedure
+    .input(craftInput)
+    .query(async ({ input }) => {
+      const caption = await craftSocialCaption({
+        title: input.title,
+        excerpt: input.excerpt,
+        content: input.content,
+        permalink: input.permalink,
+      });
+      return { caption };
     }),
 
   getJob: protectedProcedure

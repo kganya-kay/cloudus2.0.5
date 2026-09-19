@@ -41,6 +41,7 @@ export function SocialMediaDrop({
   const [accountId, setAccountId] = useState<string>("");
   const [pasteUrl, setPasteUrl] = useState("");
   const [directUrl, setDirectUrl] = useState("");
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const utils = api.useUtils();
 
@@ -133,18 +134,25 @@ export function SocialMediaDrop({
         </div>
       ) : null}
 
-      {!hasAccounts ? (
-        showCapture ? (
-          <SocialAccountCapture
-            compact={compact}
-            onSaved={() => {
-              void utils.social.listMine.invalidate();
-            }}
-          />
-        ) : (
-          <p className="os-muted">Connect first.</p>
-        )
-      ) : (
+      <UploadButton
+        endpoint={uploadEndpoint[kind]}
+        content={{ button: kind === "IMAGE" ? "Upload picture" : kind === "VIDEO" ? "Upload video" : "Upload sound" }}
+        onClientUploadComplete={(res) => {
+          const file = res?.[0] as { url?: string; ufsUrl?: string; serverData?: { url?: string } } | undefined;
+          const url = file?.ufsUrl ?? file?.url ?? file?.serverData?.url;
+          setUploadError(null);
+          if (url) onChange?.({ url, kind, source: "UPLOAD" });
+        }}
+        onUploadError={(error: Error) => {
+          setUploadError(error.message);
+        }}
+        appearance={{
+          button:
+            "ut-ready:bg-[var(--os-fg)] ut-ready:text-[var(--os-bg)] h-10 w-full rounded-full px-3.5 text-xs font-semibold",
+        }}
+      />
+
+      {hasAccounts ? (
         <div className="space-y-3">
           <label className="text-xs text-os-muted">
             Social
@@ -175,48 +183,43 @@ export function SocialMediaDrop({
                 })
               }
             >
-              {kind === "IMAGE" ? "Drop" : "Drop"}
+              Drop
             </Button>
-            <UploadButton
-              endpoint={uploadEndpoint[kind]}
-              onClientUploadComplete={(res) => {
-                const url = res?.[0]?.url;
-                if (url) onChange?.({ url, kind, source: "UPLOAD" });
-              }}
-              appearance={{
-                button: "ut-ready:bg-[var(--os-fg)] ut-ready:text-[var(--os-bg)] h-10 rounded-full px-3.5 text-xs font-semibold",
-              }}
-            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={!pasteUrl.trim() || busy}
+              onClick={() =>
+                requestLatest.mutate({
+                  accountId: selectedAccount?.id,
+                  kind,
+                  sourceUrl: pasteUrl.trim(),
+                })
+              }
+            >
+              Import
+            </Button>
           </div>
 
           <label className="text-xs text-os-muted">
-            URL
-            <div className="mt-1 flex gap-2">
-              <input
-                className="os-field mt-0"
-                placeholder="https://…"
-                value={pasteUrl}
-                onChange={(event) => setPasteUrl(event.target.value)}
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                disabled={!pasteUrl.trim() || busy}
-                onClick={() =>
-                  requestLatest.mutate({
-                    accountId: selectedAccount?.id,
-                    kind,
-                    sourceUrl: pasteUrl.trim(),
-                  })
-                }
-              >
-                Import
-              </Button>
-            </div>
+            Post URL
+            <input
+              className="os-field"
+              placeholder="https://…"
+              value={pasteUrl}
+              onChange={(event) => setPasteUrl(event.target.value)}
+            />
           </label>
         </div>
-      )}
+      ) : showCapture ? (
+        <SocialAccountCapture
+          compact={compact}
+          onSaved={() => {
+            void utils.social.listMine.invalidate();
+          }}
+        />
+      ) : null}
 
       <label className="text-xs text-os-muted">
         File URL
@@ -239,9 +242,9 @@ export function SocialMediaDrop({
         </div>
       </label>
 
-      {job.data?.status === "FAILED" || requestLatest.error ? (
+      {uploadError || job.data?.status === "FAILED" || requestLatest.error ? (
         <p className="text-sm text-os-danger">
-          {job.data?.error ?? requestLatest.error?.message}
+          {uploadError ?? job.data?.error ?? requestLatest.error?.message}
         </p>
       ) : null}
 

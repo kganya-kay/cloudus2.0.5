@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { Badge, Button, Card, PageHeader } from "~/components/os/primitives";
 import { BloggerNav } from "~/components/social/BloggerNav";
+import { PostToSocials } from "~/components/social/PostToSocials";
 import { StoryMediaPlayer } from "~/components/social/StoryMediaPlayer";
 import { formatDateTime } from "~/lib/os/format";
 import { auth } from "~/server/auth";
@@ -50,6 +51,18 @@ export default async function BlogStoryPage({ params }: PageProps) {
       </Card>
 
       <div className="flex flex-wrap gap-2">
+        {result.viewerCanManage ? (
+          <PostToSocials
+            title={post.title}
+            excerpt={post.excerpt}
+            content={post.content}
+            imageUrl={post.coverImage}
+            videoUrl={post.videoUrl}
+            audioUrl={post.audioUrl}
+            permalink={`/Blog/${blog.userName}/${post.slug}`}
+            prefetch
+          />
+        ) : null}
         <Button href={`/Blog/${blog.userName}`} size="sm" variant="secondary">
           More
         </Button>

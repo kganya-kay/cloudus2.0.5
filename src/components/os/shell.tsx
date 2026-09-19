@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Bars3Icon,
   BellIcon,
   CalendarDaysIcon,
+  ChevronLeftIcon,
   HomeIcon,
   MagnifyingGlassIcon,
   MusicalNoteIcon,
@@ -44,6 +46,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const [commandOpen, setCommandOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarReady, setSidebarReady] = useState(false);
   const [online, setOnline] = useState(true);
   const user = session?.user;
   const notifications = api.notification.list.useQuery(undefined, {
@@ -78,6 +82,17 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     setMobileSearchOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const stored = window.localStorage.getItem("cloudus.os.sidebar");
+    if (stored === "closed") setSidebarOpen(false);
+    setSidebarReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!sidebarReady) return;
+    window.localStorage.setItem("cloudus.os.sidebar", sidebarOpen ? "open" : "closed");
+  }, [sidebarOpen, sidebarReady]);
+
   const openSearch = () => {
     setMobileSearchOpen(true);
     setCommandOpen(true);
@@ -109,14 +124,29 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         Skip to content
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-os-border bg-os-elevated/80 px-4 py-6 backdrop-blur lg:flex">
-        <Link href="/" className="mb-8 flex items-center gap-3 px-2">
-          <img src="/cloudus-logo-final.png" alt="" className="h-9 w-9 rounded-full object-cover" />
-          <div>
-            <p className="text-sm font-semibold">Cloudus OS</p>
-            <p className="text-xs text-os-muted">The place where builders build</p>
-          </div>
-        </Link>
+      <aside
+        className={`fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-os-border bg-os-elevated/80 px-4 py-6 backdrop-blur transition-transform duration-200 lg:flex ${
+          sidebarOpen ? "translate-x-0" : "pointer-events-none -translate-x-full"
+        }`}
+        aria-hidden={!sidebarOpen}
+      >
+        <div className="mb-8 flex items-start justify-between gap-2 px-2">
+          <Link href="/" className="flex items-center gap-3">
+            <img src="/cloudus-logo-final.png" alt="" className="h-9 w-9 rounded-full object-cover" />
+            <div>
+              <p className="text-sm font-semibold">Cloudus OS</p>
+              <p className="text-xs text-os-muted">The place where builders build</p>
+            </div>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-os-border"
+            aria-label="Close menu"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </button>
+        </div>
         <nav aria-label="Cloudus" className="flex-1 space-y-1 overflow-y-auto">
           {desktopNav.map((item) => (
             <Link
@@ -143,9 +173,19 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="lg:pl-72">
+      <div className={`transition-[padding] duration-200 ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <header className="sticky top-0 z-40 border-b border-os-border bg-os-bg/85 backdrop-blur">
           <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className={`hidden h-11 w-11 shrink-0 place-items-center rounded-full border border-os-border bg-os-card ${
+                sidebarOpen ? "lg:hidden" : "lg:grid"
+              }`}
+              aria-label="Open menu"
+            >
+              <Bars3Icon className="h-5 w-5" />
+            </button>
             <Link href="/" className={`flex items-center gap-2 lg:hidden ${mobileSearchOpen ? "hidden" : ""}`}>
               <img src="/cloudus-logo-final.png" alt="Cloudus" className="h-8 w-8 rounded-full object-cover" />
             </Link>
