@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Badge, Button, Card, PageHeader } from "~/components/os/primitives";
@@ -32,9 +31,7 @@ export default async function BlogStoryPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        eyebrow={`@${blog.userName}`}
         title={post.title}
-        description={post.excerpt ?? blog.title}
         actions={<BloggerNav />}
       />
 
@@ -54,14 +51,11 @@ export default async function BlogStoryPage({ params }: PageProps) {
 
       <div className="flex flex-wrap gap-2">
         <Button href={`/Blog/${blog.userName}`} size="sm" variant="secondary">
-          More from @{blog.userName}
+          More
         </Button>
         <Button href="/Blog" size="sm" variant="ghost">
-          Public blogs
+          All
         </Button>
-        <Link href="/profile" className="text-sm font-semibold text-os-accent">
-          Your profile
-        </Link>
       </div>
     </div>
   );

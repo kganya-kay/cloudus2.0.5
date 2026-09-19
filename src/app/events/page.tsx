@@ -51,16 +51,14 @@ export default function EventsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Calendar"
         title="Events"
-        description="Build Nights, workshops, and activations. Each event stays linked to a project."
-        actions={<Button href="/studio/session" variant="secondary">Open a room</Button>}
+        actions={<Button href="/studio/session" variant="secondary">Room</Button>}
       />
 
       <Card>
-        <h2 className="text-lg font-semibold">Create an event</h2>
+        <h2 className="text-lg font-semibold">New</h2>
         {!session?.user?.id ? (
-          <Button href="/auth/login" className="mt-4" size="sm">Sign in to create</Button>
+          <Button href="/auth/login" className="mt-4" size="sm">Sign in</Button>
         ) : (
           <form
             className="mt-4 grid gap-3 md:grid-cols-2"
@@ -99,10 +97,10 @@ export default function EventsPage() {
             <textarea className="os-field md:col-span-2" rows={3} placeholder="Description" value={formState.description} onChange={(e) => setFormState((p) => ({ ...p, description: e.target.value }))} />
             <div className="md:col-span-2">
               <Button type="submit" disabled={!canCreateEvent || createEvent.isPending}>
-                {createEvent.isPending ? "Creating..." : "Create event"}
+                {createEvent.isPending ? "…" : "Create"}
               </Button>
               {!isAdmin && ownedProjects.length === 0 ? (
-                <p className="os-muted mt-2">Create a project first, then host an event from it.</p>
+                <p className="os-muted mt-2">Need a project first.</p>
               ) : null}
             </div>
           </form>
@@ -110,9 +108,9 @@ export default function EventsPage() {
       </Card>
 
       {isLoading ? (
-        <p className="os-muted">Loading events...</p>
+        <p className="os-muted">…</p>
       ) : events.length === 0 ? (
-        <EmptyState title="No events yet" description="Host a Friday Build Night and everyone leaves with something shipped." />
+        <EmptyState title="None" />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {events.map((event) => (

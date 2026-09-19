@@ -18,7 +18,7 @@ export default function LearnPage() {
   if (overview.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Learn" description="Loading playbooks." />
+        <PageHeader title="Learn" />
         <SkeletonGrid />
       </div>
     );
@@ -33,14 +33,12 @@ export default function LearnPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Knowledge"
         title="Learn"
-        description="Engineering notes and story blogs with picture, video, and sound."
         actions={
           <>
-            <Button href="/Blog">Public blogs</Button>
+            <Button href="/Blog">Blogs</Button>
             <Button href="/Blog/me" variant="secondary">
-              My stories
+              Mine
             </Button>
           </>
         }
@@ -64,7 +62,7 @@ export default function LearnPage() {
             <Card key={post.id}>
               <p className="os-kicker">{post.blog.title}</p>
               <h2 className="mt-2 text-lg font-semibold">{post.title}</h2>
-              <p className="os-muted mt-2">{post.excerpt ?? "A Cloudus note."}</p>
+              {post.excerpt ? <p className="os-muted mt-2 line-clamp-1">{post.excerpt}</p> : null}
               <p className="mt-3 text-xs text-os-muted">{formatShortDate(post.publishedAt)}</p>
               <Button href={`/Blog/${post.blog.userName}`} className="mt-4" size="sm" variant="secondary">
                 Read
@@ -73,11 +71,7 @@ export default function LearnPage() {
           ))}
         </div>
       ) : (
-        <EmptyState
-          title="No published notes yet"
-          description="Document one production lesson or one studio experiment. That is enough for this week."
-          action={<Button href="/Blog" size="sm">Write a note</Button>}
-        />
+        <EmptyState title="Empty" action={<Button href="/Blog" size="sm">Write</Button>} />
       )}
     </div>
   );

@@ -9,10 +9,8 @@ export default async function ShopPage() {
     <HydrateClient>
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Marketplace"
           title="Shop"
-          description="Browse Cloudus products and services without signing in. Login is only needed to like or check out."
-          actions={<Button href="/projects/create" variant="secondary">Need something custom?</Button>}
+          actions={<Button href="/projects/create" variant="secondary">Custom</Button>}
         />
         <AllShopItems initialItems={initialItems} />
       </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -104,7 +103,6 @@ export function SocialMediaDrop({
     return (
       <div className="os-card space-y-3 p-4">
         <p className="text-sm font-semibold">{heading}</p>
-        <p className="os-muted">Sign in to drop from socials or upload.</p>
         <Button href="/auth/login?callbackUrl=/Blog" size="sm">
           Sign in
         </Button>
@@ -120,9 +118,7 @@ export function SocialMediaDrop({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold">{heading}</p>
-          <p className="os-muted">
-            {description ?? "Upload, paste a URL, or drop the latest public post from a connected social."}
-          </p>
+          {description ? <p className="os-muted">{description}</p> : null}
         </div>
         {busy ? <Badge tone="accent">Fetching…</Badge> : null}
       </div>
@@ -146,12 +142,12 @@ export function SocialMediaDrop({
             }}
           />
         ) : (
-          <p className="os-muted">Connect one social above, then drop the latest post here.</p>
+          <p className="os-muted">Connect first.</p>
         )
       ) : (
         <div className="space-y-3">
           <label className="text-xs text-os-muted">
-            Connected social
+            Social
             <select
               className="os-field"
               value={selectedAccount?.id ?? ""}
@@ -179,7 +175,7 @@ export function SocialMediaDrop({
                 })
               }
             >
-              {kind === "IMAGE" ? "Drop latest social image" : `Drop latest ${kind.toLowerCase()}`}
+              {kind === "IMAGE" ? "Drop" : "Drop"}
             </Button>
             <UploadButton
               endpoint={uploadEndpoint[kind]}
@@ -194,11 +190,11 @@ export function SocialMediaDrop({
           </div>
 
           <label className="text-xs text-os-muted">
-            Paste a public post URL
+            URL
             <div className="mt-1 flex gap-2">
               <input
                 className="os-field mt-0"
-                placeholder="Instagram, TikTok, YouTube, SoundCloud…"
+                placeholder="https://…"
                 value={pasteUrl}
                 onChange={(event) => setPasteUrl(event.target.value)}
               />
@@ -223,11 +219,11 @@ export function SocialMediaDrop({
       )}
 
       <label className="text-xs text-os-muted">
-        Or a direct {kind.toLowerCase()} URL
+        File URL
         <div className="mt-1 flex gap-2">
           <input
             className="os-field mt-0"
-            placeholder={`https://… ${kind.toLowerCase()} file`}
+            placeholder="https://…"
             value={directUrl}
             onChange={(event) => setDirectUrl(event.target.value)}
           />
@@ -251,20 +247,13 @@ export function SocialMediaDrop({
 
       {hasAccounts && !compact ? (
         <details className="rounded-2xl bg-os-elevated p-3">
-          <summary className="cursor-pointer text-sm font-medium">Add another social</summary>
+          <summary className="cursor-pointer text-sm font-medium">Add</summary>
           <div className="mt-3">
             <SocialAccountCapture compact onSaved={() => void utils.social.listMine.invalidate()} />
           </div>
         </details>
       ) : null}
 
-      <p className="text-xs text-os-muted">
-        Manage accounts anytime on{" "}
-        <Link href="/profile" className="font-semibold text-os-accent">
-          your profile
-        </Link>
-        .
-      </p>
     </section>
   );
 }

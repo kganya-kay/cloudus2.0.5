@@ -25,9 +25,7 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
-      <p className="os-kicker">Cloudus OS</p>
-      <h1 className="os-title mt-2">Sign in</h1>
-      <p className="os-muted mt-2">Same Cloudus account. The operating system is the new front door.</p>
+      <h1 className="os-title">Sign in</h1>
       <div className="os-card mt-6 p-5">
         <div className="grid gap-3">
           <div>

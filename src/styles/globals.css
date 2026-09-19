@@ -120,6 +120,18 @@
     @apply mt-1 w-full rounded-2xl border border-[var(--os-border)] bg-[var(--os-bg-elevated)] px-3 py-2.5 text-sm outline-none;
   }
 
+  .os-paper {
+    @apply overflow-hidden rounded-[2rem] border border-[var(--os-border)] bg-[var(--os-card)] shadow-[var(--os-shadow)];
+  }
+
+  .os-paper-headline {
+    @apply font-display text-3xl font-semibold leading-tight tracking-tight sm:text-5xl;
+  }
+
+  .os-paper-standfirst {
+    @apply text-base leading-7 text-[var(--os-fg-muted)] sm:text-lg;
+  }
+
   .os-app main#os-main nav.sticky,
   .os-app main#os-main header.sticky {
     display: none !important;

@@ -42,7 +42,7 @@ export default function BuildPage() {
   if (overview.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Build" description="Loading your workspace." />
+        <PageHeader title="Build" />
         <SkeletonGrid />
       </div>
     );
@@ -56,15 +56,13 @@ export default function BuildPage() {
     <div className="space-y-6">
       <OfflineBanner online={online} />
       <PageHeader
-        eyebrow="Workspace"
         title="Build"
-        description="Notion for thoughts. GitHub for shipping. Capture first, then turn it into a project, beat, or post."
-        actions={<Button href="/projects/create">New project</Button>}
+        actions={<Button href="/projects/create">New</Button>}
       />
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
         <Card>
-          <p className="os-kicker">Quick capture</p>
+          <p className="os-kicker">Capture</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {kinds.map((item) => (
               <button
@@ -84,7 +82,7 @@ export default function BuildPage() {
             onChange={(event) => setText(event.target.value)}
             rows={4}
             maxLength={500}
-            placeholder="A note, an idea, or the next task..."
+            placeholder="Note"
             className="mt-4 w-full rounded-2xl border border-os-border bg-os-elevated px-4 py-3 text-sm outline-none"
           />
           <div className="mt-3 flex items-center justify-between gap-3">
@@ -93,20 +91,19 @@ export default function BuildPage() {
               disabled={!text.trim() || capture.isPending || status !== "authenticated"}
               onClick={() => capture.mutate({ kind, text: text.trim() })}
             >
-              {status !== "authenticated" ? "Sign in to save" : capture.isPending ? "Saving..." : "Capture"}
+              {status !== "authenticated" ? "Sign in" : capture.isPending ? "…" : "Save"}
             </Button>
           </div>
-          {capture.error ? <p className="mt-3 text-sm text-os-danger">Could not save. Check your session and try again.</p> : null}
+          {capture.error ? <p className="mt-3 text-sm text-os-danger">Failed.</p> : null}
         </Card>
 
         <Card>
-          <p className="os-kicker">AI assistant</p>
-          <h2 className="mt-2 text-lg font-semibold">Ask Cloudus Navigator</h2>
+          <h2 className="text-lg font-semibold">Ask</h2>
           <textarea
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             rows={4}
-            placeholder="Where should I put a laundry order, a beat, or a project brief?"
+            placeholder="Ask Cloudus"
             className="mt-4 w-full rounded-2xl border border-os-border bg-os-elevated px-4 py-3 text-sm outline-none"
           />
           <Button
@@ -115,10 +112,10 @@ export default function BuildPage() {
             disabled={!question.trim() || assistant.isPending}
             onClick={() => assistant.mutate({ question, path: "/build" })}
           >
-            {assistant.isPending ? "Thinking..." : "Ask"}
+            {assistant.isPending ? "…" : "Ask"}
           </Button>
           {assistant.data?.answer ? <p className="os-muted mt-4">{assistant.data.answer}</p> : null}
-          {assistant.error ? <p className="mt-3 text-sm text-os-danger">Assistant is unavailable.</p> : null}
+          {assistant.error ? <p className="mt-3 text-sm text-os-danger">Failed.</p> : null}
         </Card>
       </div>
 
@@ -137,16 +134,13 @@ export default function BuildPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="Your notebook is empty"
-              description="Write the first note for Season One. This becomes content later."
-            />
+            <EmptyState title="Empty" />
           )}
         </Card>
 
         <Card>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Assigned tasks</h2>
+            <h2 className="text-lg font-semibold">Tasks</h2>
             <Button href="/projects" size="sm" variant="ghost">
               Projects
             </Button>
@@ -166,11 +160,7 @@ export default function BuildPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="No tasks assigned"
-              description="Claim work from the project marketplace or create a client brief."
-              action={<Button href="/projects" size="sm">Find work</Button>}
-            />
+            <EmptyState title="None" action={<Button href="/projects" size="sm">Projects</Button>} />
           )}
         </Card>
       </div>

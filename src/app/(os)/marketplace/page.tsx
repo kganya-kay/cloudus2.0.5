@@ -19,7 +19,7 @@ export default function MarketplacePage() {
   if (overview.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Marketplace" description="Loading services and products." />
+        <PageHeader title="Marketplace" />
         <SkeletonGrid />
       </div>
     );
@@ -35,12 +35,10 @@ export default function MarketplacePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Monetization"
         title="Marketplace"
-        description="Templates, services, websites, and rentals. Checkout, webhooks, and fulfilment stay on the existing Cloudus routes."
         actions={
           <>
-            <Button href="/shop">Open shop</Button>
+            <Button href="/shop">Shop</Button>
             <Button href="/laundry" variant="secondary">
               Laundry
             </Button>
@@ -50,23 +48,22 @@ export default function MarketplacePage() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { href: "/shop", label: "Services", copy: "Packaged Cloudus work" },
-          { href: "/rooms", label: "Rentals", copy: "Approved rooms" },
-          { href: "/laundry", label: "Laundry", copy: "Pickup and delivery" },
-          { href: "/projects", label: "Client work", copy: "Briefs and bids" },
+          { href: "/shop", label: "Shop" },
+          { href: "/rooms", label: "Rooms" },
+          { href: "/laundry", label: "Laundry" },
+          { href: "/projects", label: "Projects" },
         ].map((item) => (
           <Link key={item.href} href={item.href} className="os-card p-4 hover:bg-os-elevated">
             <p className="font-semibold">{item.label}</p>
-            <p className="os-muted mt-1">{item.copy}</p>
           </Link>
         ))}
       </div>
 
       <Card>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Digital products</h2>
+          <h2 className="text-lg font-semibold">Shop</h2>
           <Link href="/shop" className="text-sm font-semibold text-os-accent">
-            All items
+            All
           </Link>
         </div>
         {shop.length ? (
@@ -83,17 +80,13 @@ export default function MarketplacePage() {
             ))}
           </div>
         ) : (
-          <EmptyState
-            title="Shop is empty"
-            description="Existing shop, order, and Paystack flows still power sales when items are published."
-            action={<Button href="/shop" size="sm">Go to shop</Button>}
-          />
+          <EmptyState title="Empty" action={<Button href="/shop" size="sm">Shop</Button>} />
         )}
       </Card>
 
       <Card>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Stay and spaces</h2>
+          <h2 className="text-lg font-semibold">Rooms</h2>
           <Link href="/rooms" className="text-sm font-semibold text-os-accent">
             Rentals
           </Link>
@@ -110,10 +103,7 @@ export default function MarketplacePage() {
             ))}
           </div>
         ) : (
-          <EmptyState
-            title="No approved listings"
-            description="Hosts still submit through /rooms/create. Admin approval is unchanged."
-          />
+          <EmptyState title="None" />
         )}
       </Card>
     </div>

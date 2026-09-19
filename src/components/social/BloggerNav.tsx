@@ -11,12 +11,12 @@ export function BloggerNav({ current }: { current?: "community" | "mine" | "prof
   return (
     <div className="flex flex-wrap gap-2">
       <Button href="/Blog" size="sm" variant={current === "community" ? "primary" : "secondary"}>
-        Public blogs
+        All
       </Button>
       {signedIn ? (
         <>
           <Button href="/Blog/me" size="sm" variant={current === "mine" ? "primary" : "secondary"}>
-            My stories
+            Mine
           </Button>
           <Button href="/profile" size="sm" variant={current === "profile" ? "primary" : "secondary"}>
             Profile
@@ -24,7 +24,7 @@ export function BloggerNav({ current }: { current?: "community" | "mine" | "prof
         </>
       ) : (
         <Button href="/auth/login?callbackUrl=/Blog/me" size="sm">
-          Sign in to write
+          Sign in
         </Button>
       )}
     </div>

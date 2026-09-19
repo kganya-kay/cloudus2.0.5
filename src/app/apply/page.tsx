@@ -32,11 +32,7 @@ export default function UnifiedApplyPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow="Join"
-        title="Apply"
-        description="Choose a path. Existing application and review workflows stay the same."
-      />
+      <PageHeader title="Apply" />
       <Card>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="text-xs text-os-muted">
@@ -78,7 +74,7 @@ export default function UnifiedApplyPage() {
         <Button className="mt-4" onClick={submit} disabled={apply.isPending || !name || !email}>
           {apply.isPending ? "Submitting…" : "Submit"}
         </Button>
-        {apply.isSuccess ? <p className="mt-3 text-sm text-os-success">Received. We’ll be in touch.</p> : null}
+        {apply.isSuccess ? <p className="mt-3 text-sm text-os-success">Received.</p> : null}
       </Card>
     </div>
   );
