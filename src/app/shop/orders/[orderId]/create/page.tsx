@@ -13,6 +13,7 @@ import {
 } from "@headlessui/react";
 
 import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
+import { FeedOwn } from "~/components/os/feed-own";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 
@@ -511,6 +512,12 @@ export default function CreateOrderPage() {
                       {post.caption && (
                         <p className="text-xs text-gray-600 line-clamp-2">{post.caption}</p>
                       )}
+                      <FeedOwn
+                        postId={post.id}
+                        title={post.title}
+                        caption={post.caption}
+                        canManage={session?.user?.id === post.creator.user?.id}
+                      />
                       {post.project?.id && (
                         <Link
                           href={`/projects/${post.project.id}`}

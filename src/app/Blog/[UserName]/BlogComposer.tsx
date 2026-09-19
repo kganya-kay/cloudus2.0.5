@@ -3,6 +3,7 @@
 import { BlogPostStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 
+import { StoryOwnerTools } from "~/components/os/story-owner";
 import { Badge, Button, Card, EmptyState, PageHeader } from "~/components/os/primitives";
 import { BloggerNav } from "~/components/social/BloggerNav";
 import { PostToSocials } from "~/components/social/PostToSocials";
@@ -252,6 +253,18 @@ export default function BlogComposer({
                   />
                 ) : null}
               </div>
+              {canManage ? (
+                <StoryOwnerTools
+                  canManage
+                  userName={routeUserName}
+                  post={{
+                    id: post.id,
+                    title: post.title,
+                    excerpt: post.excerpt,
+                    content: post.content,
+                  }}
+                />
+              ) : null}
             </article>
           ))
         )}

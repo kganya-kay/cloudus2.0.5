@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { OurFileRouter } from "~/app/api/uploadthing/core";
 import { LiveStage } from "~/components/live/LiveStage";
+import { FeedOwn } from "~/components/os/feed-own";
 import { api } from "~/trpc/react";
 import { IconButton } from "@mui/material";
 import {
@@ -848,6 +849,14 @@ export default function LatestProject() {
               {post.caption && post.caption !== summary && (
                 <p className="mt-2 text-sm text-slate-600">{post.caption}</p>
               )}
+              <div className="mt-3">
+                <FeedOwn
+                  postId={post.id}
+                  title={post.title}
+                  caption={post.caption}
+                  canManage={session?.user?.id === post.creator?.user?.id}
+                />
+              </div>
             </div>
           );
         })

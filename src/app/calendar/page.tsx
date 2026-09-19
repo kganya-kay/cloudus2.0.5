@@ -21,6 +21,7 @@ import {
 } from "date-fns";
 
 import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
+import { FeedOwn } from "~/components/os/feed-own";
 import { CalendarLive } from "./calendar-live";
 import { auth } from "~/server/auth";
 import { HydrateClient, api } from "~/trpc/server";
@@ -463,6 +464,12 @@ export default async function CalendarPage() {
                         {post.caption && (
                           <p className="text-xs text-gray-600 line-clamp-2">{post.caption}</p>
                         )}
+                        <FeedOwn
+                          postId={post.id}
+                          title={post.title}
+                          caption={post.caption}
+                          canManage={session?.user?.id === post.creator.user?.id}
+                        />
                         {post.project?.id && (
                           <Link
                             href={`/projects/${post.project.id}`}

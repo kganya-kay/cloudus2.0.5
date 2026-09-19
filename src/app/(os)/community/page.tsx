@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { FeedOwn } from "~/components/os/feed-own";
+import { StoryOwnerTools } from "~/components/os/story-owner";
 import { api } from "~/trpc/react";
 import {
   Avatar,
@@ -16,7 +19,9 @@ import { CommunityStoryDrop } from "~/components/social/CommunityStoryDrop";
 import { StoryMediaPlayer } from "~/components/social/StoryMediaPlayer";
 
 export default function CommunityPage() {
+  const { data: session } = useSession();
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
+  const userId = session?.user?.id;
 
   if (overview.isLoading) {
     return (
@@ -70,9 +75,21 @@ export default function CommunityPage() {
                   audioUrl={post.audioUrl}
                   title={post.title}
                 />
-                <Button href={`/Blog/${post.blog.userName}/${post.slug}`} size="sm" variant="secondary">
-                  Read
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button href={`/Blog/${post.blog.userName}/${post.slug}`} size="sm" variant="secondary">
+                    Read
+                  </Button>
+                  <StoryOwnerTools
+                    canManage={userId === post.blog.ownerId}
+                    userName={post.blog.userName}
+                    post={{
+                      id: post.id,
+                      title: post.title,
+                      excerpt: post.excerpt,
+                      content: null,
+                    }}
+                  />
+                </div>
               </Card>
             ))}
           </div>
@@ -114,9 +131,15 @@ export default function CommunityPage() {
           {data?.feed.length ? (
             <ul className="mt-4 space-y-3">
               {data.feed.map((item) => (
-                <li key={item.id} className="rounded-2xl bg-os-elevated p-3">
+                <li key={item.id} className="space-y-2 rounded-2xl bg-os-elevated p-3">
                   <p className="text-sm font-medium">{item.title ?? item.caption ?? item.type}</p>
                   <p className="os-muted">@{item.creator.handle}</p>
+                  <FeedOwn
+                    postId={item.id}
+                    title={item.title}
+                    caption={item.caption}
+                    canManage={userId === item.creator.user.id}
+                  />
                 </li>
               ))}
             </ul>

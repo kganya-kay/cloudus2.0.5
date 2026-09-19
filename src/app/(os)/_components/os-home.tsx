@@ -15,14 +15,24 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { FeedOwn } from "~/components/os/feed-own";
 import { Hint } from "~/components/os/hint";
+import { OwnText } from "~/components/os/own-text";
 
 import { useOnline } from "./use-online";
 
 export function OsHome() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const online = useOnline();
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
+  const utils = api.useUtils();
+  const updateCapture = api.workspace.updateCapture.useMutation({
+    onSuccess: () => void utils.workspace.overview.invalidate(),
+  });
+  const deleteCapture = api.workspace.deleteCapture.useMutation({
+    onSuccess: () => void utils.workspace.overview.invalidate(),
+  });
+  const userId = session?.user?.id;
 
   if (overview.isLoading) {
     return (
@@ -78,7 +88,19 @@ export function OsHome() {
             </div>
           ) : recentCaptures[0] ? (
             <div className="mt-3 space-y-2">
-              <p className="text-sm">{parseCapture(recentCaptures[0].name).text}</p>
+              <OwnText
+                canManage
+                text={parseCapture(recentCaptures[0].name).text}
+                busy={updateCapture.isPending || deleteCapture.isPending}
+                onSave={(text) =>
+                  updateCapture.mutate({
+                    id: recentCaptures[0]!.id,
+                    kind: parseCapture(recentCaptures[0]!.name).kind,
+                    text,
+                  })
+                }
+                onDelete={() => deleteCapture.mutate({ id: recentCaptures[0]!.id })}
+              />
               <Button href="/build" size="sm" variant="secondary">
                 Open
               </Button>
@@ -182,6 +204,12 @@ export function OsHome() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.title ?? item.caption ?? "Update"}</p>
                     <p className="os-muted truncate text-xs leading-4">@{item.creator.handle}</p>
+                    <FeedOwn
+                      postId={item.id}
+                      title={item.title}
+                      caption={item.caption}
+                      canManage={userId === item.creator.user.id}
+                    />
                   </div>
                 </li>
               ))}

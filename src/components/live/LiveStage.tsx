@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 
 import { PlayableMedia } from "~/components/media/PlayableMedia";
+import { OwnText } from "~/components/os/own-text";
 import { Button } from "~/components/os/primitives";
 import { CameraLive } from "./CameraLive";
 import { formatZarFromCents } from "~/lib/os/format";
@@ -30,8 +31,9 @@ export function LiveStage({
   onSaveStream?: (url: string) => void;
   savingStream?: boolean;
 }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const signedIn = status === "authenticated";
+  const userId = session?.user?.id;
   const [streamDraft, setStreamDraft] = useState(streamUrl ?? "");
   const [chatDraft, setChatDraft] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
@@ -60,6 +62,26 @@ export function LiveStage({
     },
   });
   const bid = api.project.bid.useMutation({
+    onSuccess: async () => {
+      if (projectId) await utils.project.tasks.invalidate({ projectId });
+    },
+  });
+  const editChat = api.live.edit.useMutation({
+    onSuccess: async () => {
+      await utils.live.chat.invalidate({ scope, scopeId });
+    },
+  });
+  const unsend = api.live.unsend.useMutation({
+    onSuccess: async () => {
+      await utils.live.chat.invalidate({ scope, scopeId });
+    },
+  });
+  const updateTask = api.project.updateTask.useMutation({
+    onSuccess: async () => {
+      if (projectId) await utils.project.tasks.invalidate({ projectId });
+    },
+  });
+  const deleteTask = api.project.deleteTask.useMutation({
     onSuccess: async () => {
       if (projectId) await utils.project.tasks.invalidate({ projectId });
     },
@@ -149,19 +171,27 @@ export function LiveStage({
           {openTasks.length ? (
             <ul className="space-y-2">
               {openTasks.slice(0, 6).map((task) => (
-                <li key={task.id} className="flex items-center justify-between gap-3 rounded-2xl bg-os-elevated px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{task.title}</p>
+                <li key={task.id} className="space-y-2 rounded-2xl bg-os-elevated px-3 py-2">
+                  <div className="flex items-center justify-between gap-3">
                     <p className="text-xs text-os-muted">{formatZarFromCents(task.budgetCents)}</p>
+                    {!canHost ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!signedIn || bid.isPending}
+                        onClick={() => bid.mutate({ projectId, taskIds: [task.id] })}
+                      >
+                        Bid
+                      </Button>
+                    ) : null}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={!signedIn || bid.isPending}
-                    onClick={() => bid.mutate({ projectId, taskIds: [task.id] })}
-                  >
-                    Bid
-                  </Button>
+                  <OwnText
+                    canManage={canHost}
+                    text={task.title}
+                    busy={updateTask.isPending || deleteTask.isPending}
+                    onSave={(title) => updateTask.mutate({ taskId: task.id, title })}
+                    onDelete={() => deleteTask.mutate({ taskId: task.id })}
+                  />
                 </li>
               ))}
             </ul>
@@ -175,10 +205,16 @@ export function LiveStage({
       <div className="space-y-3 border-t border-os-border px-4 py-4">
         <h3 className="text-sm font-semibold">Room</h3>
         <ul className="max-h-56 space-y-2 overflow-y-auto">
-          {(chat.data ?? []).map((item: { id: string; body: string; user: { name: string | null } }) => (
+          {(chat.data ?? []).map((item) => (
             <li key={item.id} className="rounded-2xl bg-os-elevated px-3 py-2">
               <p className="text-[11px] font-semibold">{item.user.name ?? "Member"}</p>
-              <p className="text-sm">{item.body}</p>
+              <OwnText
+                canManage={item.userId === userId}
+                text={item.body}
+                busy={editChat.isPending || unsend.isPending}
+                onSave={(body) => editChat.mutate({ id: item.id, body })}
+                onDelete={() => unsend.mutate({ id: item.id })}
+              />
             </li>
           ))}
           {!chat.data?.length ? <p className="os-muted">Quiet.</p> : null}

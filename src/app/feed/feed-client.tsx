@@ -9,6 +9,9 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 
+import { useSession } from "next-auth/react";
+
+import { FeedOwn } from "~/components/os/feed-own";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import { UploadButton } from "~/utils/uploadthing";
@@ -251,6 +254,9 @@ function FeedCard({
   const projectLink = hasProject ? `/projects/${post.project?.id}` : undefined;
   const shopLink = hasShopItem ? `/shop/${post.shopItem?.id}` : undefined;
 
+  const { data: session } = useSession();
+  const mine = session?.user?.id === post.creator.user?.id;
+
   const byline = useMemo(() => {
     const handle = `@${post.creator.handle}`;
     if (post.project?.name) {
@@ -292,6 +298,7 @@ function FeedCard({
         <div className="space-y-2">
           {post.title && <h3 className="text-lg font-semibold text-gray-900">{post.title}</h3>}
           {post.caption && <p className="text-sm text-gray-700">{post.caption}</p>}
+          <FeedOwn postId={post.id} title={post.title} caption={post.caption} canManage={mine} />
           {post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag) => (

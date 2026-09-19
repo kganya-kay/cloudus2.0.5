@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { OwnText } from "~/components/os/own-text";
 import { Button } from "~/components/os/primitives";
 import { PLATFORM_LABELS, SOCIAL_PLATFORMS, type SocialPlatformName } from "~/lib/social/platforms";
 import { api } from "~/trpc/react";
@@ -18,6 +19,7 @@ export function SocialAccountCapture({ onSaved, compact }: SocialAccountCaptureP
   const [seedPostUrl, setSeedPostUrl] = useState("");
   const utils = api.useUtils();
 
+  const mine = api.social.listMine.useQuery(undefined, { retry: false, enabled: !compact });
   const save = api.social.upsertAccount.useMutation({
     onSuccess: async () => {
       await utils.social.listMine.invalidate();
@@ -27,8 +29,40 @@ export function SocialAccountCapture({ onSaved, compact }: SocialAccountCaptureP
       onSaved?.();
     },
   });
+  const update = api.social.updateAccount.useMutation({
+    onSuccess: async () => {
+      await utils.social.listMine.invalidate();
+      onSaved?.();
+    },
+  });
+  const remove = api.social.removeAccount.useMutation({
+    onSuccess: async () => {
+      await utils.social.listMine.invalidate();
+      onSaved?.();
+    },
+  });
 
   return (
+    <div className="space-y-4">
+      {!compact && (mine.data?.length ?? 0) > 0 ? (
+        <ul className="space-y-2">
+          {mine.data?.map((account) => (
+            <li key={account.id} className="rounded-2xl bg-os-elevated px-3 py-2">
+              <p className="text-[11px] font-semibold">
+                {PLATFORM_LABELS[account.platform as SocialPlatformName]}
+                {account.isPrimary ? " · primary" : ""}
+              </p>
+              <OwnText
+                canManage
+                text={account.handle}
+                busy={update.isPending || remove.isPending}
+                onSave={(next) => update.mutate({ accountId: account.id, handle: next })}
+                onDelete={() => remove.mutate({ accountId: account.id })}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : null}
     <form
       className="space-y-3"
       onSubmit={(event) => {
@@ -95,5 +129,6 @@ export function SocialAccountCapture({ onSaved, compact }: SocialAccountCaptureP
         {save.isPending ? "Saving…" : "Save"}
       </Button>
     </form>
+    </div>
   );
 }

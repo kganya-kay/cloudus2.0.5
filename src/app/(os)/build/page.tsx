@@ -14,6 +14,7 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { OwnText } from "~/components/os/own-text";
 import { useOnline } from "../_components/use-online";
 
 const kinds = ["NOTE", "IDEA", "TASK"] as const;
@@ -26,11 +27,20 @@ export default function BuildPage() {
   const [question, setQuestion] = useState("");
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
   const utils = api.useUtils();
+  const refreshCaptures = async () => {
+    await Promise.all([utils.workspace.overview.invalidate(), utils.workspace.captures.invalidate()]);
+  };
   const capture = api.workspace.capture.useMutation({
     onSuccess: async () => {
       setText("");
-      await Promise.all([utils.workspace.overview.invalidate(), utils.workspace.captures.invalidate()]);
+      await refreshCaptures();
     },
+  });
+  const updateCapture = api.workspace.updateCapture.useMutation({
+    onSuccess: () => void refreshCaptures(),
+  });
+  const deleteCapture = api.workspace.deleteCapture.useMutation({
+    onSuccess: () => void refreshCaptures(),
   });
   const assistant = api.assistant.ask.useMutation();
 
@@ -129,7 +139,16 @@ export default function BuildPage() {
                   <Badge tone={item.kind === "TASK" ? "warning" : item.kind === "IDEA" ? "accent" : "default"}>
                     {item.kind}
                   </Badge>
-                  <p className="mt-2 text-sm">{item.text}</p>
+                  <div className="mt-2">
+                    <OwnText
+                      canManage
+                      multiline
+                      text={item.text}
+                      busy={updateCapture.isPending || deleteCapture.isPending}
+                      onSave={(value) => updateCapture.mutate({ id: item.id, kind: item.kind, text: value })}
+                      onDelete={() => deleteCapture.mutate({ id: item.id })}
+                    />
+                  </div>
                 </li>
               ))}
             </ul>

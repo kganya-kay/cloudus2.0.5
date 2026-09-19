@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 
+import { useSession } from "next-auth/react";
+
+import { FeedOwn } from "~/components/os/feed-own";
 import { api } from "~/trpc/react";
 
 const money = (value?: number | null) => {
@@ -29,9 +32,11 @@ export function FeedSnippetsPanel({
   limit?: number;
   className?: string;
 }) {
+  const { data: session } = useSession();
   const feedPreviewQuery = api.feed.list.useQuery({ limit });
   const posts = feedPreviewQuery.data?.items ?? [];
   const isLoading = feedPreviewQuery.isLoading;
+  const userId = session?.user?.id;
 
   return (
     <section
@@ -83,6 +88,12 @@ export function FeedSnippetsPanel({
               {post.caption && (
                 <p className="text-xs text-gray-600 dark:text-slate-300 line-clamp-2">{post.caption}</p>
               )}
+              <FeedOwn
+                postId={post.id}
+                title={post.title}
+                caption={post.caption}
+                canManage={userId === post.creator.user?.id}
+              />
               {post.payoutSummary && (
                 <p className="mt-1 text-[11px] uppercase text-blue-700 dark:text-blue-300">
                   {money(post.payoutSummary.paidCents)} funded ·{" "}

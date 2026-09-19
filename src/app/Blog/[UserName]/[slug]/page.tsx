@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { StoryOwnerTools } from "~/components/os/story-owner";
 import { Badge, Button, Card, PageHeader } from "~/components/os/primitives";
 import { BloggerNav } from "~/components/social/BloggerNav";
 import { PostToSocials } from "~/components/social/PostToSocials";
@@ -48,6 +49,18 @@ export default async function BlogStoryPage({ params }: PageProps) {
           title={post.title}
         />
         {post.content ? <p className="whitespace-pre-wrap leading-7">{post.content}</p> : null}
+        {result.viewerCanManage ? (
+          <StoryOwnerTools
+            canManage
+            userName={blog.userName}
+            post={{
+              id: post.id,
+              title: post.title,
+              excerpt: post.excerpt,
+              content: post.content,
+            }}
+          />
+        ) : null}
       </Card>
 
       <div className="flex flex-wrap gap-2">

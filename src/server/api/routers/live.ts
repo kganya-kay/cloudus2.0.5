@@ -21,6 +21,14 @@ type LiveStore = {
       data: { scope: string; scopeId: string; userId: string; body: string };
       include: { user: { select: { id: true; name: true; image: true } } };
     }) => Promise<{ id: string; userId: string; body: string; createdAt: Date; user: { id: string; name: string | null; image: string | null } }>;
+    findFirst: (args: {
+      where: { id: string; userId?: string };
+    }) => Promise<{ id: string; userId: string; body: string } | null>;
+    update: (args: {
+      where: { id: string };
+      data: { body: string };
+    }) => Promise<{ id: string; body: string }>;
+    delete: (args: { where: { id: string } }) => Promise<unknown>;
   };
 };
 
@@ -118,6 +126,34 @@ export const liveRouter = createTRPCRouter({
         },
         include: { user: { select: { id: true, name: true, image: true } } },
       });
+    }),
+
+  edit: protectedProcedure
+    .input(z.object({ id: z.string().min(1), body: z.string().trim().min(1).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await liveDb(ctx.db).liveMessage.findFirst({
+        where: { id: input.id, userId: ctx.session.user.id },
+      });
+      if (!existing || existing.body.startsWith(LIVE_SIG)) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return liveDb(ctx.db).liveMessage.update({
+        where: { id: existing.id },
+        data: { body: input.body },
+      });
+    }),
+
+  unsend: protectedProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await liveDb(ctx.db).liveMessage.findFirst({
+        where: { id: input.id, userId: ctx.session.user.id },
+      });
+      if (!existing || existing.body.startsWith(LIVE_SIG)) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      await liveDb(ctx.db).liveMessage.delete({ where: { id: existing.id } });
+      return { ok: true as const };
     }),
 
   goLive: protectedProcedure

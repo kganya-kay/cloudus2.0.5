@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { FeedOwn } from "~/components/os/feed-own";
 import { api } from "~/trpc/react";
 import { formatDateTime } from "~/lib/os/format";
 import {
@@ -16,7 +18,9 @@ import {
 import { SocialMediaDrop } from "~/components/social/SocialMediaDrop";
 
 export default function StudioPage() {
+  const { data: session } = useSession();
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
+  const userId = session?.user?.id;
 
   if (overview.isLoading) {
     return (
@@ -112,9 +116,15 @@ export default function StudioPage() {
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {(data?.feed ?? []).slice(0, 4).map((item) => (
-            <article key={item.id} className="rounded-2xl bg-os-elevated p-4">
+            <article key={item.id} className="space-y-2 rounded-2xl bg-os-elevated p-4">
               <p className="text-sm font-medium">{item.title ?? item.caption ?? "Studio note"}</p>
               <p className="os-muted mt-1">@{item.creator.handle}</p>
+              <FeedOwn
+                postId={item.id}
+                title={item.title}
+                caption={item.caption}
+                canManage={userId === item.creator.user.id}
+              />
             </article>
           ))}
         </div>

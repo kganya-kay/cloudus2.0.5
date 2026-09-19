@@ -144,6 +144,27 @@ export const socialRouter = createTRPCRouter({
       return account;
     }),
 
+  updateAccount: protectedProcedure
+    .input(
+      z.object({
+        accountId: z.string().cuid(),
+        handle: z.string().trim().max(80).optional(),
+        profileUrl: z.string().trim().max(2048).optional(),
+        seedPostUrl: z.string().url().max(2048).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedAccount(ctx, input.accountId);
+      return ctx.db.socialAccount.update({
+        where: { id: input.accountId },
+        data: {
+          ...(input.handle !== undefined ? { handle: input.handle } : {}),
+          ...(input.profileUrl !== undefined ? { profileUrl: input.profileUrl } : {}),
+          ...(input.seedPostUrl !== undefined ? { seedPostUrl: input.seedPostUrl } : {}),
+        },
+      });
+    }),
+
   removeAccount: protectedProcedure
     .input(z.object({ accountId: z.string().cuid() }))
     .mutation(async ({ ctx, input }) => {

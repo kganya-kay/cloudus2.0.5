@@ -1,4 +1,5 @@
 import { FeedPostType, PaymentStatus, ProjectTaskPayoutStatus } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
@@ -196,5 +197,46 @@ export const feedRouter = createTRPCRouter({
         },
       });
       return { removed: false as const };
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().cuid(),
+        title: z.string().max(120).optional(),
+        caption: z.string().max(2000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.feedPost.findUnique({
+        where: { id: input.id },
+        select: { creator: { select: { userId: true } } },
+      });
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+      if (existing.creator.userId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return ctx.db.feedPost.update({
+        where: { id: input.id },
+        data: {
+          title: input.title === undefined ? undefined : input.title || null,
+          caption: input.caption === undefined ? undefined : input.caption || null,
+        },
+      });
+    }),
+
+  remove: protectedProcedure
+    .input(z.object({ id: z.string().cuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.feedPost.findUnique({
+        where: { id: input.id },
+        select: { creator: { select: { userId: true } } },
+      });
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+      if (existing.creator.userId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      await ctx.db.feedPost.delete({ where: { id: input.id } });
+      return { ok: true as const };
     }),
 });

@@ -252,4 +252,32 @@ export const eventRouter = createTRPCRouter({
         },
       });
     }),
+
+  updateChat: protectedProcedure
+    .input(z.object({ id: z.string().cuid(), message: z.string().trim().min(1).max(2000) }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.eventPost.findFirst({
+        where: { id: input.id, createdById: ctx.session.user.id },
+      });
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Comment not found." });
+      }
+      return ctx.db.eventPost.update({
+        where: { id: existing.id },
+        data: { message: input.message },
+      });
+    }),
+
+  deleteChat: protectedProcedure
+    .input(z.object({ id: z.string().cuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.eventPost.findFirst({
+        where: { id: input.id, createdById: ctx.session.user.id },
+      });
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Comment not found." });
+      }
+      await ctx.db.eventPost.delete({ where: { id: existing.id } });
+      return { ok: true as const };
+    }),
 });

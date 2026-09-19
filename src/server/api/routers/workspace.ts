@@ -1,4 +1,5 @@
 import { FulfilmentStatus, Role, RoomAdminStatus } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { isSuperAdminEmail } from "~/server/auth/super-admin";
@@ -89,7 +90,7 @@ export const workspaceRouter = createTRPCRouter({
               displayName: true,
               handle: true,
               avatarUrl: true,
-              user: { select: { image: true, name: true } },
+              user: { select: { id: true, image: true, name: true } },
             },
           },
         },
@@ -149,7 +150,7 @@ export const workspaceRouter = createTRPCRouter({
           videoUrl: true,
           audioUrl: true,
           publishedAt: true,
-          blog: { select: { userName: true, title: true } },
+          blog: { select: { userName: true, title: true, ownerId: true } },
         },
       }),
       userId
@@ -228,6 +229,41 @@ export const workspaceRouter = createTRPCRouter({
           createdBy: { connect: { id: ctx.session.user.id } },
         },
       });
+    }),
+
+  updateCapture: protectedProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+        kind: captureKind.optional(),
+        text: z.string().min(1).max(500),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.post.findFirst({
+        where: { id: input.id, createdById: ctx.session.user.id },
+      });
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Capture not found." });
+      }
+      const kind = input.kind ?? /^\[(NOTE|IDEA|TASK)\]/.exec(existing.name)?.[1] ?? "NOTE";
+      return ctx.db.post.update({
+        where: { id: existing.id },
+        data: { name: `[${kind}] ${input.text}` },
+      });
+    }),
+
+  deleteCapture: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.post.findFirst({
+        where: { id: input.id, createdById: ctx.session.user.id },
+      });
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Capture not found." });
+      }
+      await ctx.db.post.delete({ where: { id: existing.id } });
+      return { ok: true as const };
     }),
 
   founderSnapshot: protectedProcedure.query(async ({ ctx }) => {
