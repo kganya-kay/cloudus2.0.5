@@ -5,17 +5,22 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import {
+  AcademicCapIcon,
   Bars3Icon,
   BellIcon,
+  BuildingStorefrontIcon,
   CalendarDaysIcon,
   ChevronLeftIcon,
+  Cog6ToothIcon,
   HomeIcon,
   MagnifyingGlassIcon,
   MusicalNoteIcon,
   NewspaperIcon,
   RectangleStackIcon,
+  ShieldCheckIcon,
   ShoppingBagIcon,
   SparklesIcon,
+  TruckIcon,
   UserCircleIcon,
   VideoCameraIcon,
   WrenchScrewdriverIcon,
@@ -24,11 +29,11 @@ import {
 import { desktopNav, isNavActive, mobileNav } from "~/lib/os/nav";
 import { useTheme } from "~/lib/os/theme";
 import { api } from "~/trpc/react";
-import { Hint, HoverPop } from "./hint";
+import { Hint } from "./hint";
 import { Avatar, Button } from "./primitives";
 import { CommandPalette } from "./command-palette";
 
-const mobileIcons: Record<string, typeof HomeIcon> = {
+const navIcons: Record<string, typeof HomeIcon> = {
   "/": HomeIcon,
   "/build": WrenchScrewdriverIcon,
   "/community": SparklesIcon,
@@ -36,9 +41,14 @@ const mobileIcons: Record<string, typeof HomeIcon> = {
   "/studio": MusicalNoteIcon,
   "/studio/session": VideoCameraIcon,
   "/marketplace": ShoppingBagIcon,
+  "/learn": AcademicCapIcon,
   "/Blog": NewspaperIcon,
   "/events": CalendarDaysIcon,
   "/profile": UserCircleIcon,
+  "/settings": Cog6ToothIcon,
+  "/suppliers/dashboard": BuildingStorefrontIcon,
+  "/drivers/dashboard": TruckIcon,
+  "/founder": ShieldCheckIcon,
 };
 
 export function OsShell({ children }: { children: React.ReactNode }) {
@@ -145,28 +155,38 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
         </div>
-        <nav aria-label="Cloudus" className="flex-1 space-y-1 overflow-visible">
-          {desktopNav.map((item) => (
-            <HoverPop key={item.href} label={item.description}>
+        <nav aria-label="Cloudus" className="flex flex-1 flex-col gap-1 overflow-y-auto">
+          {desktopNav.map((item) => {
+            const Icon = navIcons[item.href] ?? HomeIcon;
+            const active = isNavActive(pathname, item.href);
+            return (
               <Link
+                key={item.href}
                 href={item.href}
-                className={`block w-full rounded-2xl px-3 py-2.5 text-sm font-semibold ${
-                  isNavActive(pathname, item.href)
-                    ? "bg-os-burgundy text-os-bg"
-                    : "text-os-muted hover:bg-os-gold/15 hover:text-os-ink"
+                className={`flex h-11 w-full shrink-0 items-center gap-3 rounded-2xl px-3 text-sm font-semibold ${
+                  active ? "bg-os-burgundy text-os-bg" : "text-os-muted hover:bg-os-gold/15 hover:text-os-ink"
                 }`}
               >
+                <Icon className="h-5 w-5 shrink-0" />
                 {item.label}
               </Link>
-            </HoverPop>
-          ))}
+            );
+          })}
         </nav>
-        <div className="mt-4 space-y-2 border-t border-os-border pt-4">
-          {roleLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="block rounded-2xl px-3 py-2 text-sm text-os-muted hover:bg-os-gold/15">
-              {link.label}
-            </Link>
-          ))}
+        <div className="mt-4 space-y-1 border-t border-os-border pt-4">
+          {roleLinks.map((link) => {
+            const Icon = navIcons[link.href] ?? ShieldCheckIcon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex h-11 w-full items-center gap-3 rounded-2xl px-3 text-sm font-semibold text-os-muted hover:bg-os-gold/15 hover:text-os-ink"
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {link.label}
+              </Link>
+            );
+          })}
           <div className="flex items-center justify-between px-3">
             <Hint label="Search">Ctrl K</Hint>
           </div>
@@ -269,7 +289,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       >
         <ul className="no-scrollbar flex snap-x snap-mandatory gap-1 overflow-x-auto px-2 py-2">
           {mobileNav.map((item) => {
-            const Icon = mobileIcons[item.href] ?? HomeIcon;
+            const Icon = navIcons[item.href] ?? HomeIcon;
             const active = isNavActive(pathname, item.href);
             return (
               <li key={item.href} className="snap-start shrink-0">
