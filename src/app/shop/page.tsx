@@ -3,7 +3,7 @@ import AllShopItems from "../_components/allShopItems";
 import { Button, PageHeader } from "~/components/os/primitives";
 
 export default async function ShopPage() {
-  await api.post.hello({ text: "from Cloudus" }).catch(() => null);
+  const initialItems = await api.shopItem.getAll().catch(() => []);
 
   return (
     <HydrateClient>
@@ -11,12 +11,10 @@ export default async function ShopPage() {
         <PageHeader
           eyebrow="Marketplace"
           title="Shop"
-          description="Packaged Cloudus services. Checkout and fulfilment stay on the existing order flow."
+          description="Browse Cloudus products and services without signing in. Login is only needed to like or check out."
           actions={<Button href="/projects/create" variant="secondary">Need something custom?</Button>}
         />
-        <div className="os-card p-4">
-          <AllShopItems />
-        </div>
+        <AllShopItems initialItems={initialItems} />
       </div>
     </HydrateClient>
   );
