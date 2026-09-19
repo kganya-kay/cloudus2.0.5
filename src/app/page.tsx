@@ -4,9 +4,9 @@ import ToastBanner from "./_components/ToastBanner";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage(props: {
-  searchParams?: Promise<{ toast?: string }> | { toast?: string };
+  searchParams?: Promise<{ toast?: string }>;
 }) {
-  const params = await Promise.resolve(props.searchParams ?? {});
+  const params = (await props.searchParams) ?? {};
   const toastKey = params.toast ?? null;
 
   return (
