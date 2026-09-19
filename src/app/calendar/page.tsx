@@ -21,6 +21,7 @@ import {
 } from "date-fns";
 
 import { MarketplaceTasksPanel } from "~/app/_components/MarketplaceTasksPanel";
+import { CalendarLive } from "./calendar-live";
 import { auth } from "~/server/auth";
 import { HydrateClient, api } from "~/trpc/server";
 
@@ -296,6 +297,8 @@ export default async function CalendarPage() {
             </div>
           </div>
         </section>
+
+        <CalendarLive />
 
         <main className="bg-gray-100 pb-16">
           <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] lg:px-8">

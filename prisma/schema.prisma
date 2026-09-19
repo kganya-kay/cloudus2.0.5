@@ -396,12 +396,16 @@ model MediaPulseStory {
   embedHtml      String?
   interestCount  Int            @default(1)
   score          Int            @default(0)
+  origin         String         @default("LIVE")
+  pinned         Boolean        @default(false)
+  editionDate    DateTime?
   fetchedAt      DateTime       @default(now())
   expiresAt      DateTime
 
   @@unique([topic, kind, sourceUrl])
   @@index([score, expiresAt])
   @@index([topic, expiresAt])
+  @@index([origin, editionDate])
 }
 
 // =====================
@@ -615,6 +619,20 @@ model Event {
   @@index([hostId])
   @@index([createdById])
   @@index([startAt])
+}
+
+model LiveMessage {
+  id        String   @id @default(cuid())
+  scope     String
+  scopeId   String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([scope, scopeId, createdAt])
+  @@index([userId])
 }
 
 model EventPost {
@@ -990,6 +1008,7 @@ model User {
   socialAccounts    SocialAccount[]
   socialImportJobs  SocialImportJob[]
   topicInterests    TopicInterest[]
+  liveMessages      LiveMessage[]
   // back-rel for posts authored by this user
   posts             Post[]              @relation("PostCreatedBy")
   eventPosts        EventPost[]

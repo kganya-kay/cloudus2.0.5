@@ -6,11 +6,16 @@ import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import {
   BellIcon,
+  CalendarDaysIcon,
   HomeIcon,
   MagnifyingGlassIcon,
+  MusicalNoteIcon,
+  NewspaperIcon,
   RectangleStackIcon,
+  ShoppingBagIcon,
   SparklesIcon,
   UserCircleIcon,
+  VideoCameraIcon,
   WrenchScrewdriverIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -20,7 +25,18 @@ import { api } from "~/trpc/react";
 import { Avatar, Button } from "./primitives";
 import { CommandPalette } from "./command-palette";
 
-const mobileIcons = [HomeIcon, WrenchScrewdriverIcon, SparklesIcon, RectangleStackIcon, UserCircleIcon];
+const mobileIcons: Record<string, typeof HomeIcon> = {
+  "/": HomeIcon,
+  "/build": WrenchScrewdriverIcon,
+  "/community": SparklesIcon,
+  "/projects": RectangleStackIcon,
+  "/studio": MusicalNoteIcon,
+  "/studio/session": VideoCameraIcon,
+  "/marketplace": ShoppingBagIcon,
+  "/Blog": NewspaperIcon,
+  "/events": CalendarDaysIcon,
+  "/profile": UserCircleIcon,
+};
 
 export function OsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -202,24 +218,24 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
 
-        <main id="os-main" className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:pb-12">
+        <main id="os-main" className="mx-auto w-full min-w-0 max-w-6xl overflow-x-hidden px-4 pb-28 pt-6 sm:px-6 lg:pb-12">
           {children}
         </main>
       </div>
 
       <nav
         aria-label="Mobile"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-os-border bg-os-bg/95 px-2 py-2 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-os-border bg-os-bg/95 backdrop-blur lg:hidden"
       >
-        <ul className="grid grid-cols-5">
-          {mobileNav.map((item, index) => {
-            const Icon = mobileIcons[index] ?? HomeIcon;
+        <ul className="no-scrollbar flex snap-x snap-mandatory gap-1 overflow-x-auto px-2 py-2">
+          {mobileNav.map((item) => {
+            const Icon = mobileIcons[item.href] ?? HomeIcon;
             const active = isNavActive(pathname, item.href);
             return (
-              <li key={item.href}>
+              <li key={item.href} className="snap-start shrink-0">
                 <Link
                   href={item.href}
-                  className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-semibold ${
+                  className={`flex h-12 w-16 flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-semibold ${
                     active ? "text-os-accent" : "text-os-muted"
                   }`}
                 >

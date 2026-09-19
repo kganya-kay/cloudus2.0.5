@@ -59,7 +59,7 @@ export function OsHome() {
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <h2 className="text-lg font-semibold">Next</h2>
           {data?.assignedTasks[0] ? (
@@ -114,23 +114,26 @@ export function OsHome() {
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.4fr,0.8fr]">
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Projects</h2>
-            <Link href="/projects" className="text-sm font-semibold text-os-accent">
+      <section className="grid min-w-0 gap-4 md:grid-cols-2">
+        <div className="os-card min-w-0 overflow-hidden p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold">Projects</h2>
+            <Link href="/projects" className="text-xs font-semibold text-os-accent">
               All
             </Link>
           </div>
           {data?.projects.length ? (
-            <ul className="space-y-3">
-              {data.projects.slice(0, 5).map((project) => (
-                <li key={project.id}>
-                  <Link href={`/projects/${project.id}`} className="flex items-center gap-3 rounded-2xl p-2 hover:bg-os-elevated">
-                    <img src={project.image} alt="" className="h-12 w-12 rounded-2xl object-cover" />
+            <ul className="space-y-1">
+              {data.projects.slice(0, 3).map((project) => (
+                <li key={project.id} className="min-w-0">
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="flex min-w-0 items-center gap-2.5 rounded-xl py-1.5"
+                  >
+                    <img src={project.image} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{project.name}</p>
-                      <p className="os-muted truncate">{project.category ?? project.type}</p>
+                      <p className="truncate text-sm font-medium">{project.name}</p>
+                      <p className="os-muted truncate text-xs leading-4">{project.category ?? project.type}</p>
                     </div>
                     <Badge>{project.status}</Badge>
                   </Link>
@@ -138,36 +141,44 @@ export function OsHome() {
               ))}
             </ul>
           ) : (
-            <EmptyState title="None yet" action={<Button href="/projects/create" size="sm">New</Button>} />
+            <div className="flex items-center justify-between gap-3">
+              <p className="os-muted">None.</p>
+              <Button href="/projects/create" size="sm">
+                New
+              </Button>
+            </div>
           )}
-        </Card>
+        </div>
 
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Room</h2>
-            <Link href="/community" className="text-sm font-semibold text-os-accent">
+        <div className="os-card min-w-0 overflow-hidden p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold">Room</h2>
+            <Link href="/community" className="text-xs font-semibold text-os-accent">
               Open
             </Link>
           </div>
-          <ul className="space-y-3">
-            {(data?.feed ?? []).slice(0, 4).map((item) => (
-              <li key={item.id} className="flex items-start gap-3">
-                <Avatar
-                  src={item.creator.avatarUrl ?? item.creator.user.image}
-                  name={item.creator.displayName}
-                  size="sm"
-                />
-                <div>
-                  <p className="text-sm font-medium">{item.title ?? item.caption ?? "Update"}</p>
-                  <p className="os-muted">@{item.creator.handle}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {!data?.feed.length ? (
+          {(data?.feed ?? []).length ? (
+            <ul className="space-y-1">
+              {(data?.feed ?? []).slice(0, 3).map((item) => (
+                <li key={item.id} className="flex min-w-0 items-center gap-2.5 py-1.5">
+                  <span className="shrink-0">
+                    <Avatar
+                      src={item.creator.avatarUrl ?? item.creator.user.image}
+                      name={item.creator.displayName}
+                      size="sm"
+                    />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{item.title ?? item.caption ?? "Update"}</p>
+                    <p className="os-muted truncate text-xs leading-4">@{item.creator.handle}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
             <p className="os-muted">Quiet.</p>
-          ) : null}
-        </Card>
+          )}
+        </div>
       </section>
     </div>
   );

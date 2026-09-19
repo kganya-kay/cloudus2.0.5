@@ -111,12 +111,16 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const event = await ctx.db.event.findUnique({
         where: { id: input.id },
-        select: { id: true, createdById: true },
+        select: { id: true, createdById: true, hostId: true },
       });
       if (!event) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
       }
-      if (!canManageAllEvents(ctx) && event.createdById !== ctx.session.user.id) {
+      if (
+        !canManageAllEvents(ctx) &&
+        event.createdById !== ctx.session.user.id &&
+        event.hostId !== ctx.session.user.id
+      ) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       return ctx.db.event.update({
