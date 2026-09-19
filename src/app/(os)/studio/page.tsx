@@ -13,6 +13,7 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { SocialMediaDrop } from "~/components/social/SocialMediaDrop";
 
 export default function StudioPage() {
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
@@ -105,6 +106,12 @@ export default function StudioPage() {
           )}
         </Card>
       </section>
+
+      <SocialMediaDrop
+        kind="IMAGE"
+        label="Drop latest social image"
+        description="Reusable Cloudus drop. Connect one social on first run, then fetch the latest public post in the background."
+      />
 
       <Card>
         <div className="flex items-center justify-between">

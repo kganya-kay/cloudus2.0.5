@@ -23,13 +23,11 @@ export default async function UserBlogPage({ params }: PageProps) {
 
   return (
     <HydrateClient>
-      <main className="mx-auto min-h-[70vh] w-full max-w-3xl px-4 py-10">
-        <BlogComposer
-          routeUserName={routeUserName}
-          sessionUserName={session?.user?.name ?? null}
-          isSignedIn={Boolean(session?.user)}
-        />
-      </main>
+      <BlogComposer
+        routeUserName={routeUserName}
+        sessionUserName={session?.user?.name ?? session?.user?.email?.split("@")[0] ?? null}
+        isSignedIn={Boolean(session?.user)}
+      />
     </HydrateClient>
   );
 }
