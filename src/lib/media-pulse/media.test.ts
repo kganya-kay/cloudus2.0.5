@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { WIRE_DESK } from "./catalog";
+import { DAILY_DESK } from "./catalog";
 import { isPlaceholderMedia, pickLiveMedia } from "./media";
+import { isYoutubeShort, matchDeskBeat } from "./sources";
 
 describe("live daily media", () => {
   it("rejects the Cloudus logo as media", () => {
@@ -16,9 +17,14 @@ describe("live daily media", () => {
     assert.equal(pickLiveMedia({ videoUrl: "https://youtu.be/abc" })?.videoUrl, "https://youtu.be/abc");
   });
 
-  it("seeds a fifteen-story wire desk", () => {
-    assert.equal(WIRE_DESK.length, 15);
-    assert.ok(WIRE_DESK.some((item) => item.topic === "maphorisa"));
-    assert.ok(WIRE_DESK.some((item) => item.topic === "madlanga"));
+  it("keeps a live desk for DOAC, eNCA, and Mighti Jamie", () => {
+    assert.ok(DAILY_DESK.length >= 8);
+    assert.ok(DAILY_DESK.some((item) => item.topic === "doac" && item.skipShorts));
+    assert.ok(DAILY_DESK.some((item) => item.topic === "enca"));
+    assert.ok(DAILY_DESK.some((item) => item.topic === "mighti-jamie"));
+    assert.equal(matchDeskBeat("diary of a ceo")?.topic, "doac");
+    assert.equal(matchDeskBeat("enca")?.topic, "enca");
+    assert.equal(isYoutubeShort("https://www.youtube.com/shorts/abc"), true);
+    assert.equal(isYoutubeShort("https://www.youtube.com/watch?v=OhOmLqR5nN4"), false);
   });
 });

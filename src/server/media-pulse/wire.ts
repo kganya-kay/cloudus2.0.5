@@ -1,9 +1,9 @@
-import { WIRE_DESK } from "~/lib/media-pulse/catalog";
+import { DAILY_DESK } from "~/lib/media-pulse/catalog";
 import { pickLiveMedia } from "~/lib/media-pulse/media";
-import { fetchNewsMany, fetchWikipedia, fetchYouTube, fetchYoutubeOembed } from "~/lib/media-pulse/sources";
+import { collectBeat } from "~/lib/media-pulse/sources";
 import type { PulseStory } from "~/lib/media-pulse/types";
 
-const TTL_MS = 20 * 60 * 1000;
+const TTL_MS = 15 * 60 * 1000;
 let cache: { at: number; stories: PulseStory[] } | null = null;
 
 function toStory(
@@ -41,46 +41,25 @@ function toStory(
   };
 }
 
-export async function collectWireStories(): Promise<PulseStory[]> {
-  if (cache && Date.now() - cache.at < TTL_MS) return cache.stories;
+export function clearWireCache() {
+  cache = null;
+}
+
+export async function collectWireStories(force = false): Promise<PulseStory[]> {
+  if (!force && cache && Date.now() - cache.at < TTL_MS) return cache.stories;
 
   const batches = await Promise.all(
-    WIRE_DESK.map(async (seed, index) => {
+    DAILY_DESK.map(async (seed, index) => {
       const take = seed.take ?? 1;
+      const score = 130 - index * 3;
+      const items = await collectBeat(seed);
       const collected: PulseStory[] = [];
-      const score = 118 - index * 3;
-
-      if (seed.kind === "VIDEO") {
-        const live = await fetchYouTube(seed.query);
-        const fallback = !live && seed.youtube ? await fetchYoutubeOembed(seed.youtube) : null;
-        const video = live ?? fallback;
-        if (video) {
-          const story = toStory(`wire-yt-${seed.topic}`, seed.topic, video, score + 12);
-          if (story) collected.push(story);
-        }
-        if (collected.length < take) {
-          const extras = await fetchNewsMany(`${seed.query} site:youtube.com`, take);
-          for (const [slot, item] of extras.entries()) {
-            const story = toStory(`wire-yt-${seed.topic}-${slot}`, seed.topic, item, score + 6 - slot);
-            if (story && !collected.some((row) => row.sourceUrl === story.sourceUrl)) {
-              collected.push(story);
-            }
-          }
-        }
-      } else {
-        const news = await fetchNewsMany(seed.query, take);
-        const wiki = news.some((item) => !item.imageUrl) ? await fetchWikipedia(seed.query) : null;
-        for (const [slot, item] of news.entries()) {
-          const story = toStory(
-            `wire-news-${seed.topic}-${slot}`,
-            seed.topic,
-            { ...item, imageUrl: item.imageUrl ?? wiki?.imageUrl },
-            score - slot,
-          );
-          if (story) collected.push(story);
+      for (const [slot, item] of items.entries()) {
+        const story = toStory(`wire-${seed.topic}-${slot}`, seed.topic, item, score + 8 - slot);
+        if (story && !collected.some((row) => row.sourceUrl === story.sourceUrl)) {
+          collected.push(story);
         }
       }
-
       return collected.slice(0, take);
     }),
   );

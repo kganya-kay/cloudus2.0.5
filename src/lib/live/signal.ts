@@ -3,6 +3,8 @@ export const LIVE_SIG = "__SIG__";
 export type LiveSignal =
   | { k: "on"; hostId: string }
   | { k: "off"; hostId: string }
+  | { k: "join"; name?: string }
+  | { k: "leave" }
   | { k: "offer"; to: string; sdp: string }
   | { k: "answer"; to: string; sdp: string }
   | { k: "ice"; to: string; candidate: RTCIceCandidateInit };

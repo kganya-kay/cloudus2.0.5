@@ -33,8 +33,9 @@ type LiveStore = {
 };
 
 const signalInput = z.object({
-  k: z.enum(["on", "off", "offer", "answer", "ice"]),
+  k: z.enum(["on", "off", "join", "leave", "offer", "answer", "ice"]),
   hostId: z.string().optional(),
+  name: z.string().max(80).optional(),
   to: z.string().optional(),
   sdp: z.string().optional(),
   candidate: z.any().optional(),
@@ -66,15 +67,52 @@ export const liveRouter = createTRPCRouter({
         body: { startsWith: LIVE_SIG },
       },
       orderBy: { createdAt: "desc" },
-      take: 24,
+      take: 80,
       include: { user: { select: { id: true, name: true, image: true } } },
     });
+    let live = false;
+    let hostId: string | null = null;
+    let startedAt = 0;
     for (const row of rows) {
       const next = decodeSignal(row.body);
-      if (next?.k === "on") return { live: true as const, hostId: next.hostId };
-      if (next?.k === "off") return { live: false as const, hostId: next.hostId };
+      if (next?.k === "on") {
+        live = true;
+        hostId = next.hostId;
+        startedAt = new Date(row.createdAt).getTime();
+        break;
+      }
+      if (next?.k === "off") {
+        return { live: false as const, hostId: next.hostId, seats: [] as Array<{ userId: string; name: string | null; image: string | null }> };
+      }
     }
-    return { live: false as const, hostId: null };
+    if (!live) return { live: false as const, hostId: null, seats: [] };
+
+    const seats = new Map<string, { userId: string; name: string | null; image: string | null }>();
+    for (const row of [...rows].reverse()) {
+      if (new Date(row.createdAt).getTime() < startedAt) continue;
+      const next = decodeSignal(row.body);
+      if (!next) continue;
+      if (next.k === "leave") {
+        seats.delete(row.userId);
+        continue;
+      }
+      if (next.k === "on" || next.k === "join") {
+        seats.set(row.userId, {
+          userId: row.userId,
+          name: (next.k === "join" ? next.name : null) ?? row.user.name,
+          image: row.user.image,
+        });
+      }
+    }
+    if (hostId && !seats.has(hostId)) {
+      const hostRow = rows.find((row) => row.userId === hostId);
+      seats.set(hostId, {
+        userId: hostId,
+        name: hostRow?.user.name ?? null,
+        image: hostRow?.user.image ?? null,
+      });
+    }
+    return { live: true as const, hostId, seats: [...seats.values()] };
   }),
 
   signals: publicProcedure

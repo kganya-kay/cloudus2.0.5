@@ -4,9 +4,11 @@ import { z } from "zod";
 import { MEDIA_PULSE_KINDS } from "~/lib/media-pulse/kinds";
 import { editionBounds, editionKey, pickLiveMedia } from "~/lib/media-pulse/media";
 import { slugTopic, titleFromSlug } from "~/lib/media-pulse/topics";
+import { resolveDeskNote } from "~/lib/media-pulse/sources";
 import { caretakerProcedure } from "~/server/api/rbac";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { composeFrontpage } from "~/server/media-pulse/compose";
+import { clearWireCache, collectWireStories } from "~/server/media-pulse/wire";
 
 const kindSchema = z.enum(MEDIA_PULSE_KINDS);
 
@@ -99,5 +101,77 @@ export const mediaPulseRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await ctx.db.mediaPulseStory.delete({ where: { id: input.id } });
       return { ok: true as const };
+    }),
+
+  desk: caretakerProcedure.query(async () => {
+    return collectWireStories();
+  }),
+
+  pullDesk: caretakerProcedure.mutation(async () => {
+    clearWireCache();
+    return collectWireStories(true);
+  }),
+
+  ingest: caretakerProcedure
+    .input(
+      z.object({
+        note: z.string().trim().min(2).max(500),
+        pinned: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const found = await resolveDeskNote(input.note);
+      const picked = found.filter((item) => pickLiveMedia(item));
+      if (!picked.length) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Nothing live for that." });
+      }
+      const day = editionKey();
+      const now = new Date();
+      const created = [];
+      for (const [index, item] of picked.slice(0, 3).entries()) {
+        const media = pickLiveMedia(item)!;
+        const kind = item.videoUrl ? "VIDEO" : item.kind;
+        created.push(
+          await ctx.db.mediaPulseStory.upsert({
+            where: {
+              topic_kind_sourceUrl: {
+                topic: `daily-${day}`,
+                kind,
+                sourceUrl: item.sourceUrl,
+              },
+            },
+            update: {
+              title: item.title,
+              dek: item.dek || item.title,
+              sourceName: item.sourceName,
+              imageUrl: media.imageUrl,
+              videoUrl: media.videoUrl,
+              audioUrl: media.audioUrl,
+              pinned: input.pinned ?? index === 0,
+              editionDate: now,
+              score: 180 - index * 4,
+              expiresAt: new Date(now.getTime() + 36 * 60 * 60 * 1000),
+            },
+            create: {
+              topic: `daily-${day}`,
+              kind,
+              title: item.title,
+              dek: item.dek || item.title,
+              sourceName: item.sourceName,
+              sourceUrl: item.sourceUrl,
+              imageUrl: media.imageUrl,
+              videoUrl: media.videoUrl,
+              audioUrl: media.audioUrl,
+              origin: "ADMIN",
+              pinned: input.pinned ?? index === 0,
+              editionDate: now,
+              score: 180 - index * 4,
+              expiresAt: new Date(now.getTime() + 36 * 60 * 60 * 1000),
+            },
+          }),
+        );
+      }
+      clearWireCache();
+      return created;
     }),
 });
