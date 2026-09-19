@@ -17,6 +17,7 @@ import { platformRouter } from "./routers/platform";
 import { auditRouter } from "./routers/audit";
 import { roomRouter } from "./routers/room";
 import { blogRouter } from "./routers/blog";
+import { workspaceRouter } from "./routers/workspace";
 
 
 /**
@@ -43,6 +44,7 @@ export const appRouter = createTRPCRouter({
   audit: auditRouter,
   room: roomRouter,
   blog: blogRouter,
+  workspace: workspaceRouter,
 });
 
 // export type definition of API

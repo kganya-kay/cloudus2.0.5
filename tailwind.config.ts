@@ -9,6 +9,11 @@ export default withUt({
     extend: {
       fontFamily: {
         sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+        display: ["var(--font-geist-sans)", ...fontFamily.sans],
+      },
+      spacing: {
+        18: "4.5rem",
+        22: "5.5rem",
       },
       colors: {
         cloudus: {
@@ -18,6 +23,25 @@ export default withUt({
           border: "var(--cloudus-border)",
           accent: "var(--cloudus-accent)",
         },
+        os: {
+          bg: "var(--os-bg)",
+          elevated: "var(--os-bg-elevated)",
+          fg: "var(--os-fg)",
+          muted: "var(--os-fg-muted)",
+          card: "var(--os-card)",
+          border: "var(--os-border)",
+          accent: "var(--os-accent)",
+          soft: "var(--os-accent-soft)",
+          success: "var(--os-success)",
+          warning: "var(--os-warning)",
+          danger: "var(--os-danger)",
+        },
+      },
+      boxShadow: {
+        os: "var(--os-shadow)",
+      },
+      borderRadius: {
+        os: "1.5rem",
       },
     },
   },

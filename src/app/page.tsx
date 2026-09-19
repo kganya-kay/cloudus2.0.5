@@ -21,8 +21,8 @@ export default async function Page(props: any) {
   }
 
   const [featuredCreators, announcements] = await Promise.all([
-    api.creator.featured(),
-    api.platform.announcements({ limit: 3 }),
+    api.creator.featured().catch(() => []),
+    api.platform.announcements({ limit: 3 }).catch(() => []),
   ]);
 
   const toastKey = (props?.searchParams?.toast as string) ?? null;
