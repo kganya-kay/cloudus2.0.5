@@ -16,7 +16,7 @@ export function BloggerNav({ current }: { current?: "community" | "mine" | "prof
       {signedIn ? (
         <>
           <Button href="/Blog/me" size="sm" variant={current === "mine" ? "primary" : "secondary"}>
-            Mine
+            Book
           </Button>
           <Button href="/profile" size="sm" variant={current === "profile" ? "primary" : "secondary"}>
             Profile

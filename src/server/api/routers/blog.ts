@@ -37,7 +37,7 @@ const defaultUserNameFromSession = (sessionUser: {
 };
 
 const defaultBlogTitleFromSession = (sessionUser: { name?: string | null }, fallbackUserName: string) =>
-  `${sessionUser.name?.trim() || fallbackUserName}'s Blog`;
+  `The Book of ${sessionUser.name?.trim() || fallbackUserName}`;
 
 const assertNormalized = (value: string) => {
   if (!value) {

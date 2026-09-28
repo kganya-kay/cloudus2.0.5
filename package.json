@@ -19,7 +19,7 @@
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/os/format.test.ts src/lib/social/platforms.test.ts src/lib/media-pulse/topics.test.ts src/lib/media-pulse/media.test.ts"
+    "test": "tsx --test src/lib/os/format.test.ts src/lib/social/platforms.test.ts src/lib/media-pulse/topics.test.ts src/lib/media-pulse/media.test.ts src/lib/blog/html.test.ts"
   },
   "dependencies": {
     "@auth/core": "^0.40.0",
@@ -36,6 +36,12 @@
     "@sendgrid/mail": "^8.1.5",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.50.0",
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extension-placeholder": "^3.31.3",
+    "@tiptap/extension-underline": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "@trpc/client": "^11.0.0-rc.446",
     "@trpc/react-query": "^11.0.0-rc.446",
     "@trpc/server": "^11.0.0-rc.446",

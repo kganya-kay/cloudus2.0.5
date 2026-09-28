@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { BookCanvas } from "~/components/blog/BookCanvas";
 import { api } from "~/trpc/react";
 
 import { OwnBar } from "./own-text";
@@ -77,12 +78,7 @@ export function StoryOwnerTools({
     <div className="space-y-3">
       <input className="os-field" value={title} onChange={(event) => setTitle(event.target.value)} />
       <input className="os-field" value={excerpt} onChange={(event) => setExcerpt(event.target.value)} />
-      <textarea
-        className="os-field"
-        rows={5}
-        value={content}
-        onChange={(event) => setContent(event.target.value)}
-      />
+      <BookCanvas value={content} onChange={setContent} />
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"

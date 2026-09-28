@@ -366,3 +366,427 @@
     background-position: 0% 40%;
   }
 }
+
+.life-desk {
+  perspective: 1600px;
+}
+
+.life-book {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 32rem;
+}
+
+.life-book-shadow {
+  position: absolute;
+  bottom: 1.2rem;
+  left: 50%;
+  width: min(70%, 22rem);
+  height: 2.4rem;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(42, 33, 24, 0.28), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.life-book-stage {
+  position: relative;
+  width: min(100%, 21rem);
+  height: 32rem;
+  transform-style: preserve-3d;
+  transition: width 700ms cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+
+.life-book.is-open .life-book-stage {
+  width: min(100%, 46rem);
+}
+
+.life-book-cover {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 4;
+  display: grid;
+  place-items: stretch;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform-origin: left center;
+  transform: rotateY(-14deg) rotateX(4deg);
+  transition: transform 1.05s cubic-bezier(0.65, 0.05, 0.36, 1);
+  transform-style: preserve-3d;
+}
+
+.life-book.is-open .life-book-cover {
+  transform: rotateY(-158deg) rotateX(2deg);
+}
+
+.life-book-pages {
+  position: absolute;
+  inset: 4% 4% 4% 8%;
+  overflow: hidden;
+  border-radius: 0 1.1rem 1.1rem 0;
+  background:
+    linear-gradient(90deg, rgba(90, 62, 24, 0.12), transparent 18px),
+    repeating-linear-gradient(
+      0deg,
+      #f7f0e2,
+      #f7f0e2 27px,
+      rgba(90, 62, 24, 0.05) 28px
+    );
+  box-shadow:
+    inset 0 0 0 1px rgba(140, 106, 58, 0.18),
+    18px 22px 40px -24px rgba(42, 33, 24, 0.45);
+  transform-origin: left center;
+}
+
+.life-book-pages.is-turning .life-book-leaf {
+  animation: book-turn 640ms cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+
+.life-book-gutter {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1.4rem;
+  background: linear-gradient(90deg, rgba(42, 33, 24, 0.18), transparent);
+  pointer-events: none;
+}
+
+.life-book-leaf {
+  height: 100%;
+  overflow: auto;
+  padding: 1.6rem 1.5rem 1.6rem 2rem;
+}
+
+.life-book.is-binding {
+  animation: book-bind 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.life-book.is-binding::after {
+  content: "";
+  position: absolute;
+  inset: 8% 18%;
+  pointer-events: none;
+  background: linear-gradient(120deg, transparent, rgba(196, 163, 90, 0.45), transparent);
+  animation: book-foil 1.5s ease;
+}
+
+.life-cover {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0.85rem 0.85rem 0;
+  background: var(--book-cloth, #6b1f33);
+  box-shadow:
+    0 22px 40px -18px rgba(42, 33, 24, 0.5),
+    inset 0 0 0 1px rgba(196, 163, 90, 0.35);
+  color: #f4efe4;
+}
+
+.life-cover-spine {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1.15rem;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.08) 40%, rgba(0, 0, 0, 0.25));
+}
+
+.life-cover-ridge {
+  position: absolute;
+  inset: 0.8rem auto 0.8rem 1.25rem;
+  width: 3px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, var(--os-gold), var(--os-bronze));
+  opacity: 0.85;
+}
+
+.life-cover-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.life-cover-art.has-photo {
+  opacity: 0.42;
+}
+
+.life-cover-grain {
+  background-image:
+    radial-gradient(rgba(244, 239, 228, 0.12) 0.7px, transparent 0.7px),
+    linear-gradient(135deg, transparent 40%, rgba(196, 163, 90, 0.18));
+  background-size: 3px 3px, 100% 100%;
+}
+
+.life-cover-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.1rem 1rem 1.15rem 1.7rem;
+  background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, 0.55));
+}
+
+.life-cover-kicker {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--os-gold);
+}
+
+.life-cover-title {
+  margin-top: 0.35rem;
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.life-cover-author {
+  margin-top: 0.35rem;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.life-shelf {
+  display: grid;
+  gap: 0;
+}
+
+.life-shelf-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.85rem 0.55rem;
+  padding: 0 0.5rem;
+}
+
+.life-shelf-item {
+  display: block;
+  transform-origin: 50% 100%;
+  transition: transform 280ms ease;
+}
+
+.life-shelf-item:hover,
+.life-shelf-item:focus-visible {
+  transform: translateY(-10px) rotate(-2deg);
+}
+
+.life-shelf-plank {
+  height: 0.7rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #8c6a3a, #5c4326);
+  box-shadow: 0 10px 18px -12px rgba(42, 33, 24, 0.6);
+}
+
+.book-prose {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: #2a2118;
+}
+
+.book-prose p {
+  margin: 0 0 0.9em;
+}
+
+.book-prose h2,
+.book-prose h3 {
+  margin: 0.4em 0 0.6em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.book-prose img.book-pic,
+.book-prose .book-pic {
+  display: block;
+  max-width: 46%;
+  height: auto;
+  border-radius: 0.45rem;
+  shape-margin: 0.75em;
+  box-shadow: 0 10px 22px -16px rgba(42, 33, 24, 0.55);
+}
+
+.book-prose img.book-pic-left,
+.book-prose .book-pic-left {
+  float: left;
+  margin: 0.2em 1.1em 0.8em 0;
+  shape-outside: margin-box;
+}
+
+.book-prose img.book-pic-right,
+.book-prose .book-pic-right {
+  float: right;
+  margin: 0.2em 0 0.8em 1.1em;
+  shape-outside: margin-box;
+}
+
+.book-prose::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.book-canvas .tiptap {
+  min-height: 16rem;
+}
+
+.book-canvas .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: #8a7a66;
+}
+
+.book-quill {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.book-mark {
+  min-height: 2rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--os-gold) 50%, var(--os-border));
+  background: #f8f1e2;
+  padding: 0 0.7rem;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2a2118;
+}
+
+.book-mark-wide {
+  min-width: 6.5rem;
+}
+
+.book-quill [data-ut-element="button"] {
+  margin: 0;
+  height: 2rem;
+  width: auto;
+}
+
+.book-quill [data-ut-element="allowed-content"] {
+  display: none;
+}
+
+.book-quill-rule {
+  width: 1px;
+  height: 1rem;
+  background: var(--os-border);
+}
+
+.book-title-field,
+.book-excerpt-field {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #2a2118;
+  outline: none;
+}
+
+.book-title-field {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.book-excerpt-field {
+  font-size: 0.95rem;
+  color: #6b5d4a;
+}
+
+.dark .book-prose,
+.dark .book-title-field,
+.dark .life-book-leaf {
+  color: var(--os-fg);
+}
+
+.dark .life-book-pages {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.28), transparent 18px),
+    repeating-linear-gradient(
+      0deg,
+      #1c1814,
+      #1c1814 27px,
+      rgba(244, 241, 234, 0.04) 28px
+    );
+}
+
+.dark .book-excerpt-field {
+  color: var(--os-fg-muted);
+}
+
+.dark .book-mark {
+  background: var(--os-card);
+  color: var(--os-fg);
+}
+
+@media (max-width: 640px) {
+  .life-book.is-open .life-book-cover {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .life-book-stage,
+  .life-book.is-open .life-book-stage {
+    width: min(100%, 21rem);
+    height: 30rem;
+  }
+
+  .book-prose img.book-pic,
+  .book-prose .book-pic {
+    max-width: 58%;
+  }
+}
+
+@keyframes book-turn {
+  0% {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+  45% {
+    transform: rotateY(-72deg);
+    opacity: 0.35;
+  }
+  100% {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes book-bind {
+  0% {
+    transform: scale(0.78) rotateY(38deg) rotateX(10deg);
+    opacity: 0.2;
+  }
+  42% {
+    transform: scale(1.06) rotateY(-12deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.98) rotateY(6deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes book-foil {
+  0% {
+    transform: translateX(-40%) skewX(-18deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(50%) skewX(-18deg);
+    opacity: 0;
+  }
+}

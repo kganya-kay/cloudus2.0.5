@@ -3,14 +3,15 @@
 import { BlogPostStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 
-import { StoryOwnerTools } from "~/components/os/story-owner";
-import { Badge, Button, Card, EmptyState, PageHeader } from "~/components/os/primitives";
+import { BookCanvas } from "~/components/blog/BookCanvas";
+import { BookShelf } from "~/components/blog/BookShelf";
+import { BookStage } from "~/components/blog/BookStage";
+import { Button } from "~/components/os/primitives";
 import { BloggerNav } from "~/components/social/BloggerNav";
 import { PostToSocials } from "~/components/social/PostToSocials";
 import { SocialStoryFields } from "~/components/social/SocialStoryFields";
-import { StoryMediaPlayer } from "~/components/social/StoryMediaPlayer";
 import type { SocialStoryMedia } from "~/components/social/types";
-import { PLATFORM_LABELS, type SocialPlatformName } from "~/lib/social/platforms";
+import { excerptFromHtml, firstImageSrc, stripHtml } from "~/lib/blog/html";
 import { api } from "~/trpc/react";
 
 type BlogComposerProps = {
@@ -28,28 +29,21 @@ const normalizeName = (value: string) =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
-const formatDate = (value: Date | null | undefined) => {
-  if (!value) return "Draft";
-  try {
-    return new Intl.DateTimeFormat("en-ZA", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(value));
-  } catch {
-    return "Published";
-  }
-};
+type Mode = "cover" | "open" | "write" | "bound";
 
 export default function BlogComposer({
   routeUserName,
   sessionUserName,
   isSignedIn,
 }: BlogComposerProps) {
+  const [mode, setMode] = useState<Mode>("cover");
+  const [turning, setTurning] = useState(false);
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [media, setMedia] = useState<SocialStoryMedia>({});
   const [status, setStatus] = useState<BlogPostStatus>(BlogPostStatus.PUBLISHED);
+  const [canvasKey, setCanvasKey] = useState(0);
 
   const utils = api.useUtils();
   const profile = api.blog.profile.useQuery(
@@ -60,7 +54,7 @@ export default function BlogComposer({
     {
       userName: routeUserName,
       includeDrafts: true,
-      limit: 20,
+      limit: 50,
     },
     { retry: false },
   );
@@ -71,6 +65,23 @@ export default function BlogComposer({
     return normalizeName(routeUserName) === normalizeName(sessionUserName);
   }, [isSignedIn, profile.data?.viewerCanManage, routeUserName, sessionUserName]);
 
+  const items = useMemo(
+    () =>
+      [...(posts.data?.items ?? [])].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      ),
+    [posts.data?.items],
+  );
+
+  const resetPage = () => {
+    setTitle("");
+    setExcerpt("");
+    setContent("");
+    setMedia({});
+    setStatus(BlogPostStatus.PUBLISHED);
+    setCanvasKey((key) => key + 1);
+  };
+
   const createPost = api.blog.createPost.useMutation({
     onSuccess: async () => {
       await Promise.all([
@@ -78,198 +89,158 @@ export default function BlogComposer({
         utils.blog.listPosts.invalidate({ userName: routeUserName }),
         utils.blog.listPublicBlogs.invalidate(),
       ]);
-      setTitle("");
-      setExcerpt("");
-      setContent("");
-      setMedia({});
-      setStatus(BlogPostStatus.PUBLISHED);
+      resetPage();
+      setMode("bound");
+      window.setTimeout(() => setMode("cover"), 1700);
     },
   });
 
   const blog = profile.data?.blog;
-  const socials = blog?.owner.socialAccounts ?? [];
-  const items = posts.data?.items ?? [];
+  const bookTitle = blog?.title ?? routeUserName;
+  const author = blog?.owner.name ?? routeUserName;
+  const chapterTitle = title.trim() || `Chapter ${items.length + 1}`;
+  const chapterCover = media.imageUrl ?? firstImageSrc(content) ?? null;
+  const coverImage = chapterCover ?? items.at(-1)?.coverImage ?? null;
+  const hasStory = Boolean(stripHtml(content) || media.imageUrl || media.videoUrl || media.audioUrl);
+  const open = mode !== "cover";
+
+  const turnTo = (next: Mode) => {
+    setTurning(true);
+    setMode(next);
+    window.setTimeout(() => setTurning(false), 680);
+  };
+
+  const bind = () => {
+    createPost.mutate({
+      userName: routeUserName,
+      title: chapterTitle,
+      excerpt: excerpt.trim() || excerptFromHtml(content) || undefined,
+      content: stripHtml(content) ? content.trim() : undefined,
+      coverImage: chapterCover ?? undefined,
+      videoUrl: media.videoUrl,
+      audioUrl: media.audioUrl,
+      status,
+    });
+  };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={blog?.title ?? routeUserName}
-        actions={<BloggerNav current={canManage ? "mine" : "community"} />}
-      />
+    <div className="life-desk space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="os-kicker">@{blog?.userName ?? routeUserName}</p>
+        <BloggerNav current={canManage ? "mine" : "community"} />
+      </div>
 
-      <Card>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="os-kicker">@{blog?.userName ?? routeUserName}</p>
-            <p className="mt-1 font-semibold">{blog?.owner.name ?? routeUserName}</p>
-            <p className="os-muted">{blog?.postCount ?? items.length} stories</p>
+      <BookStage
+        title={bookTitle}
+        author={author}
+        image={coverImage}
+        chapters={items.length}
+        open={open}
+        binding={mode === "bound"}
+        turning={turning}
+        onCoverClick={() => (open ? setMode("cover") : turnTo(canManage ? "write" : "open"))}
+      >
+        {mode === "bound" ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <p className="font-display text-4xl">Bound.</p>
+            <p className="os-muted">A new chapter sits on the shelf.</p>
           </div>
-          {socials.map((account) => (
-            <a
-              key={`${account.platform}-${account.handle}`}
-              href={account.profileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-os-elevated px-3 py-1 text-xs font-semibold"
-            >
-              {PLATFORM_LABELS[account.platform as SocialPlatformName]} @{account.handle}
-            </a>
-          ))}
-        </div>
-      </Card>
-
-      {canManage ? (
-        <Card className="space-y-4">
-          <h2 className="text-xl font-semibold">New</h2>
-
-          <label className="text-xs text-os-muted">
-            Title
+        ) : canManage && mode === "write" ? (
+          <div className="space-y-4">
             <input
-              className="os-field"
+              className="book-title-field"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Title"
+              placeholder={`Chapter ${items.length + 1}`}
             />
-          </label>
-          <label className="text-xs text-os-muted">
-            Excerpt
             <input
-              className="os-field"
+              className="book-excerpt-field"
               value={excerpt}
               onChange={(event) => setExcerpt(event.target.value)}
-              placeholder="One line"
+              placeholder="A line for the flyleaf"
             />
-          </label>
-          <label className="text-xs text-os-muted">
-            Story
-            <textarea
-              className="os-field"
-              rows={6}
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              placeholder="Story"
-            />
-          </label>
-
-          <div className="space-y-3">
-            <p className="text-sm font-semibold">Media</p>
-            {media.imageUrl || media.videoUrl || media.audioUrl ? (
-              <StoryMediaPlayer
-                imageUrl={media.imageUrl}
-                videoUrl={media.videoUrl}
-                audioUrl={media.audioUrl}
-                title={title || "Story"}
-              />
-            ) : null}
-            <SocialStoryFields value={media} onChange={setMedia} showFirstRun={false} />
+            <BookCanvas key={canvasKey} value={content} onChange={setContent} disabled={createPost.isPending} />
           </div>
+        ) : (
+          <div className="flex h-full flex-col justify-between gap-6">
+            <div>
+              <p className="os-kicker">A life in chapters</p>
+              <p className="mt-3 font-display text-3xl leading-tight">{bookTitle}</p>
+              <p className="mt-2 os-muted">
+                {items.length} chapter{items.length === 1 ? "" : "s"}
+              </p>
+            </div>
+            {canManage ? (
+              <Button type="button" onClick={() => turnTo("write")}>
+                Write
+              </Button>
+            ) : !isSignedIn ? (
+              <Button href={`/auth/login?callbackUrl=/Blog/${routeUserName}`} size="sm">
+                Sign in
+              </Button>
+            ) : null}
+          </div>
+        )}
+      </BookStage>
 
+      {mode === "cover" ? (
+        <div className="flex justify-center gap-3">
+          {canManage ? (
+            <Button type="button" onClick={() => turnTo("write")}>
+              Write
+            </Button>
+          ) : (
+            <Button type="button" variant="secondary" onClick={() => turnTo("open")}>
+              Open
+            </Button>
+          )}
+        </div>
+      ) : null}
+
+      {canManage && mode === "write" ? (
+        <div className="mx-auto w-full max-w-3xl space-y-4">
+          <SocialStoryFields value={media} onChange={setMedia} showFirstRun={false} />
           <div className="flex flex-wrap items-center gap-3">
             <select
               className="os-field w-auto"
               value={status}
               onChange={(event) => setStatus(event.target.value as BlogPostStatus)}
             >
-              <option value={BlogPostStatus.PUBLISHED}>Published</option>
-              <option value={BlogPostStatus.DRAFT}>Draft</option>
-              <option value={BlogPostStatus.ARCHIVED}>Archived</option>
+              <option value={BlogPostStatus.PUBLISHED}>Bind</option>
+              <option value={BlogPostStatus.DRAFT}>Keep private</option>
             </select>
             <Button
               type="button"
-              disabled={
-                createPost.isPending ||
-                !title.trim() ||
-                (!content.trim() && !media.imageUrl && !media.videoUrl && !media.audioUrl)
-              }
-              onClick={() =>
-                createPost.mutate({
-                  userName: routeUserName,
-                  title: title.trim(),
-                  excerpt: excerpt.trim() || undefined,
-                  content: content.trim() || undefined,
-                  coverImage: media.imageUrl,
-                  videoUrl: media.videoUrl,
-                  audioUrl: media.audioUrl,
-                  status,
-                })
-              }
+              disabled={createPost.isPending || !hasStory}
+              onClick={bind}
             >
-              {createPost.isPending ? "Saving…" : "Publish"}
+              {createPost.isPending ? "Binding…" : "Bind chapter"}
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => setMode("cover")}>
+              Close
             </Button>
             <PostToSocials
-              title={title}
+              title={chapterTitle}
               excerpt={excerpt}
               content={content}
-              imageUrl={media.imageUrl}
+              imageUrl={coverImage}
               videoUrl={media.videoUrl}
               audioUrl={media.audioUrl}
               permalink={`/Blog/${routeUserName}`}
             />
           </div>
           {createPost.error ? <p className="text-sm text-os-danger">{createPost.error.message}</p> : null}
-        </Card>
-      ) : !isSignedIn ? (
-        <Card>
-          <Button href={`/auth/login?callbackUrl=/Blog/${routeUserName}`} size="sm">
-            Sign in
-          </Button>
-        </Card>
+        </div>
       ) : null}
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Stories</h2>
-        {items.length === 0 ? (
-          <EmptyState title="Empty" />
-        ) : (
-          items.map((post) => (
-            <article key={post.id} className="os-card space-y-3 p-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-lg font-semibold">{post.title}</h3>
-                <Badge tone={post.status === "PUBLISHED" ? "success" : "default"}>{post.status}</Badge>
-                <span className="text-xs text-os-muted">{formatDate(post.publishedAt)}</span>
-              </div>
-              {post.excerpt ? <p className="os-muted">{post.excerpt}</p> : null}
-              <StoryMediaPlayer
-                imageUrl={post.coverImage}
-                videoUrl={post.videoUrl}
-                audioUrl={post.audioUrl}
-                title={post.title}
-              />
-              {post.content ? <p className="whitespace-pre-wrap text-sm leading-6">{post.content}</p> : null}
-              <div className="flex flex-wrap gap-2">
-                <Button href={`/Blog/${routeUserName}/${post.slug}`} size="sm" variant="secondary">
-                  Open
-                </Button>
-                {canManage ? (
-                  <PostToSocials
-                    title={post.title}
-                    excerpt={post.excerpt}
-                    content={post.content}
-                    imageUrl={post.coverImage}
-                    videoUrl={post.videoUrl}
-                    audioUrl={post.audioUrl}
-                    permalink={`/Blog/${routeUserName}/${post.slug}`}
-                    prefetch
-                  />
-                ) : null}
-              </div>
-              {canManage ? (
-                <StoryOwnerTools
-                  canManage
-                  userName={routeUserName}
-                  post={{
-                    id: post.id,
-                    title: post.title,
-                    excerpt: post.excerpt,
-                    content: post.content,
-                  }}
-                />
-              ) : null}
-            </article>
-          ))
-        )}
-      </section>
-
+      <BookShelf
+        books={items.map((post, index) => ({
+          href: `/Blog/${routeUserName}/${post.slug}`,
+          title: post.title,
+          author: `Ch. ${index + 1}`,
+          image: post.coverImage,
+        }))}
+      />
     </div>
   );
 }

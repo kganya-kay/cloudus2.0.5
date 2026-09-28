@@ -17,7 +17,7 @@ export default async function UserBlogPage({ params }: PageProps) {
     api.blog.listPosts.prefetch({
       userName: routeUserName,
       includeDrafts: Boolean(session?.user),
-      limit: 20,
+      limit: 50,
     }),
   ]);
 
