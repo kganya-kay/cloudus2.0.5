@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { FeedOwn } from "~/components/os/feed-own";
-import { StoryOwnerTools } from "~/components/os/story-owner";
 import { api } from "~/trpc/react";
 import {
   Avatar,
@@ -15,8 +14,8 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { BookShelf } from "~/components/blog/BookShelf";
 import { CommunityStoryDrop } from "~/components/social/CommunityStoryDrop";
-import { StoryMediaPlayer } from "~/components/social/StoryMediaPlayer";
 
 export default function CommunityPage() {
   const { data: session } = useSession();
@@ -56,44 +55,14 @@ export default function CommunityPage() {
       <CommunityStoryDrop />
 
       {data?.blogs.length ? (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Blogs</h2>
-            <Link href="/Blog" className="text-sm font-semibold text-os-accent">
-              All
-            </Link>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {data.blogs.map((post) => (
-              <Card key={post.id} className="space-y-3">
-                <p className="os-kicker">@{post.blog.userName}</p>
-                <h3 className="font-semibold">{post.title}</h3>
-                {post.excerpt ? <p className="os-muted line-clamp-1">{post.excerpt}</p> : null}
-                <StoryMediaPlayer
-                  imageUrl={post.coverImage}
-                  videoUrl={post.videoUrl}
-                  audioUrl={post.audioUrl}
-                  title={post.title}
-                />
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button href={`/Blog/${post.blog.userName}/${post.slug}`} size="sm" variant="secondary">
-                    Read
-                  </Button>
-                  <StoryOwnerTools
-                    canManage={userId === post.blog.ownerId}
-                    userName={post.blog.userName}
-                    post={{
-                      id: post.id,
-                      title: post.title,
-                      excerpt: post.excerpt,
-                      content: null,
-                    }}
-                  />
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
+        <BookShelf
+          books={data.blogs.map((post) => ({
+            href: `/Blog/${post.blog.userName}/${post.slug}`,
+            title: post.title,
+            author: post.blog.userName,
+            image: post.coverImage,
+          }))}
+        />
       ) : null}
 
       <section className="grid gap-4 lg:grid-cols-[1fr,1fr]">

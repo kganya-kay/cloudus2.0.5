@@ -510,6 +510,20 @@
   opacity: 0.42;
 }
 
+.life-cover.is-pictorial .life-cover-art.has-photo {
+  opacity: 1;
+}
+
+.life-cover-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding-left: 0.7rem;
+  color: rgba(244, 239, 228, 0.78);
+}
+
 .life-cover-grain {
   background-image:
     radial-gradient(rgba(244, 239, 228, 0.12) 0.7px, transparent 0.7px),

@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { api } from "~/trpc/react";
-import { formatShortDate } from "~/lib/os/format";
+import { BookShelf } from "~/components/blog/BookShelf";
 import {
   Button,
-  Card,
-  EmptyState,
   ErrorState,
   PageHeader,
   SkeletonGrid,
@@ -57,22 +55,15 @@ export default function LearnPage() {
       </div>
 
       {posts.length ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {posts.map((post) => (
-            <Card key={post.id}>
-              <p className="os-kicker">{post.blog.title}</p>
-              <h2 className="mt-2 text-lg font-semibold">{post.title}</h2>
-              {post.excerpt ? <p className="os-muted mt-2 line-clamp-1">{post.excerpt}</p> : null}
-              <p className="mt-3 text-xs text-os-muted">{formatShortDate(post.publishedAt)}</p>
-              <Button href={`/Blog/${post.blog.userName}/${post.slug}`} className="mt-4" size="sm" variant="secondary">
-                Read
-              </Button>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <EmptyState title="Empty" action={<Button href="/Blog" size="sm">Write</Button>} />
-      )}
+        <BookShelf
+          books={posts.map((post) => ({
+            href: `/Blog/${post.blog.userName}/${post.slug}`,
+            title: post.title,
+            author: post.blog.title,
+            image: post.coverImage,
+          }))}
+        />
+      ) : null}
     </div>
   );
 }

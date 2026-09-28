@@ -25,7 +25,8 @@ export function BookShelf({ books }: { books: ShelfBook[] }) {
               author={book.author}
               image={book.image}
               chapters={book.chapters}
-              size="sm"
+              size="md"
+              pictorial
             />
           </Link>
         ))}
