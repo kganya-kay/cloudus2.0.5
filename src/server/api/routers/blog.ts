@@ -37,7 +37,7 @@ const defaultUserNameFromSession = (sessionUser: {
 };
 
 const defaultBlogTitleFromSession = (sessionUser: { name?: string | null }, fallbackUserName: string) =>
-  `The Book of ${sessionUser.name?.trim() || fallbackUserName}`;
+  `${sessionUser.name?.trim() || fallbackUserName}'s Blog`;
 
 const assertNormalized = (value: string) => {
   if (!value) {
@@ -148,6 +148,38 @@ export const blogRouter = createTRPCRouter({
         },
         publishedPostCount: countByBlogId.get(item.blogId) ?? 0,
       }));
+    }),
+
+  listRecentPosts: publicProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().int().positive().max(40).optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.db.blogPost.findMany({
+        where: { status: BlogPostStatus.PUBLISHED },
+        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        take: input?.limit ?? 12,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          excerpt: true,
+          coverImage: true,
+          publishedAt: true,
+          createdAt: true,
+          blog: {
+            select: {
+              userName: true,
+              title: true,
+              owner: { select: { name: true } },
+            },
+          },
+        },
+      });
     }),
 
   profile: publicProcedure
@@ -307,7 +339,6 @@ export const blogRouter = createTRPCRouter({
       where: { ownerId: ctx.session.user.id },
       update: {
         userName: normalizedUserName,
-        title: defaultBlogTitleFromSession(ctx.session.user, normalizedUserName),
       },
       create: {
         ownerId: ctx.session.user.id,
@@ -379,7 +410,6 @@ export const blogRouter = createTRPCRouter({
         where: { ownerId: ctx.session.user.id },
         update: {
           userName: normalizedUserName,
-          title: defaultBlogTitleFromSession(ctx.session.user, normalizedUserName),
         },
         create: {
           ownerId: ctx.session.user.id,

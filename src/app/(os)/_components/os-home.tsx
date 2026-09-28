@@ -64,9 +64,9 @@ export function OsHome() {
         hint="Build, then open tonight’s room."
         actions={
           <>
-            <Button href="/build">Build</Button>
-            <Button href="/studio/session" variant="secondary">
-              Session
+            <Button href="/Blog/me">Write</Button>
+            <Button href="/build" variant="secondary">
+              Build
             </Button>
           </>
         }
@@ -146,6 +146,39 @@ export function OsHome() {
           </div>
         </Card>
       </section>
+
+      {(data?.blogs.length ?? 0) > 0 ? (
+        <section className="os-card min-w-0 overflow-hidden p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold">Blogs</h2>
+            <Link href="/Blog" className="text-xs font-semibold text-os-accent">
+              All
+            </Link>
+          </div>
+          <ul className="space-y-1">
+            {(data?.blogs ?? []).slice(0, 4).map((post) => (
+              <li key={post.id} className="min-w-0">
+                <Link
+                  href={`/Blog/${post.blog.userName}/${post.slug}`}
+                  className="flex min-w-0 items-center justify-between gap-3 rounded-xl py-1.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{post.title}</p>
+                    <p className="os-muted truncate text-xs leading-4">@{post.blog.userName}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <section className="os-card flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="font-display text-lg font-semibold">Blog</p>
+          <Button href={status === "authenticated" ? "/Blog/me" : "/auth/login?callbackUrl=/Blog/me"} size="sm">
+            Write
+          </Button>
+        </section>
+      )}
 
       <section className="grid min-w-0 gap-4 md:grid-cols-2">
         <div className="os-card min-w-0 overflow-hidden p-4">

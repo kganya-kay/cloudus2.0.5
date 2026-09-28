@@ -146,7 +146,7 @@ export function BookReader({
           </>
         ) : null}
         <Button href={`/Blog/${userName}`} size="sm" variant="secondary">
-          Book
+          Blog
         </Button>
       </div>
     </div>

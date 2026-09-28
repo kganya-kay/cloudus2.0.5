@@ -57,6 +57,12 @@ export function stripHtml(value: string) {
     .trim();
 }
 
+export function titleFromDump(value: string | null | undefined, fallback = "New post") {
+  const line = stripHtml(value ?? "").split("\n")[0]?.trim() || fallback;
+  if (line.length < 3) return fallback;
+  return line.slice(0, 160);
+}
+
 export function excerptFromHtml(value: string | null | undefined, max = 160) {
   const text = stripHtml(value ?? "");
   if (text.length <= max) return text;

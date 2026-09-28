@@ -98,7 +98,7 @@ export default function BlogComposer({
   const blog = profile.data?.blog;
   const bookTitle = blog?.title ?? routeUserName;
   const author = blog?.owner.name ?? routeUserName;
-  const chapterTitle = title.trim() || `Chapter ${items.length + 1}`;
+  const chapterTitle = title.trim() || `Post ${items.length + 1}`;
   const chapterCover = media.imageUrl ?? firstImageSrc(content) ?? null;
   const coverImage = chapterCover ?? items.at(-1)?.coverImage ?? null;
   const hasStory = Boolean(stripHtml(content) || media.imageUrl || media.videoUrl || media.audioUrl);
@@ -142,8 +142,8 @@ export default function BlogComposer({
       >
         {mode === "bound" ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            <p className="font-display text-4xl">Bound.</p>
-            <p className="os-muted">A new chapter sits on the shelf.</p>
+            <p className="font-display text-4xl">In the book.</p>
+            <p className="os-muted">Your post is on the shelf.</p>
           </div>
         ) : canManage && mode === "write" ? (
           <div className="space-y-4">
@@ -151,23 +151,23 @@ export default function BlogComposer({
               className="book-title-field"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder={`Chapter ${items.length + 1}`}
+              placeholder={`Post ${items.length + 1}`}
             />
             <input
               className="book-excerpt-field"
               value={excerpt}
               onChange={(event) => setExcerpt(event.target.value)}
-              placeholder="A line for the flyleaf"
+              placeholder="One line"
             />
             <BookCanvas key={canvasKey} value={content} onChange={setContent} disabled={createPost.isPending} />
           </div>
         ) : (
           <div className="flex h-full flex-col justify-between gap-6">
             <div>
-              <p className="os-kicker">A life in chapters</p>
+              <p className="os-kicker">Blog</p>
               <p className="mt-3 font-display text-3xl leading-tight">{bookTitle}</p>
               <p className="mt-2 os-muted">
-                {items.length} chapter{items.length === 1 ? "" : "s"}
+                {items.length} post{items.length === 1 ? "" : "s"} in the book
               </p>
             </div>
             {canManage ? (
@@ -206,15 +206,15 @@ export default function BlogComposer({
               value={status}
               onChange={(event) => setStatus(event.target.value as BlogPostStatus)}
             >
-              <option value={BlogPostStatus.PUBLISHED}>Bind</option>
-              <option value={BlogPostStatus.DRAFT}>Keep private</option>
+              <option value={BlogPostStatus.PUBLISHED}>Publish</option>
+              <option value={BlogPostStatus.DRAFT}>Draft</option>
             </select>
             <Button
               type="button"
               disabled={createPost.isPending || !hasStory}
               onClick={bind}
             >
-              {createPost.isPending ? "Binding…" : "Bind chapter"}
+              {createPost.isPending ? "…" : "Publish"}
             </Button>
             <Button type="button" variant="ghost" onClick={() => setMode("cover")}>
               Close
@@ -237,7 +237,7 @@ export default function BlogComposer({
         books={items.map((post, index) => ({
           href: `/Blog/${routeUserName}/${post.slug}`,
           title: post.title,
-          author: `Ch. ${index + 1}`,
+          author: String(index + 1),
           image: post.coverImage,
         }))}
       />

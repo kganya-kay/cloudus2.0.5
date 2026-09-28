@@ -64,7 +64,7 @@ export default function LearnPage() {
               <h2 className="mt-2 text-lg font-semibold">{post.title}</h2>
               {post.excerpt ? <p className="os-muted mt-2 line-clamp-1">{post.excerpt}</p> : null}
               <p className="mt-3 text-xs text-os-muted">{formatShortDate(post.publishedAt)}</p>
-              <Button href={`/Blog/${post.blog.userName}`} className="mt-4" size="sm" variant="secondary">
+              <Button href={`/Blog/${post.blog.userName}/${post.slug}`} className="mt-4" size="sm" variant="secondary">
                 Read
               </Button>
             </Card>

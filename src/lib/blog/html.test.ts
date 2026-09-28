@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { excerptFromHtml, paginateHtml, sanitizeHtml, toBookHtml } from "./html";
+import { excerptFromHtml, paginateHtml, sanitizeHtml, titleFromDump, toBookHtml } from "./html";
 
 test("sanitizeHtml drops scripts and keeps wrap images", () => {
   const html = sanitizeHtml(
@@ -24,4 +24,9 @@ test("paginateHtml splits long chapters", () => {
 
 test("excerptFromHtml strips tags", () => {
   assert.equal(excerptFromHtml("<p>A life in ink.</p>"), "A life in ink.");
+});
+
+test("titleFromDump uses the first words", () => {
+  assert.equal(titleFromDump("<p>Morning in Joburg</p>"), "Morning in Joburg");
+  assert.equal(titleFromDump("ok"), "New post");
 });

@@ -58,7 +58,7 @@ export default function CommunityPage() {
       {data?.blogs.length ? (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Stories</h2>
+            <h2 className="font-display text-lg font-semibold">Blogs</h2>
             <Link href="/Blog" className="text-sm font-semibold text-os-accent">
               All
             </Link>

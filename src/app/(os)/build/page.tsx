@@ -14,6 +14,7 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { DumpToBook } from "~/components/blog/BlogDump";
 import { OwnText } from "~/components/os/own-text";
 import { useOnline } from "../_components/use-online";
 
@@ -148,6 +149,9 @@ export default function BuildPage() {
                       onSave={(value) => updateCapture.mutate({ id: item.id, kind: item.kind, text: value })}
                       onDelete={() => deleteCapture.mutate({ id: item.id })}
                     />
+                    <div className="mt-2">
+                      <DumpToBook text={item.text} />
+                    </div>
                   </div>
                 </li>
               ))}

@@ -10,7 +10,7 @@ export function BloggerSetup() {
         <h2 className="text-lg font-semibold">Blog</h2>
         <div className="flex flex-wrap gap-2">
           <Button href="/Blog/me" size="sm">
-            Mine
+            Write
           </Button>
           <Button href="/Blog" size="sm" variant="secondary">
             All
