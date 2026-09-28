@@ -8,7 +8,7 @@ import {
   pickMediaFromSources,
   youtubeIdsInText,
 } from "./extract";
-import { iframeSrcForUrl, youtubeIdFromUrl } from "./embed";
+import { iframeSrcForUrl, tvEmbedSrc, youtubeIdFromUrl } from "./embed";
 import { fallbackSocialCaption } from "./caption";
 import { instagramComposerUrl, isMobileUserAgent } from "./instagram";
 import {
@@ -87,6 +87,9 @@ describe("social extractors", () => {
   it("builds a YouTube embed", () => {
     assert.equal(youtubeIdFromUrl("https://www.youtube.com/watch?v=abc123"), "abc123");
     assert.equal(iframeSrcForUrl("https://youtu.be/abc123"), "https://www.youtube.com/embed/abc123");
+    const tv = tvEmbedSrc("https://youtu.be/abc123") ?? "";
+    assert.match(tv, /autoplay=1/);
+    assert.match(tv, /mute=1/);
   });
 
   it("prefers a thumbnail when dropping an image", () => {

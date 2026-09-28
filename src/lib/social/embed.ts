@@ -40,3 +40,23 @@ export function iframeSrcForUrl(url: string) {
   }
   return null;
 }
+
+export function tvEmbedSrc(url: string, muted = true) {
+  const youtubeId = youtubeIdFromUrl(url);
+  if (youtubeId) {
+    const params = new URLSearchParams({
+      autoplay: "1",
+      mute: muted ? "1" : "0",
+      playsinline: "1",
+      rel: "0",
+      modestbranding: "1",
+      controls: "0",
+      iv_load_policy: "3",
+    });
+    return `https://www.youtube.com/embed/${youtubeId}?${params.toString()}`;
+  }
+  if (url.includes("soundcloud.com")) {
+    return `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true&visual=true`;
+  }
+  return iframeSrcForUrl(url);
+}

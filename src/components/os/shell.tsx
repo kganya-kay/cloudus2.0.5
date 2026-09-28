@@ -31,6 +31,7 @@ import { useTheme } from "~/lib/os/theme";
 import { api } from "~/trpc/react";
 import { Hint } from "./hint";
 import { Avatar, Button } from "./primitives";
+import { DailyTV } from "~/components/media-pulse/DailyTV";
 import { CommandPalette } from "./command-palette";
 
 const navIcons: Record<string, typeof HomeIcon> = {
@@ -307,6 +308,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           })}
         </ul>
       </nav>
+
+      {pathname && pathname !== "/" && !pathname.startsWith("/studio/session") ? <DailyTV size="dock" /> : null}
 
       <CommandPalette open={commandOpen} onClose={closeSearch} />
     </div>

@@ -631,8 +631,19 @@
   clear: both;
 }
 
+.book-prose a {
+  color: var(--os-burgundy);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .book-canvas .tiptap {
   min-height: 16rem;
+}
+
+.book-canvas.is-compact .tiptap,
+.book-canvas .tiptap.is-compact {
+  min-height: 10rem;
 }
 
 .book-canvas .tiptap p.is-editor-empty:first-child::before {
@@ -788,5 +799,216 @@
   100% {
     transform: translateX(50%) skewX(-18deg);
     opacity: 0;
+  }
+}
+
+.daily-tv {
+  --tv-shell: #16110d;
+  --tv-face: #2a2118;
+}
+
+.daily-tv.is-stage {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.daily-tv.is-dock {
+  position: fixed;
+  right: 1rem;
+  bottom: 5.6rem;
+  z-index: 30;
+  width: min(18rem, calc(100vw - 2rem));
+}
+
+@media (min-width: 1024px) {
+  .daily-tv.is-dock {
+    bottom: 1.5rem;
+    width: 20rem;
+  }
+}
+
+.daily-tv-chassis {
+  position: relative;
+  border-radius: 1.35rem 1.35rem 1.05rem 1.05rem;
+  padding: 0.65rem 0.7rem 0.45rem;
+  background:
+    linear-gradient(160deg, #3a2e22 0%, var(--tv-shell) 42%, #0c0907 100%);
+  box-shadow:
+    0 24px 48px -22px rgba(12, 9, 7, 0.72),
+    inset 0 1px 0 rgba(196, 163, 90, 0.28);
+}
+
+.daily-tv-bezel {
+  padding: 0.35rem;
+  border-radius: 0.7rem;
+  background: radial-gradient(circle at 20% 0%, rgba(196, 163, 90, 0.16), transparent 46%), #0a0705;
+}
+
+.daily-tv-glass {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.35rem;
+  background: #050403;
+  cursor: pointer;
+}
+
+.daily-tv-yt,
+.daily-tv-yt iframe,
+.daily-tv-glass video,
+.daily-tv-glass iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.daily-tv-still {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  animation: daily-ken 18s ease-in-out infinite alternate;
+}
+
+.daily-tv-void {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 50% 40%, #1a1210, #050403 68%);
+}
+
+.daily-tv-void.is-live {
+  box-shadow: inset 0 0 40px rgba(179, 36, 36, 0.28);
+}
+
+.daily-tv-scan,
+.daily-tv-shine {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.daily-tv-scan {
+  background: repeating-linear-gradient(
+    180deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 3px
+  );
+  opacity: 0.35;
+}
+
+.daily-tv-shine {
+  background: linear-gradient(120deg, rgba(255, 244, 220, 0.16), transparent 36%, transparent 62%, rgba(196, 163, 90, 0.08));
+}
+
+.daily-tv-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.2rem 0.15rem;
+}
+
+.daily-tv-led {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 999px;
+  background: #3a3228;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+.daily-tv-led.is-on {
+  background: var(--os-gold);
+  box-shadow: 0 0 10px var(--os-gold);
+}
+
+.daily-tv-led.is-live {
+  background: #d13a3a;
+  box-shadow: 0 0 12px #d13a3a;
+  animation: daily-led 1.2s ease-in-out infinite;
+}
+
+.daily-tv-pips {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.daily-tv-pip {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: #3a3228;
+}
+
+.daily-tv-pip.is-on {
+  background: #f4efe4;
+}
+
+.daily-tv-pip.is-live {
+  background: #d13a3a;
+}
+
+.daily-tv-dials {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #c4b6a3;
+}
+
+.daily-tv-dials a,
+.daily-tv-dials button {
+  display: grid;
+  height: 1.6rem;
+  width: 1.6rem;
+  place-items: center;
+  border-radius: 999px;
+}
+
+.daily-tv-stand {
+  width: min(38%, 9rem);
+  height: 0.7rem;
+  margin: 0.15rem auto 0;
+  border-radius: 0 0 0.6rem 0.6rem;
+  background: linear-gradient(180deg, #2a2118, #14110e);
+  box-shadow: 0 10px 16px -12px rgba(12, 9, 7, 0.8);
+}
+
+.daily-tv-pill {
+  position: fixed;
+  right: 1rem;
+  bottom: 5.6rem;
+  z-index: 30;
+  display: grid;
+  height: 2.4rem;
+  width: 2.4rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #16110d;
+  box-shadow: 0 12px 28px -16px rgba(12, 9, 7, 0.8);
+}
+
+@media (min-width: 1024px) {
+  .daily-tv-pill {
+    bottom: 1.5rem;
+  }
+}
+
+@keyframes daily-led {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes daily-ken {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
   }
 }

@@ -1,4 +1,4 @@
-import { MediaPulse } from "~/components/media-pulse/MediaPulse";
+import { DailyTV } from "~/components/media-pulse/DailyTV";
 import { api } from "~/trpc/server";
 
 import { OsHome } from "./(os)/_components/os-home";
@@ -18,7 +18,7 @@ export default async function HomePage(props: {
       {toastKey === "login_required" ? (
         <ToastBanner variant="warning" message="Sign in to see your profile." />
       ) : null}
-      <MediaPulse initial={pulse} />
+      <DailyTV size="stage" initial={pulse} />
       <OsHome />
     </div>
   );
