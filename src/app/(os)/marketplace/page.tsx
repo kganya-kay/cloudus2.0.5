@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
 import { formatZarFromCents } from "~/lib/os/format";
@@ -12,6 +13,7 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
+import { HireDesk } from "~/components/revenue/HireDesk";
 
 export default function MarketplacePage() {
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
@@ -38,13 +40,17 @@ export default function MarketplacePage() {
         title="Marketplace"
         actions={
           <>
-            <Button href="/shop">Shop</Button>
-            <Button href="/laundry" variant="secondary">
-              Laundry
+            <Button href="/hire">Hire</Button>
+            <Button href="/shop" variant="secondary">
+              Shop
             </Button>
           </>
         }
       />
+
+      <Suspense fallback={<SkeletonGrid count={9} />}>
+        <HireDesk compact />
+      </Suspense>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[

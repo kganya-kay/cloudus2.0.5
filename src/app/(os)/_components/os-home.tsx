@@ -65,9 +65,9 @@ export function OsHome() {
         hint="Build, then open tonight’s room."
         actions={
           <>
-            <Button href="/Blog/me">Write</Button>
-            <Button href="/build" variant="secondary">
-              Build
+            <Button href="/hire">Hire</Button>
+            <Button href="/Blog/me" variant="secondary">
+              Write
             </Button>
           </>
         }

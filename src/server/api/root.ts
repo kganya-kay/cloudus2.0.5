@@ -21,6 +21,7 @@ import { socialRouter } from "./routers/social";
 import { mediaPulseRouter } from "./routers/mediaPulse";
 import { liveRouter } from "./routers/live";
 import { workspaceRouter } from "./routers/workspace";
+import { revenueRouter } from "./routers/revenue";
 
 
 /**
@@ -51,6 +52,7 @@ export const appRouter = createTRPCRouter({
   mediaPulse: mediaPulseRouter,
   live: liveRouter,
   workspace: workspaceRouter,
+  revenue: revenueRouter,
 });
 
 // export type definition of API

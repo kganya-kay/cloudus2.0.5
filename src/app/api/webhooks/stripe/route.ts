@@ -4,6 +4,7 @@ import { verifyPaystackSignature, verifyPaystackTransaction } from "~/lib/paysta
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { PaymentStatus } from "@prisma/client";
+import { afterShopPaymentPaid } from "~/server/revenue/engine";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -172,6 +173,9 @@ export async function POST(request: Request) {
       providerRef,
       receiptUrl,
     });
+    if (nextStatus === PaymentStatus.PAID) {
+      await afterShopPaymentPaid(db, paymentId);
+    }
   }
 
   if (projectPaymentId) {
