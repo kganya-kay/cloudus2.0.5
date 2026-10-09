@@ -43,7 +43,7 @@ const navIcons: Record<string, typeof HomeIcon> = {
   "/studio": MusicalNoteIcon,
   "/studio/session": VideoCameraIcon,
   "/marketplace": ShoppingBagIcon,
-  "/hire": BanknotesIcon,
+  "/services": BanknotesIcon,
   "/learn": AcademicCapIcon,
   "/Blog": NewspaperIcon,
   "/events": CalendarDaysIcon,

@@ -18,7 +18,8 @@ export async function GET(request: Request) {
   if (!authorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(await runOrchestration(db));
+  const result = await runOrchestration(db);
+  return NextResponse.json(result);
 }
 
 export async function POST(request: Request) {

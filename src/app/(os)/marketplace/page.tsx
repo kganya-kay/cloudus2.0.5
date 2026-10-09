@@ -13,7 +13,7 @@ import {
   PageHeader,
   SkeletonGrid,
 } from "~/components/os/primitives";
-import { HireDesk } from "~/components/revenue/HireDesk";
+import { ServiceDesk } from "~/components/revenue/ServiceDesk";
 
 export default function MarketplacePage() {
   const overview = api.workspace.overview.useQuery(undefined, { retry: false });
@@ -40,7 +40,7 @@ export default function MarketplacePage() {
         title="Marketplace"
         actions={
           <>
-            <Button href="/hire">Hire</Button>
+            <Button href="/services">Services</Button>
             <Button href="/shop" variant="secondary">
               Shop
             </Button>
@@ -49,7 +49,7 @@ export default function MarketplacePage() {
       />
 
       <Suspense fallback={<SkeletonGrid count={9} />}>
-        <HireDesk compact />
+        <ServiceDesk compact />
       </Suspense>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

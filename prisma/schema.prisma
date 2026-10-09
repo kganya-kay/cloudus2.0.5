@@ -1018,6 +1018,8 @@ model User {
   roomListings      RoomListing[]
   bookingsAsGuest   Booking[]           @relation("BookingGuest")
   bookingsAsHost    Booking[]           @relation("BookingHost")
+  campaignsCreated  Campaign[]          @relation("CampaignCreatedBy")
+  outreachPosts     OutreachPost[]      @relation("OutreachPostCreatedBy")
 }
 
 model VerificationToken {
@@ -1408,4 +1410,138 @@ model BookingPayment {
   booking Booking @relation(fields: [bookingId], references: [id])
 
   @@index([status])
+}
+
+enum OutreachChannel {
+  LINKEDIN
+  FACEBOOK
+  INSTAGRAM
+  EMAIL
+}
+
+enum OutreachPostStatus {
+  DRAFT
+  SCHEDULED
+  POSTING
+  POSTED
+  FAILED
+  SKIPPED
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum LeadInterest {
+  UNKNOWN
+  OPENED
+  CLICKED
+  INTERESTED
+  REPLIED
+  UNSUBSCRIBED
+}
+
+model OutreachPost {
+  id           String              @id @default(cuid())
+  channel      OutreachChannel
+  status       OutreachPostStatus  @default(DRAFT)
+  title        String
+  body         String
+  permalink    String?
+  mediaUrl     String?
+  scheduledAt  DateTime
+  postedAt     DateTime?
+  externalId   String?
+  error        String?
+  context      Json?
+  createdById  String?
+  createdBy    User?               @relation("OutreachPostCreatedBy", fields: [createdById], references: [id])
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([status, scheduledAt])
+  @@index([channel, scheduledAt])
+}
+
+model Campaign {
+  id           String         @id @default(cuid())
+  name         String
+  serviceSlug  String
+  city         String
+  lat          Float?
+  lng          Float?
+  radiusKm     Float          @default(12)
+  status       CampaignStatus @default(DRAFT)
+  brief        String
+  emailSubject String
+  emailBody    String
+  createdById  String
+  createdBy    User           @relation("CampaignCreatedBy", fields: [createdById], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  leads        CampaignLead[]
+  touches      CampaignTouch[]
+
+  @@index([status, city])
+  @@index([createdById])
+}
+
+model CampaignLead {
+  id            String        @id @default(cuid())
+  campaignId    String
+  campaign      Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name          String
+  category      String?
+  website       String?
+  email         String?
+  phone         String?
+  address       String?
+  osmId         String?
+  source        String
+  consentSource String?
+  lat           Float?
+  lng           Float?
+  token         String        @unique @default(cuid())
+  interest      LeadInterest  @default(UNKNOWN)
+  score         Int           @default(0)
+  lastTouchedAt DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  touches       CampaignTouch[]
+
+  @@unique([campaignId, osmId])
+  @@index([campaignId, interest])
+  @@index([email])
+}
+
+model CampaignTouch {
+  id         String          @id @default(cuid())
+  campaignId String
+  campaign   Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId     String
+  lead       CampaignLead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  channel    OutreachChannel
+  kind       String
+  status     String
+  subject    String?
+  body       String?
+  sentAt     DateTime?
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  meta       Json?
+  createdAt  DateTime        @default(now())
+
+  @@index([campaignId, createdAt])
+  @@index([leadId, kind])
+}
+
+model OrchestrationRun {
+  id         String   @id @default(cuid())
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+  ok         Boolean  @default(false)
+  summary    Json?
 }

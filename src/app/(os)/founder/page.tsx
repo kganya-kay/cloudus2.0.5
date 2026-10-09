@@ -79,8 +79,8 @@ export default function FounderPage() {
             <Button onClick={() => pulse.mutate()} disabled={pulse.isPending} variant="secondary">
               Pulse
             </Button>
-            <Button href="/admin" variant="ghost">
-              Admin
+            <Button href="/admin/outreach" variant="ghost">
+              Outreach
             </Button>
           </>
         }

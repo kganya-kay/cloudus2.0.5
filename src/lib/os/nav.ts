@@ -14,7 +14,7 @@ export const mobileNav: OsNavItem[] = [
   { href: "/studio", label: "Studio", description: "Studio", mobile: true },
   { href: "/studio/session", label: "Live", description: "Live", mobile: true },
   { href: "/marketplace", label: "Market", description: "Marketplace", mobile: true },
-  { href: "/hire", label: "Hire", description: "Hire", mobile: true },
+  { href: "/services", label: "Services", description: "Services", mobile: true },
   { href: "/Blog", label: "Blogs", description: "Blogs", mobile: true },
   { href: "/events", label: "Events", description: "Events", mobile: true },
   { href: "/profile", label: "Profile", description: "Profile", mobile: true },
@@ -27,7 +27,7 @@ export const desktopNav: OsNavItem[] = [
   { href: "/studio", label: "Studio", description: "Studio", shortcut: "G S" },
   { href: "/community", label: "Community", description: "Community", shortcut: "G C" },
   { href: "/marketplace", label: "Marketplace", description: "Marketplace", shortcut: "G M" },
-  { href: "/hire", label: "Hire", description: "Hire", shortcut: "G $" },
+  { href: "/services", label: "Services", description: "Services", shortcut: "G V" },
   { href: "/learn", label: "Learn", description: "Learn", shortcut: "G L" },
   { href: "/Blog", label: "Blogs", description: "Blogs" },
   { href: "/events", label: "Events", description: "Events", shortcut: "G E" },
@@ -51,6 +51,7 @@ export const commandRoutes: OsNavItem[] = [
   { href: "/founder", label: "Founder", description: "Founder" },
   { href: "/admin", label: "Admin", description: "Admin" },
   { href: "/admin/daily", label: "Daily", description: "Daily" },
+  { href: "/admin/outreach", label: "Outreach", description: "Outreach" },
 ];
 
 export const isNavActive = (pathname: string, href: string) => {

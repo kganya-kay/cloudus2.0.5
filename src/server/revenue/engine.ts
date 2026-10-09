@@ -124,7 +124,7 @@ export async function hireService(
       price: service.priceCents,
       link: service.href,
       api: serviceKey(service.slug),
-      links: [service.href, `/hire?s=${service.slug}`],
+      links: [service.href, `/services?s=${service.slug}`],
       createdBy: { connect: { id: guest.id } },
       createdFor: { connect: { id: itemId } },
       customerName: input.name,
@@ -245,7 +245,7 @@ export async function fulfillPaidOrder(db: Db, orderId: number) {
   const caption = fallbackSocialCaption({
     title,
     excerpt: `Open ${resolved.href}`,
-    permalink: `/hire?s=${resolved.slug}`,
+    permalink: `/services?s=${resolved.slug}`,
   });
 
   await db.feedPost.create({
@@ -327,7 +327,7 @@ export async function pulsePresence(db: Db, service?: CloudusService) {
   if (recent > 0) return { posted: 0, slug: pick.slug };
 
   const profile = await operatorProfile(db, ownerId);
-  const permalink = `/hire?s=${pick.slug}`;
+  const permalink = `/services?s=${pick.slug}`;
   const caption = await craftSocialCaption({
     title: pick.name,
     excerpt: pick.href,

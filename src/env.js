@@ -30,6 +30,15 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
+    SENDGRID_API_KEY: z.string().optional(),
+    SENDGRID_FROM_EMAIL: z.string().email().optional(),
+    LINKEDIN_ACCESS_TOKEN: z.string().optional(),
+    LINKEDIN_AUTHOR_URN: z.string().optional(),
+    FACEBOOK_PAGE_ID: z.string().optional(),
+    FACEBOOK_PAGE_ACCESS_TOKEN: z.string().optional(),
+    INSTAGRAM_BUSINESS_ID: z.string().optional(),
+    INSTAGRAM_ACCESS_TOKEN: z.string().optional(),
+    CRON_SECRET: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -63,6 +72,15 @@ export const env = createEnv({
     OZOW_PRIVATE_KEY: process.env.OZOW_PRIVATE_KEY,
     OZOW_MODE: process.env.OZOW_MODE,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
+    SENDGRID_FROM_EMAIL: process.env.SENDGRID_FROM_EMAIL,
+    LINKEDIN_ACCESS_TOKEN: process.env.LINKEDIN_ACCESS_TOKEN,
+    LINKEDIN_AUTHOR_URN: process.env.LINKEDIN_AUTHOR_URN,
+    FACEBOOK_PAGE_ID: process.env.FACEBOOK_PAGE_ID,
+    FACEBOOK_PAGE_ACCESS_TOKEN: process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
+    INSTAGRAM_BUSINESS_ID: process.env.INSTAGRAM_BUSINESS_ID,
+    INSTAGRAM_ACCESS_TOKEN: process.env.INSTAGRAM_ACCESS_TOKEN,
+    CRON_SECRET: process.env.CRON_SECRET,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

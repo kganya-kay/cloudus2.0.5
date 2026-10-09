@@ -122,6 +122,12 @@ export default async function AdminHome() {
           >
             Daily
           </Link>
+          <Link
+            href="/admin/outreach"
+            className="rounded-xl border bg-white p-3 text-center text-sm font-semibold hover:bg-gray-50"
+          >
+            Outreach
+          </Link>
         </div>
 
         <section className="grid gap-4 rounded-3xl border border-gray-100 bg-white/80 p-4 shadow-sm lg:grid-cols-[2fr,1fr]">

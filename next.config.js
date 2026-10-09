@@ -22,6 +22,11 @@ const config = {
             },
         ];
     },
+    async redirects() {
+        return [
+            { source: "/hire", destination: "/services", permanent: false },
+        ];
+    },
     images: {
         remotePatterns:[
             {

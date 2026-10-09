@@ -19,7 +19,7 @@
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/os/format.test.ts src/lib/social/platforms.test.ts src/lib/media-pulse/topics.test.ts src/lib/media-pulse/media.test.ts src/lib/blog/html.test.ts src/lib/revenue/catalog.test.ts"
+    "test": "tsx --test src/lib/os/format.test.ts src/lib/social/platforms.test.ts src/lib/media-pulse/topics.test.ts src/lib/media-pulse/media.test.ts src/lib/blog/html.test.ts src/lib/revenue/catalog.test.ts src/lib/revenue/stack.test.ts src/lib/outreach/channels.test.ts"
   },
   "dependencies": {
     "@auth/core": "^0.40.0",
@@ -33,6 +33,8 @@
     "@mui/material": "^6.2.1",
     "@neondatabase/serverless": "^0.10.4",
     "@prisma/client": "^6.8.1",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@sendgrid/mail": "^8.1.5",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.50.0",
@@ -51,6 +53,7 @@
     "@uploadthing/react": "^7.1.3",
     "ai": "^5.0.113",
     "date-fns": "^4.1.0",
+    "framer-motion": "^14.0.0",
     "geist": "^1.3.0",
     "html-to-image": "^1.11.11",
     "jsforce": "^3.8.1",

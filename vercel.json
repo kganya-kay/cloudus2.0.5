@@ -1,8 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/revenue/pulse",
+      "path": "/api/outreach/orchestrate",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/outreach/orchestrate",
+      "schedule": "0 16 * * *"
     }
   ]
 }

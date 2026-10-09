@@ -1,15 +1,9 @@
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-import { HireDesk } from "~/components/revenue/HireDesk";
-import { PageHeader, SkeletonGrid } from "~/components/os/primitives";
-
-export default function HirePage() {
-  return (
-    <div className="space-y-6">
-      <PageHeader title="Hire" />
-      <Suspense fallback={<SkeletonGrid count={9} />}>
-        <HireDesk />
-      </Suspense>
-    </div>
-  );
+export default async function HireRedirect(props: {
+  searchParams?: Promise<{ s?: string }>;
+}) {
+  const params = (await props.searchParams) ?? {};
+  const slug = params.s ? `?s=${encodeURIComponent(params.s)}` : "";
+  redirect(`/services${slug}`);
 }
